@@ -23,13 +23,6 @@
       <version>0.40.1</version>
       <scope>provided</scope>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>io.strimzi</groupId>
-      <artifactId>crd-generator</artifactId>
-      <version>0.23.0</version>
-    </dependency>
-    -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -53,39 +46,6 @@
           </execution>
         </executions>
       </plugin>
-      <!--
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.0.0</version>
-        <executions>
-          <execution>
-            <id>generate-crd</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>java</executable>
-              <arguments>
-                <argument>-classpath</argument>
-                <classpath>
-                  <dependency>io.strimzi:crd-generator</dependency>
-                </classpath>
-                <argument>io.strimzi.crdgenerator.CrdGenerator</argument>
-                <argument>-label</argument><argument>app:apicurio</argument>
-                <argument>-label</argument><argument>apicur.io/crd-install:true</argument>
-                <argument>-target-kube</argument><argument>1.16+</argument>
-                <argument>-crd-api-version</argument><argument>v1</argument>
-                <argument>-api-versions</argument><argument>v1alpha1</argument>
-                <argument>-yaml</argument>
-                <argument>io.apicurio.studio.operator.api.ApicurioStudio=target${file.separator}resources${file.separator}apicuriostudios.studio.apicurio.yaml</argument>
-              </arguments>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      -->
     </plugins>
   </build>
 </project>
