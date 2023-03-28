@@ -1,6 +1,15 @@
 # Compiled class file
 *.class
 
+# Compilation target dir
+target
+
+# IDE specific files
+.idea
+.classpath
+.project
+.settings
+
 # Log file
 *.log
 
