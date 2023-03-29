@@ -18,7 +18,9 @@
  */
 package io.github.microcks.operator.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.sundr.builder.annotations.Buildable;
 
@@ -26,6 +28,7 @@ import io.sundr.builder.annotations.Buildable;
  * Representation of the MongoDB part of an operator-managed Microcks installation.
  * @author laurent
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Buildable(
       editableEnabled = false,
@@ -36,6 +39,7 @@ public class MongoDBSpec {
    @JsonPropertyDescription("Install MongoDB or reuse an existing instance? Default to true.")
    private boolean install = true;
 
+   @JsonProperty("url")
    @JsonPropertyDescription("MongoDB root URL to use for access")
    private String url;
 

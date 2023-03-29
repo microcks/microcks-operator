@@ -18,6 +18,7 @@
  */
 package io.github.microcks.operator.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -31,6 +32,7 @@ import java.util.Map;
  * Representation of the Microcks webapp part of an operator-managed Microcks installation.
  * @author laurent
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Buildable(
       editableEnabled = false,

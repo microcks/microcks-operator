@@ -24,7 +24,10 @@ import io.github.microcks.operator.api.model.MicrocksServiceSpec;
 import io.github.microcks.operator.api.model.MongoDBSpec;
 import io.github.microcks.operator.api.model.PostmanRuntimeSpec;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
@@ -33,6 +36,7 @@ import io.sundr.builder.annotations.Buildable;
  * This the {@code specification} of a {@link Microcks} custom resource.
  * @author laurent
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "version", "microcks", "postman", "keycloak",
       "mongodb", "features"})
@@ -54,6 +58,7 @@ public class MicrocksSpec {
    @JsonPropertyDescription("Configuration of Keycloak access and/or install")
    private KeycloakSpec keycloak;
 
+   @JsonProperty("mongodb")
    @JsonPropertyDescription("Configuration of MongoDB access and/or install")
    private MongoDBSpec mongodb;
 

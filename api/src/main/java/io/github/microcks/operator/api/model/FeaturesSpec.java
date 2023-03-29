@@ -18,6 +18,7 @@
  */
 package io.github.microcks.operator.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -27,6 +28,7 @@ import io.sundr.builder.annotations.Buildable;
  * Representation of the Features part of an operator-managed Microcks installation.
  * @author laurent
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "async", "repositoryFilter", "repositoryTenancy", "microcksHub"})
 @Buildable(

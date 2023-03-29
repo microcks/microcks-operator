@@ -1,0 +1,66 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  version: latest
+
+  microcks:
+    replicas: 1
+    generateCert: true
+
+    mockInvocationStats: true
+    resources:
+      requests:
+        cpu: 200m
+        memory: 400Mi
+    env:
+      - name: SERVICES_UPDATE_INTERVAL
+        value: 0 0 0/2 * * *
+    openshift:
+      route:
+        enabled: true
+        type: edge
+
+  postman:
+    replicas: 1
+
+  keycloak:
+    install: true
+    realm: microcks
+    generateCert: true
+    resources:
+      requests:
+        cpu: 400m
+        memory: 400Mi
+    openshift:
+      route:
+        enabled: true
+        type: edge
+
+  mongodb:
+    install: true
+    persistent: true
+    volumeSize: 2Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 400Mi
+
+  features:
+    async:
+      enabled: false
+
+    repositoryFilter:
+      enabled: false
+      labelKey: domain
+      labelLabel: Domain
+      labelList: domain,status
+
+    repositoryTenancy:
+      enabled: false
+      artifactImportAllowedRoles: admin,manager,manager-any
+
+    microcksHub:
+      enabled: true
+      allowedRoles: admin,manager,manager-any

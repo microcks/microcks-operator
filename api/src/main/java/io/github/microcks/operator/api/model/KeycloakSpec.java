@@ -18,7 +18,9 @@
  */
 package io.github.microcks.operator.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.sundr.builder.annotations.Buildable;
 
@@ -26,6 +28,7 @@ import io.sundr.builder.annotations.Buildable;
  * Representation of the Keycloak part of an operator-managed Microcks installation.
  * @author laurent
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Buildable(
       editableEnabled = false,
@@ -39,6 +42,7 @@ public class KeycloakSpec {
    @JsonPropertyDescription("Keycloak realm to use for authentication on Microcks")
    private String realm;
 
+   @JsonProperty("url")
    @JsonPropertyDescription("Keycloak root URL to use for access and Ingress if created")
    private String url;
 
