@@ -1,0 +1,103 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: "{{name}}"
+    container: keycloak
+    group: microcks
+    app.kubernetes.io/component: keycloak
+    app.kubernetes.io/managed-by: microcks-operator
+    app.openshift.io/runtime: sso
+  annotations:
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{name}}"
+      deploymentconfig: keycloak
+      container: keycloak
+      group: microcks
+  template:
+    metadata:
+      labels:
+        app: "{{name}}"
+        deploymentconfig: keycloak
+        container: keycloak
+        group: microcks
+    spec:
+      containers:
+        - name: keycloak-server
+          image: "{{keycloak.image}}"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: jolokia
+              containerPort: 8778
+              protocol: TCP
+          args:
+            - 'start'
+            - '--features=token-exchange'
+            - '--db=$(KC_DB)'
+            - '--db-url-host=$(KC_DB_URL_HOST)'
+            - '--db-username=$(KC_DB_USER)'
+            - '--db-password=$(KC_DB_PASSWORD)'
+            - '--health-enabled=true'
+            - '--import-realm'
+          env:
+            - name: INTERNAL_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: OPERATING_MODE
+              value: clustered
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: postgresUsername
+                  name: "microcks-keycloak-admin"
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresPassword
+                  name: "microcks-keycloak-admin"
+            - name: KC_DB_URL_DATABASE
+              value: root
+            - name: KC_DB_URL_HOST
+              value: "microcks-keycloak-postgresql"
+            - name: OPENSHIFT_KUBE_PING_LABELS
+              value: deploymentconfig=keycloak
+            - name: OPENSHIFT_KUBE_PING_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KC_PROXY
+              value: "edge"
+          livenessProbe:
+            httpGet:
+              path: "/health/live"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 2
+            periodSeconds: 20
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: "/health/ready"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          securityContext:
+            privileged: false
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst

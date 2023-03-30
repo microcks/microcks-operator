@@ -19,6 +19,7 @@
 package io.github.microcks.operator.model;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,6 +33,8 @@ public class Merger {
    private final List<String> PRIMITIVE_JSON_TYPES = Arrays.asList("Long", "Long[]",
          "Integer", "Integer[]", "String", "String[]",
          "Boolean", "boolean[]", "ArrayList", "LinkedHashMap");
+
+   private final List<String> RESOURCES_EXCLUDED_TYPES = Arrays.asList("io.fabric8.kubernetes.api.model.ObjectMeta");
 
    /**
     * Merge 2 resources of class T together, producing a third one. The first argument is
@@ -50,25 +53,34 @@ public class Merger {
       Object merged = clazz.newInstance();
 
       for (Field field : clazz.getDeclaredFields()) {
-         field.setAccessible(true);
-         Object localValue = field.get(local);
-         Object remoteValue = field.get(remote);
+         // Sanity check: don't try to set final or transient.
+         if (!Modifier.isFinal(field.getModifiers()) && !Modifier.isTransient(field.getModifiers())) {
+            field.setAccessible(true);
+            Object localValue = field.get(local);
+            Object remoteValue = field.get(remote);
 
-         if (localValue != null) {
-            if (PRIMITIVE_JSON_TYPES.contains(localValue.getClass().getSimpleName())) {
-               // If remote value is a primitive, use it if not null.
-               field.set(merged, (remoteValue != null) ? remoteValue : localValue);
-            } else if (remoteValue != null) {
-               // If a remote value provided, use this one.
-               field.set(merged, this.merge(localValue, remoteValue));
+            // Don't try to merge objects that must be kept as-is.
+            if (!RESOURCES_EXCLUDED_TYPES.contains(field.getType().getName())) {
+               if (localValue != null) {
+                  if (PRIMITIVE_JSON_TYPES.contains(localValue.getClass().getSimpleName())) {
+                     // If remote value is a primitive, use it if not null.
+                     field.set(merged, (remoteValue != null) ? remoteValue : localValue);
+                  } else if (remoteValue != null) {
+                     // If a remote value provided, use this one.
+                     field.set(merged, this.merge(localValue, remoteValue));
+                  } else {
+                     // No remote value, use the local (default)
+                     field.set(merged, localValue);
+                  }
+               } else {
+                  // No value provided as default.
+                  if (remoteValue != null) {
+                     // Use the one coming from remote resource.
+                     field.set(merged, remoteValue);
+                  }
+               }
             } else {
-               // No remote value, use the local (default)
-               field.set(merged, localValue);
-            }
-         } else {
-            // No value provided as default.
-            if (remoteValue != null) {
-               // Use the one coming from remote resource.
+               // Kept the object as-is.
                field.set(merged, remoteValue);
             }
          }
