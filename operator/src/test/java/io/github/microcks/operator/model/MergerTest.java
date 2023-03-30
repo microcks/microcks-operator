@@ -62,6 +62,7 @@ public class MergerTest {
       try {
          result = new Merger().merge(defaultCR, simplestCR);
       } catch (Throwable t) {
+         t.printStackTrace();
          fail("Merging Microcks CR should not fail");
       }
 
@@ -91,6 +92,7 @@ public class MergerTest {
       try {
          result = new Merger().merge(defaultCR, partialCR);
       } catch (Throwable t) {
+         t.printStackTrace();
          fail("Merging Microcks CR should not fail");
       }
 
