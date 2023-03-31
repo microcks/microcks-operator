@@ -6,7 +6,7 @@
     <groupId>io.github.microcks</groupId>
     <artifactId>microcks-operator</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>microcks-kube-operator</artifactId>
   <properties>
@@ -43,7 +43,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.7.2</version>
+      <version>5.9.1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
