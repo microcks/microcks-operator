@@ -11,6 +11,7 @@
   <artifactId>microcks-kube-operator</artifactId>
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
+    <surefire-plugin.version>3.0.0</surefire-plugin.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
@@ -55,6 +56,17 @@
         <configuration>
           <compilerArgs>-Xlint:deprecation</compilerArgs>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire-plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit-platform</artifactId>
+            <version>${surefire-plugin.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
       <plugin>
         <groupId>io.quarkus</groupId>
