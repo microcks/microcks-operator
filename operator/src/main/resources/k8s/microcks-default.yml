@@ -29,10 +29,13 @@ spec:
     install: true
     realm: microcks
     generateCert: true
+    serviceAccount: microcks-serviceaccount
+    serviceAccountCredentials: ab54d329-e435-41ae-a900-ec6b3fe15c54
     resources:
       requests:
         cpu: 400m
         memory: 400Mi
+    volumeSize: 1Gi
     openshift:
       route:
         enabled: true
