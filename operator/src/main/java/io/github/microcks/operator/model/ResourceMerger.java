@@ -27,7 +27,7 @@ import java.util.List;
  * Merger holds utility methods for merging resources together.
  * @author laurent
  */
-public class Merger {
+public class ResourceMerger {
 
    /** List of Java primitive types typically found in Json/Yaml documents. */
    private final List<String> PRIMITIVE_JSON_TYPES = Arrays.asList("Long", "Long[]",
@@ -48,7 +48,7 @@ public class Merger {
     * @throws InstantiationException If an instanciation error occurs
     */
    @SuppressWarnings("unchecked")
-   public <T> T merge(T local, T remote) throws IllegalAccessException, InstantiationException {
+   public <T> T mergeResources(T local, T remote) throws IllegalAccessException, InstantiationException {
       Class<?> clazz = local.getClass();
       Object merged = clazz.newInstance();
 
@@ -56,32 +56,41 @@ public class Merger {
          // Sanity check: don't try to set final or transient.
          if (!Modifier.isFinal(field.getModifiers()) && !Modifier.isTransient(field.getModifiers())) {
             field.setAccessible(true);
-            Object localValue = field.get(local);
-            Object remoteValue = field.get(remote);
 
-            // Don't try to merge objects that must be kept as-is.
-            if (!RESOURCES_EXCLUDED_TYPES.contains(field.getType().getName())) {
-               if (localValue != null) {
-                  if (PRIMITIVE_JSON_TYPES.contains(localValue.getClass().getSimpleName())) {
-                     // If remote value is a primitive, use it if not null.
-                     field.set(merged, (remoteValue != null) ? remoteValue : localValue);
-                  } else if (remoteValue != null) {
-                     // If a remote value provided, use this one.
-                     field.set(merged, this.merge(localValue, remoteValue));
+            // Manage safety cases first...
+            if (remote == null && local != null) {
+               field.set(merged, field.get(local));
+            } else if (remote != null && local == null) {
+               field.set(merged, field.get(remote));
+            } else {
+               // Safely access the values from here.
+               Object localValue = field.get(local);
+               Object remoteValue = field.get(remote);
+
+               // Don't try to merge objects that must be kept as-is.
+               if (!RESOURCES_EXCLUDED_TYPES.contains(field.getType().getName())) {
+                  if (localValue != null) {
+                     if (PRIMITIVE_JSON_TYPES.contains(localValue.getClass().getSimpleName())) {
+                        // If remote value is a primitive, use it if not null.
+                        field.set(merged, (remoteValue != null) ? remoteValue : localValue);
+                     } else if (remoteValue != null) {
+                        // If a remote value provided, use this one.
+                        field.set(merged, this.mergeResources(localValue, remoteValue));
+                     } else {
+                        // No remote value, use the local (default)
+                        field.set(merged, localValue);
+                     }
                   } else {
-                     // No remote value, use the local (default)
-                     field.set(merged, localValue);
+                     // No value provided as default.
+                     if (remoteValue != null) {
+                        // Use the one coming from remote resource.
+                        field.set(merged, remoteValue);
+                     }
                   }
                } else {
-                  // No value provided as default.
-                  if (remoteValue != null) {
-                     // Use the one coming from remote resource.
-                     field.set(merged, remoteValue);
-                  }
+                  // Kept the object as-is.
+                  field.set(merged, remoteValue);
                }
-            } else {
-               // Kept the object as-is.
-               field.set(merged, remoteValue);
             }
          }
       }

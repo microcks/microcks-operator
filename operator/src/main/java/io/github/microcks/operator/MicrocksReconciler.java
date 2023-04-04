@@ -22,10 +22,10 @@ import io.github.microcks.operator.api.Microcks;
 import io.github.microcks.operator.api.MicrocksSpec;
 import io.github.microcks.operator.api.MicrocksStatus;
 import io.github.microcks.operator.api.model.Status;
-import io.github.microcks.operator.model.Merger;
+import io.github.microcks.operator.model.ResourceMerger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.ReconcilerUtils;
@@ -37,6 +37,8 @@ import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceInitializer;
 import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
+import io.javaoperatorsdk.operator.api.reconciler.dependent.DependentResource;
+import io.javaoperatorsdk.operator.api.reconciler.dependent.ReconcileResult;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Workflow;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.WorkflowReconcileResult;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
@@ -66,14 +68,10 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    @Inject
    KubernetesClient client;
 
-   @Inject
-   ObjectMapper mapper;
-
-   private Merger merger = new Merger();
-
-   private KeycloakDependentResourcesManager keycloakReconciler;
+   private ResourceMerger merger = new ResourceMerger();
 
    private Workflow<Microcks> keycloakModuleWF;
+   private KeycloakDependentResourcesManager keycloakReconciler;
 
 
    public MicrocksReconciler(KubernetesClient client) {
@@ -95,35 +93,56 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       logger.infof("Starting reconcile operation for '%s'", microcks.getMetadata().getName());
 
       Microcks defaultCR = loadDefaultMicrocksCR();
-      Microcks completeCR = merger.merge(defaultCR, microcks);
+      MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
+      Microcks completeCR = new Microcks();
+      completeCR.setKind(microcks.getKind());
+      completeCR.setMetadata(microcks.getMetadata());
+      completeCR.setSpec(completeSpec);
+      completeCR.setStatus(microcks.getStatus());
 
-      logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
+      //logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
 
       Set<Secret> secondarySecrets = context.getSecondaryResources(Secret.class);
-      logger.infof("Secondary DSecrets watched: %s", secondarySecrets);
+      logger.infof("Secondary Secrets watched: %d", secondarySecrets.size());
       Set<Deployment> secondaryDeployments = context.getSecondaryResources(Deployment.class);
-      logger.infof("Secondary Deployments watched: %s", secondaryDeployments);
-
-
-      WorkflowReconcileResult keycloakResult = keycloakModuleWF.reconcile(completeCR, context);
-      logger.info("Reconcile Keycloak dependents: " + keycloakResult.getReconciledDependents());
-
-      if (keycloakResult.getReconciledDependents() != null && keycloakResult.getReconciledDependents().size() > 0) {
-         MicrocksStatus status = Objects.requireNonNullElse(microcks.getStatus(), new MicrocksStatus());
-      }
-
+      logger.infof("Secondary Deployments watched: %d", secondaryDeployments.size());
+      Set<Service> secondaryServices = context.getSecondaryResources(Service.class);
+      logger.infof("Secondary Services watched: %d", secondaryServices.size());
 
       Optional<WorkflowReconcileResult> workflowReconcileResult = context.managedDependentResourceContext().getWorkflowReconcileResult();
       logger.info("workflowReconcileResult: " + workflowReconcileResult);
 
+      WorkflowReconcileResult keycloakResult = keycloakModuleWF.reconcile(completeCR, context);
+      logger.info("Reconciled Keycloak dependents: " + keycloakResult.getReconciledDependents());
+
+      if (keycloakResult.getReconciledDependents() != null && keycloakResult.getReconciledDependents().size() > 0) {
+         logger.infof("We've reconciled %d Keycloak dependents", keycloakResult.getReconciledDependents().size());
+
+         if (keycloakResult.getNotReadyDependents().size() > 0) {
+            logger.info("  Got not ready dependents: " + keycloakResult.getNotReadyDependents().size());
+         }
+         if (keycloakResult.allDependentResourcesReady()) {
+            logger.info("  All dependents are ready!");
+         }
+
+         for (DependentResource depRes : keycloakResult.getReconciledDependents()) {
+            logger.infof("- reconciled: '%s'", depRes.getClass().getName());
+            ReconcileResult recRes = keycloakResult.getReconcileResults().get(depRes);
+            System.err.println(recRes.getSingleOperation());
+            //System.err.println(recRes.getResourceOperations());
+         }
+
+         MicrocksStatus status = Objects.requireNonNullElse(microcks.getStatus(), new MicrocksStatus());
+      }
 
       MicrocksStatus status = new MicrocksStatus();
       status.setStatus(Status.DEPLOYING);
 
       microcks.setStatus(status);
-      return UpdateControl.patchStatus(microcks);
 
-      //return UpdateControl.noUpdate();
+      logger.infof("Finishing reconcile operation for '%s'", microcks.getMetadata().getName());
+      //return UpdateControl.patchStatus(microcks);
+      return UpdateControl.noUpdate();
    }
 
    @Override

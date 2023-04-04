@@ -16,22 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
-
-import io.github.microcks.operator.api.Microcks;
-
-import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
+package io.github.microcks.operator;
 
 /**
- * A reconciliation pre-condition that is only met if Keycloak module should be installed.
+ * Configuration properties and constants for the Microcks operator.
  * @author laurent
  */
-public class KeycloakInstallPrecondition implements Condition<HasMetadata, Microcks> {
+public class MicrocksOperatorConfig {
 
-   @Override
-   public boolean isMet(Microcks primary, HasMetadata secondary, Context<Microcks> context) {
-      return primary.getSpec().getKeycloak().isInstall();
-   }
+   public static final String OPERATOR_NAME = "microcks-operator";
+   public static final String RESOURCE_LABEL_SELECTOR = "app.kubernetes.io/managed-by=" + OPERATOR_NAME;
+   public static final String GROUP_LABEL_VALUE = "microcks";
 }

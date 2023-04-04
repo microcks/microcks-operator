@@ -34,10 +34,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * This is a unit test for the {@link Merger} util class.
+ * This is a unit test for the {@link ResourceMerger} util class.
  * @author Laurent
  */
-public class MergerTest {
+public class ResourceMergerTest {
 
    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
@@ -55,28 +55,28 @@ public class MergerTest {
    }
 
    @Test
-   public void testMergeEmptyMicrocks() {
+   public void testMergeEmptyMicrocksSpec() {
       Microcks simplestCR = new Microcks();
 
-      Microcks result = null;
+      MicrocksSpec result = null;
       try {
-         result = new Merger().merge(defaultCR, simplestCR);
+         result = new ResourceMerger().mergeResources(defaultCR.getSpec(), simplestCR.getSpec());
       } catch (Throwable t) {
          t.printStackTrace();
          fail("Merging Microcks CR should not fail");
       }
 
-      assertNotNull(result.getSpec());
-      assertEquals("latest", result.getSpec().getVersion());
-      assertEquals(1, result.getSpec().getMicrocks().getReplicas());
-      assertEquals(1, result.getSpec().getPostman().getReplicas());
-      assertTrue(result.getSpec().getKeycloak().isInstall());
-      assertTrue(result.getSpec().getMongoDB().isInstall());
-      assertFalse(result.getSpec().getFeatures().getAsync().isEnabled());
+      assertNotNull(result);
+      assertEquals("latest", result.getVersion());
+      assertEquals(1, result.getMicrocks().getReplicas());
+      assertEquals(1, result.getPostman().getReplicas());
+      assertTrue(result.getKeycloak().isInstall());
+      assertTrue(result.getMongoDB().isInstall());
+      assertFalse(result.getFeatures().getAsync().isEnabled());
    }
 
    @Test
-   public void testMergePartialMicrocks() {
+   public void testMergePartialMicrocksSpec() {
       Microcks partialCR = new Microcks();
       MicrocksSpec spec = new MicrocksSpec();
       KeycloakSpec keycloak = new KeycloakSpec();
@@ -88,22 +88,22 @@ public class MergerTest {
       keycloak.setRealm("custom-realm");
       keycloak.setUrl("keycloak.acme.com");
 
-      Microcks result = null;
+      MicrocksSpec result = null;
       try {
-         result = new Merger().merge(defaultCR, partialCR);
+         result = new ResourceMerger().mergeResources(defaultCR.getSpec(), partialCR.getSpec());
       } catch (Throwable t) {
          t.printStackTrace();
          fail("Merging Microcks CR should not fail");
       }
 
-      assertNotNull(result.getSpec());
-      assertEquals("1.7.0", result.getSpec().getVersion());
-      assertEquals(1, result.getSpec().getMicrocks().getReplicas());
-      assertEquals(1, result.getSpec().getPostman().getReplicas());
-      assertFalse(result.getSpec().getKeycloak().isInstall());
-      assertEquals("custom-realm", result.getSpec().getKeycloak().getRealm());
-      assertEquals("keycloak.acme.com", result.getSpec().getKeycloak().getUrl());
-      assertTrue(result.getSpec().getMongoDB().isInstall());
-      assertFalse(result.getSpec().getFeatures().getAsync().isEnabled());
+      assertNotNull(result);
+      assertEquals("1.7.0", result.getVersion());
+      assertEquals(1, result.getMicrocks().getReplicas());
+      assertEquals(1, result.getPostman().getReplicas());
+      assertFalse(result.getKeycloak().isInstall());
+      assertEquals("custom-realm", result.getKeycloak().getRealm());
+      assertEquals("keycloak.acme.com", result.getKeycloak().getUrl());
+      assertTrue(result.getMongoDB().isInstall());
+      assertFalse(result.getFeatures().getAsync().isEnabled());
    }
 }

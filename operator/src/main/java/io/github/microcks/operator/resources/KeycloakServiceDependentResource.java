@@ -20,59 +20,47 @@ package io.github.microcks.operator.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.Microcks;
+import io.github.microcks.operator.api.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
+import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.api.reconciler.dependent.Deleter;
-import io.javaoperatorsdk.operator.processing.dependent.Creator;
+import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependentResource;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes Secret dependent resource.
+ * A Keycloak Kubernetes Service dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
-      implements Creator<Secret, Microcks>, Deleter<Microcks>, NamedSecondaryResourceProvider<Microcks> {
+public class KeycloakServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
+      implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   public static final String KEYCLOAK_ADMIN_KEY = "username";
-   public static final String KEYCLOAK_ADMIN_PASSWORD_KEY = "password";
-
-   public static final String DATABASE_USER_KEY = "postgresUsername";
-   public static final String DATABASE_USER_PASSWORD_KEY = "postgresPassword";
-
-   private static final String RESOURCE_SUFFIX = "-keycloak-admin";
-
-   public KeycloakSecretDependentResource() {
-      super(Secret.class);
-   }
-
-   public static final String getSecretName(Microcks microcks) {
-      return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
+   public KeycloakServiceDependentResource() {
+      super(Service.class);
    }
 
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return primary.getMetadata().getName() + RESOURCE_SUFFIX;
+      return KeycloakDeploymentDependentResource.getDeploymentName(primary);
    }
 
    @Override
-   protected Secret desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak Secret for '%s'", microcks.getMetadata().getName());
+   protected Service desired(Microcks microcks, Context<Microcks> context) {
+      logger.infof("Building desired Keycloak Service for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
+      final MicrocksSpec spec = microcks.getSpec();
 
-      SecretBuilder builder = new SecretBuilder()
+      ServiceBuilder builder = new ServiceBuilder()
             .withNewMetadata()
                .withName(getSecondaryResourceName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
@@ -80,10 +68,19 @@ public class KeycloakSecretDependentResource extends KubernetesDependentResource
                .addToLabels("container", "keycloak")
                .addToLabels("group", "microcks")
             .endMetadata()
-            .addToStringData(KEYCLOAK_ADMIN_KEY, "admin" + RandomStringUtils.randomAlphanumeric(6))
-            .addToStringData(KEYCLOAK_ADMIN_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32))
-            .addToStringData(DATABASE_USER_KEY, "user" + RandomStringUtils.randomAlphanumeric(6))
-            .addToStringData(DATABASE_USER_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32));
+            .withNewSpec()
+               .addToSelector("app", microcksName)
+               .addToSelector("container", "keycloak")
+               .addToSelector("group", "microcks")
+               .addNewPort()
+                  .withName("keycloak")
+                  .withPort(8080)
+                  .withProtocol("TCP")
+                  .withTargetPort(new IntOrString(8080))
+               .endPort()
+               .withSessionAffinity("None")
+               .withType("ClusterIP")
+            .endSpec();
 
       return builder.build();
    }

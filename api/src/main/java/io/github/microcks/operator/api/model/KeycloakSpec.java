@@ -52,6 +52,9 @@ public class KeycloakSpec {
    @JsonPropertyDescription("Size of persistent storage volume if persistent")
    private String volumeSize;
 
+   @JsonPropertyDescription("Name of storage class to use if not relying on default")
+   private String storageClassName;
+
    @JsonPropertyDescription("Service Account for connecting external services to Microcks")
    private String serviceAccount;
 
@@ -99,6 +102,14 @@ public class KeycloakSpec {
 
    public void setVolumeSize(String volumeSize) {
       this.volumeSize = volumeSize;
+   }
+
+   public String getStorageClassName() {
+      return storageClassName;
+   }
+
+   public void setStorageClassName(String storageClassName) {
+      this.storageClassName = storageClassName;
    }
 
    public String getServiceAccount() {

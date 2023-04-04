@@ -1,0 +1,63 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: "{{name}}"
+    container: keycloak-postgresql
+    group: microcks
+    app.kubernetes.io/component: keycloak-postgresql
+    app.kubernetes.io/managed-by: microcks-operator
+    app.openshift.io/runtime: postgresql
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{name}}"
+      deploymentconfig: keycloak-postgresql
+      container: keycloak-postgresql
+      group: microcks
+  template:
+    metadata:
+      labels:
+        app: "{{name}}"
+        deploymentconfig: keycloak-postgresql
+        container: keycloak-postgresql
+        group: microcks
+    spec:
+      containers:
+        - name: keycloak-postgresql
+          image: "{{keycloak.postgres_image}}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          readinessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 5
+            exec:
+              command:
+                - "/bin/sh"
+                - "-i"
+                - "-c"
+                - psql 127.0.0.1 -U ${POSTGRESQL_USER} -q -d ${POSTGRESQL_DATABASE}
+                  -c 'SELECT 1'
+          livenessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 30
+            tcpSocket:
+              port: 5432
+          env:
+            - name: POSTGRESQL_DATABASE
+              value: root
+            - name: POSTGRESQL_MAX_CONNECTIONS
+              value: '100'
+            - name: POSTGRESQL_SHARED_BUFFERS
+              value: 12MB
+          volumeMounts:
+            - name: "keycloak-postgresql-data"
+              mountPath: "/var/lib/pgsql/data"
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: "keycloak-postgresql-data"

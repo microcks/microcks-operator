@@ -20,44 +20,34 @@ package io.github.microcks.operator.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.Microcks;
+import io.github.microcks.operator.api.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.api.reconciler.dependent.Deleter;
-import io.javaoperatorsdk.operator.processing.dependent.Creator;
+import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependentResource;
-import org.apache.commons.lang3.RandomStringUtils;
+import io.quarkus.qute.CheckedTemplate;
+import io.quarkus.qute.TemplateInstance;
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes Secret dependent resource.
+ * A Keycloak Kubernetes ConfigMap dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
-      implements Creator<Secret, Microcks>, Deleter<Microcks>, NamedSecondaryResourceProvider<Microcks> {
+public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentResource<ConfigMap, Microcks>
+      implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   public static final String KEYCLOAK_ADMIN_KEY = "username";
-   public static final String KEYCLOAK_ADMIN_PASSWORD_KEY = "password";
+   private static final String RESOURCE_SUFFIX = "-keycloak-config";
 
-   public static final String DATABASE_USER_KEY = "postgresUsername";
-   public static final String DATABASE_USER_PASSWORD_KEY = "postgresPassword";
-
-   private static final String RESOURCE_SUFFIX = "-keycloak-admin";
-
-   public KeycloakSecretDependentResource() {
-      super(Secret.class);
-   }
-
-   public static final String getSecretName(Microcks microcks) {
-      return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
+   public KeycloakConfigMapDependentResource() {
+      super(ConfigMap.class);
    }
 
    @Override
@@ -66,13 +56,16 @@ public class KeycloakSecretDependentResource extends KubernetesDependentResource
    }
 
    @Override
-   protected Secret desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak Secret for '%s'", microcks.getMetadata().getName());
+   protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
+      logger.infof("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
+
+      // Compute realm-config with Qute template.
+      String realmConfig = Templates.microcksRealm(microcks.getSpec()).render();
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
 
-      SecretBuilder builder = new SecretBuilder()
+      ConfigMapBuilder builder = new ConfigMapBuilder()
             .withNewMetadata()
                .withName(getSecondaryResourceName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
@@ -80,11 +73,13 @@ public class KeycloakSecretDependentResource extends KubernetesDependentResource
                .addToLabels("container", "keycloak")
                .addToLabels("group", "microcks")
             .endMetadata()
-            .addToStringData(KEYCLOAK_ADMIN_KEY, "admin" + RandomStringUtils.randomAlphanumeric(6))
-            .addToStringData(KEYCLOAK_ADMIN_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32))
-            .addToStringData(DATABASE_USER_KEY, "user" + RandomStringUtils.randomAlphanumeric(6))
-            .addToStringData(DATABASE_USER_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32));
+            .addToData("microcks-realm.json", realmConfig);
 
       return builder.build();
+   }
+
+   @CheckedTemplate
+   public static class Templates {
+      public static native TemplateInstance microcksRealm(MicrocksSpec spec);
    }
 }

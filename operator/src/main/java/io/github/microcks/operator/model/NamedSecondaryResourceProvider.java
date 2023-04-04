@@ -16,22 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
-
-import io.github.microcks.operator.api.Microcks;
+package io.github.microcks.operator.model;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 
 /**
- * A reconciliation pre-condition that is only met if Keycloak module should be installed.
+ * As a secondary resource provider of a primary resource {@type P}, it brings the ability to define
+ * this second resource name. Resource names can be later used as resource discriminator to easily setup watchers.
  * @author laurent
  */
-public class KeycloakInstallPrecondition implements Condition<HasMetadata, Microcks> {
+public interface NamedSecondaryResourceProvider<P extends HasMetadata> {
 
-   @Override
-   public boolean isMet(Microcks primary, HasMetadata secondary, Context<Microcks> context) {
-      return primary.getSpec().getKeycloak().isInstall();
-   }
+   /**
+    * The name of the - future - secondary resource that will be created
+    * @param primary The primary resource to generate second resource for.
+    * @return
+    */
+   String getSecondaryResourceName(P primary);
 }

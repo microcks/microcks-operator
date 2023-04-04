@@ -20,11 +20,12 @@ package io.github.microcks.operator.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.Microcks;
+import io.github.microcks.operator.api.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.javaoperatorsdk.operator.ReconcilerUtils;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
@@ -32,19 +33,19 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDep
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes Deployment dependent resource.
+ * A Keycloak Kubernetes Database Deployment dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependentResource<Deployment, Microcks>
+public class KeycloakDatabaseDeploymentDependentResource extends CRUDKubernetesDependentResource<Deployment, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String RESOURCE_SUFFIX = "-keycloak";
+   private static final String RESOURCE_SUFFIX = "-keycloak-postgresql";
 
-   public KeycloakDeploymentDependentResource() {
+   public KeycloakDatabaseDeploymentDependentResource() {
       super(Deployment.class);
    }
 
@@ -59,13 +60,14 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
 
    @Override
    protected Deployment desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak Deployment for '%s'", microcks.getMetadata().getName());
+      logger.infof("Building desired Keycloak DB Deployment for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
+      final MicrocksSpec spec = microcks.getSpec();
 
-      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-deployment.yml");
-      deployment = new DeploymentBuilder(deployment)
+      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-postgresql-deployment.yml");
+      DeploymentBuilder builder = new DeploymentBuilder(deployment)
             .editMetadata()
                .withName(getDeploymentName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
@@ -81,31 +83,56 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
                   .editMetadata().addToLabels("app", microcksName).endMetadata()
                   .editSpec()
                      .editFirstContainer()
-                        .withImage("quay.io/keycloak/keycloak:20.0.2")
+                        .withImage("centos/postgresql-10-centos7")
                         .addNewEnv()
-                           .withName("KEYCLOAK_ADMIN")
+                           .withName("POSTGRESQL_USER")
                            .withNewValueFrom()
                               .withNewSecretKeyRef()
                                  .withName(KeycloakSecretDependentResource.getSecretName(microcks))
-                                 .withKey(KeycloakSecretDependentResource.KEYCLOAK_ADMIN_KEY)
+                                 .withKey(KeycloakSecretDependentResource.DATABASE_USER_KEY)
                               .endSecretKeyRef()
                            .endValueFrom()
                         .endEnv()
                         .addNewEnv()
-                           .withName("KEYCLOAK_ADMIN_PASSWORD")
+                           .withName("POSTGRESQL_PASSWORD")
                            .withNewValueFrom()
                               .withNewSecretKeyRef()
                                  .withName(KeycloakSecretDependentResource.getSecretName(microcks))
-                                 .withKey(KeycloakSecretDependentResource.KEYCLOAK_ADMIN_PASSWORD_KEY)
+                                 .withKey(KeycloakSecretDependentResource.DATABASE_USER_PASSWORD_KEY)
                               .endSecretKeyRef()
                            .endValueFrom()
                         .endEnv()
                      .endContainer()
                   .endSpec()
                .endTemplate()
-            .endSpec()
-            .build();
+            .endSpec();
 
-      return deployment;
+      if (spec.getKeycloak().isPersistent()) {
+         builder.editSpec()
+               .editTemplate()
+                  .editSpec()
+                     .editFirstVolume()
+                        .editOrNewPersistentVolumeClaim()
+                           .withClaimName(KeycloakDatabasePVCDependentResource.getPVCName(microcks))
+                        .endPersistentVolumeClaim()
+                     .endVolume()
+                  .endSpec()
+               .endTemplate()
+               .endSpec();
+      } else {
+         builder.editSpec()
+               .editTemplate()
+                  .editSpec()
+                     .editFirstVolume()
+                        .editOrNewEmptyDir()
+                           .withMedium("")
+                        .endEmptyDir()
+                     .endVolume()
+                  .endSpec()
+               .endTemplate()
+               .endSpec();
+      }
+
+      return builder.build();
    }
 }

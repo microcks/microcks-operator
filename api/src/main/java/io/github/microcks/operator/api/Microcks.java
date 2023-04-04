@@ -43,6 +43,7 @@ import io.sundr.builder.annotations.BuildableReference;
 )
 public class Microcks extends CustomResource<MicrocksSpec, MicrocksStatus> implements Namespaced {
 
+   /*
    private ObjectMeta metadata; // Add it for the generator / builder
    private MicrocksSpec spec; // Add it for the generator / builder
 
@@ -65,4 +66,5 @@ public class Microcks extends CustomResource<MicrocksSpec, MicrocksStatus> imple
    public void setSpec(MicrocksSpec spec) {
       this.spec = spec;
    }
+    */
 }
