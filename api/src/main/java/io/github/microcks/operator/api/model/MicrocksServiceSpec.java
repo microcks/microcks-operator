@@ -42,6 +42,8 @@ public class MicrocksServiceSpec {
 
    @JsonPropertyDescription("Number of desired pods for Microcks service")
    private int replicas;
+
+   @JsonPropertyDescription("The URL to use for exposing Microcks main ingress")
    private String url;
 
    @JsonPropertyDescription("Annotations to apply to Ingress if created")
@@ -53,8 +55,11 @@ public class MicrocksServiceSpec {
    @JsonPropertyDescription("Environment variables for Microcks service")
    private List<EnvVar> env;
 
-   @JsonPropertyDescription("Enable/disable statistics for mocks invocation. Defaults to true.")
+   @JsonPropertyDescription("Enable/disable statistics for mocks invocation. Defaults to true")
    private boolean mockInvocationStats;
+
+   @JsonPropertyDescription("Allow configuration of logging level. Defaults to INFO")
+   private LogLevel logLevel;
 
    public int getReplicas() {
       return replicas;
@@ -102,5 +107,13 @@ public class MicrocksServiceSpec {
 
    public void setMockInvocationStats(boolean mockInvocationStats) {
       this.mockInvocationStats = mockInvocationStats;
+   }
+
+   public LogLevel getLogLevel() {
+      return logLevel;
+   }
+
+   public void setLogLevel(LogLevel logLevel) {
+      this.logLevel = logLevel;
    }
 }

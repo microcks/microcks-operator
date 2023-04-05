@@ -38,11 +38,21 @@ public class MicrocksHubSpec {
    @JsonPropertyDescription("Enable/disable this feature. Default is false.")
    private boolean enabled = false;
 
+   private String allowedRoles;
+
    public boolean isEnabled() {
       return enabled;
    }
 
    public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+   }
+
+   public String getAllowedRoles() {
+      return allowedRoles;
+   }
+
+   public void setAllowedRoles(String allowedRoles) {
+      this.allowedRoles = allowedRoles;
    }
 }

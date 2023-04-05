@@ -25,37 +25,48 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
 /**
- * Representation of the Repository tenancy config of an operator-managed Microcks installation.
+ * Representation of a generic Broker connection configuration of an operator-managed Microcks installation.
  * @author laurent
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "enabled", "artifactImportAllowedRoles" })
+@JsonPropertyOrder({ "url", "username", "password" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
 )
-public class RepositoryTenancySpec {
+public class GenericBrokerConnectionSpec {
 
-   @JsonPropertyDescription("Enable/disable this feature. Default is false")
-   private boolean enabled = false;
+   @JsonPropertyDescription("The URL to use for connecting to the broker")
+   private String url;
 
-   @JsonPropertyDescription("The list of roles (separated by ,) that are allowed to import artifacts")
-   private String artifactImportAllowedRoles;
+   @JsonPropertyDescription("The username to use for authenticating to the broker")
+   private String username;
 
-   public boolean isEnabled() {
-      return enabled;
+   @JsonPropertyDescription("The password to use for authenticating to the broker")
+   private String password;
+
+   public String getUrl() {
+      return url;
    }
 
-   public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
+   public void setUrl(String url) {
+      this.url = url;
    }
 
-   public String getArtifactImportAllowedRoles() {
-      return artifactImportAllowedRoles;
+   public String getUsername() {
+      return username;
    }
 
-   public void setArtifactImportAllowedRoles(String artifactImportAllowedRoles) {
-      this.artifactImportAllowedRoles = artifactImportAllowedRoles;
+   public void setUsername(String username) {
+      this.username = username;
+   }
+
+   public String getPassword() {
+      return password;
+   }
+
+   public void setPassword(String password) {
+      this.password = password;
    }
 }

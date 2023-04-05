@@ -47,14 +47,17 @@ import org.jboss.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
 
 /**
+ * Reconciliation entry point for the {@type Microcks} Kubernetes custom resource.
  * @author laurent
  */
 @ControllerConfiguration(namespaces = WATCH_CURRENT_NAMESPACE)
@@ -71,19 +74,26 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    private ResourceMerger merger = new ResourceMerger();
 
    private Workflow<Microcks> keycloakModuleWF;
+   private Workflow<Microcks> microcksModuleWF;
    private KeycloakDependentResourcesManager keycloakReconciler;
+   private MicrocksDependentResourcesManager microcksReconciler;
 
 
    public MicrocksReconciler(KubernetesClient client) {
       this.client = client;
       keycloakReconciler = new KeycloakDependentResourcesManager(client);
+      microcksReconciler = new MicrocksDependentResourcesManager(client);
       keycloakModuleWF = keycloakReconciler.buildReconciliationWorkflow();
+      microcksModuleWF = microcksReconciler.buildReconcialiationWorkflow();
    }
 
    @Override
    public Map<String, EventSource> prepareEventSources(EventSourceContext<Microcks> context) {
       return EventSourceInitializer.nameEventSources(
-            keycloakReconciler.initEventSources(context)
+            Stream.concat(
+                  Arrays.stream(keycloakReconciler.initEventSources(context)),
+                  Arrays.stream(microcksReconciler.initEventSources(context))
+            ).toArray(EventSource[]::new)
       );
    }
 
@@ -124,16 +134,16 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
          if (keycloakResult.allDependentResourcesReady()) {
             logger.info("  All dependents are ready!");
          }
-
          for (DependentResource depRes : keycloakResult.getReconciledDependents()) {
-            logger.infof("- reconciled: '%s'", depRes.getClass().getName());
             ReconcileResult recRes = keycloakResult.getReconcileResults().get(depRes);
-            System.err.println(recRes.getSingleOperation());
-            //System.err.println(recRes.getResourceOperations());
+            logger.infof("- reconciled: '%s' with op %s", depRes.getClass().getSimpleName(), recRes.getSingleOperation());
          }
 
          MicrocksStatus status = Objects.requireNonNullElse(microcks.getStatus(), new MicrocksStatus());
       }
+
+      WorkflowReconcileResult microcksResult = microcksModuleWF.reconcile(completeCR, context);
+      logger.info("Reconciled Microcks dependents: " + microcksResult.getReconciledDependents());
 
       MicrocksStatus status = new MicrocksStatus();
       status.setStatus(Status.DEPLOYING);

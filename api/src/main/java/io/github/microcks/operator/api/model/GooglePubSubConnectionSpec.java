@@ -21,41 +21,39 @@ package io.github.microcks.operator.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
 /**
- * Representation of the Repository tenancy config of an operator-managed Microcks installation.
+ * Representation of the Google PubSub connection config of an operator-managed Microcks installation.
  * @author laurent
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "enabled", "artifactImportAllowedRoles" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
 )
-public class RepositoryTenancySpec {
+public class GooglePubSubConnectionSpec {
 
-   @JsonPropertyDescription("Enable/disable this feature. Default is false")
-   private boolean enabled = false;
+   @JsonPropertyDescription("The Google Cloud Platform (GCP) project to use for connecting to PubSub broker")
+   private String project;
 
-   @JsonPropertyDescription("The list of roles (separated by ,) that are allowed to import artifacts")
-   private String artifactImportAllowedRoles;
+   @JsonPropertyDescription("A Secret reference holding the GCP serviceAccount authentication token JSON file")
+   private SecretReferenceSpec serviceAccountSecretRef;
 
-   public boolean isEnabled() {
-      return enabled;
+   public String getProject() {
+      return project;
    }
 
-   public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
+   public void setProject(String project) {
+      this.project = project;
    }
 
-   public String getArtifactImportAllowedRoles() {
-      return artifactImportAllowedRoles;
+   public SecretReferenceSpec getServiceAccountSecretRef() {
+      return serviceAccountSecretRef;
    }
 
-   public void setArtifactImportAllowedRoles(String artifactImportAllowedRoles) {
-      this.artifactImportAllowedRoles = artifactImportAllowedRoles;
+   public void setServiceAccountSecretRef(SecretReferenceSpec serviceAccountSecretRef) {
+      this.serviceAccountSecretRef = serviceAccountSecretRef;
    }
 }

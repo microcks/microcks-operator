@@ -21,6 +21,7 @@ package io.github.microcks.operator.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
 /**
@@ -29,14 +30,24 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({ "enabled", "labelKey", "labelLabel", "labelList" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
 )
 public class RepositoryFilterSpec {
 
-   @JsonPropertyDescription("Enable/disable this feature. Default is false.")
+   @JsonPropertyDescription("Enable/disable this feature. Default is false")
    private boolean enabled = false;
+
+   @JsonPropertyDescription("The label key to consider for repository filtering")
+   private String labelKey;
+
+   @JsonPropertyDescription("The label of label used for repository filtering")
+   private String labelLabel;
+
+   @JsonPropertyDescription("The list of labels (separated by ,) to display on services list")
+   private String labelList;
 
    public boolean isEnabled() {
       return enabled;
@@ -44,5 +55,29 @@ public class RepositoryFilterSpec {
 
    public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+   }
+
+   public String getLabelKey() {
+      return labelKey;
+   }
+
+   public void setLabelKey(String labelKey) {
+      this.labelKey = labelKey;
+   }
+
+   public String getLabelLabel() {
+      return labelLabel;
+   }
+
+   public void setLabelLabel(String labelLabel) {
+      this.labelLabel = labelLabel;
+   }
+
+   public String getLabelList() {
+      return labelList;
+   }
+
+   public void setLabelList(String labelList) {
+      this.labelList = labelList;
    }
 }

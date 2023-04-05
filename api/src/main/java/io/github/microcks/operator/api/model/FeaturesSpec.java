@@ -30,7 +30,7 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "async", "repositoryFilter", "repositoryTenancy", "microcksHub"})
+@JsonPropertyOrder({ "async", "repositoryFilter", "repositoryTenancy", "microcksHub" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
@@ -44,7 +44,7 @@ public class FeaturesSpec {
    private RepositoryFilterSpec repositoryFilter;
 
    @JsonPropertyDescription("Configuration for repository tenancy features")
-   private RepositoryTenancySpec repositoryTenancySpec;
+   private RepositoryTenancySpec repositoryTenancy;
 
    @JsonPropertyDescription("Configuration for Microcks Hub related features")
    private MicrocksHubSpec microcksHub;
@@ -66,12 +66,12 @@ public class FeaturesSpec {
       this.repositoryFilter = repositoryFilter;
    }
 
-   public RepositoryTenancySpec getRepositoryTenancySpec() {
-      return repositoryTenancySpec;
+   public RepositoryTenancySpec getRepositoryTenancy() {
+      return repositoryTenancy;
    }
 
-   public void setRepositoryTenancySpec(RepositoryTenancySpec repositoryTenancySpec) {
-      this.repositoryTenancySpec = repositoryTenancySpec;
+   public void setRepositoryTenancy(RepositoryTenancySpec repositoryTenancy) {
+      this.repositoryTenancy = repositoryTenancy;
    }
 
    public MicrocksHubSpec getMicrocksHub() {

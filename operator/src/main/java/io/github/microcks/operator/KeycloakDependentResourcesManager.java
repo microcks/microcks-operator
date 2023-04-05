@@ -62,7 +62,6 @@ public class KeycloakDependentResourcesManager {
    private KubernetesDependentResource<Service, Microcks> dbServiceDR;
    private KubernetesDependentResource<Deployment, Microcks> deploymentDR;
    private KubernetesDependentResource<Service, Microcks> serviceDR;
-
    private KubernetesDependentResource<ConfigMap, Microcks> configMapDR;
 
    public KeycloakDependentResourcesManager(KubernetesClient client) {

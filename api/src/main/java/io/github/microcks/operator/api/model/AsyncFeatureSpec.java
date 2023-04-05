@@ -21,6 +21,7 @@ package io.github.microcks.operator.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
 /**
@@ -29,14 +30,41 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({ "enabled", "defaultBinding", "defaultFrequency", "defaultAvroEncoding",
+      "kafka", "amqp", "mqtt", "nats", "googlepubsub" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
 )
 public class AsyncFeatureSpec {
 
-   @JsonPropertyDescription("Enable/disable this feature. Default is false.")
+   @JsonPropertyDescription("Enable/disable this feature. Default is false")
    private boolean enabled = false;
+
+   @JsonPropertyDescription("Default protocol binding to use if no specified in AsyncAPI document")
+   private String defaultBinding;
+
+   @JsonPropertyDescription("Default frequency for publishing async mock messages")
+   private int defaultFrequency;
+
+   @JsonPropertyDescription("Default Avro encoding mode for publishing mock messages")
+   private AvroEncoding defaultAvroEncoding;
+
+   @JsonPropertyDescription("Configuration of Kafka broker access and/or install")
+   private KafkaSpec kafka;
+
+   @JsonPropertyDescription("Configuration of AMQP broker access")
+   private GenericBrokerConnectionSpec amqp;
+
+   @JsonPropertyDescription("Configuration of MQTT broker access")
+   private GenericBrokerConnectionSpec mqtt;
+
+   @JsonPropertyDescription("Configuration of NATS broker access")
+   private GenericBrokerConnectionSpec nats;
+
+   @JsonPropertyDescription("Configuration of Google PubSub access")
+   private GooglePubSubConnectionSpec googlepubsub;
+
 
    public boolean isEnabled() {
       return enabled;
@@ -44,5 +72,69 @@ public class AsyncFeatureSpec {
 
    public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+   }
+
+   public String getDefaultBinding() {
+      return defaultBinding;
+   }
+
+   public void setDefaultBinding(String defaultBinding) {
+      this.defaultBinding = defaultBinding;
+   }
+
+   public int getDefaultFrequency() {
+      return defaultFrequency;
+   }
+
+   public void setDefaultFrequency(int defaultFrequency) {
+      this.defaultFrequency = defaultFrequency;
+   }
+
+   public AvroEncoding getDefaultAvroEncoding() {
+      return defaultAvroEncoding;
+   }
+
+   public void setDefaultAvroEncoding(AvroEncoding defaultAvroEncoding) {
+      this.defaultAvroEncoding = defaultAvroEncoding;
+   }
+
+   public KafkaSpec getKafka() {
+      return kafka;
+   }
+
+   public void setKafka(KafkaSpec kafka) {
+      this.kafka = kafka;
+   }
+
+   public GenericBrokerConnectionSpec getAmqp() {
+      return amqp;
+   }
+
+   public void setAmqp(GenericBrokerConnectionSpec amqp) {
+      this.amqp = amqp;
+   }
+
+   public GenericBrokerConnectionSpec getMqtt() {
+      return mqtt;
+   }
+
+   public void setMqtt(GenericBrokerConnectionSpec mqtt) {
+      this.mqtt = mqtt;
+   }
+
+   public GenericBrokerConnectionSpec getNats() {
+      return nats;
+   }
+
+   public void setNats(GenericBrokerConnectionSpec nats) {
+      this.nats = nats;
+   }
+
+   public GooglePubSubConnectionSpec getGooglepubsub() {
+      return googlepubsub;
+   }
+
+   public void setGooglepubsub(GooglePubSubConnectionSpec googlepubsub) {
+      this.googlepubsub = googlepubsub;
    }
 }

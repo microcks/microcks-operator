@@ -10,6 +10,8 @@ spec:
     generateCert: true
 
     mockInvocationStats: true
+    logLevel: INFO
+
     resources:
       requests:
         cpu: 200m
@@ -53,6 +55,29 @@ spec:
   features:
     async:
       enabled: false
+      kafka:
+        install: true
+        authentication:
+          # If not 'NONE', we support 'SSL' for mutual TLS and 'SASL_SSL' for SASL over TLS.
+          type: NONE
+          # For TLS transport, you'll always need a truststore to hold your cluster certificate.
+          # You have to setup a truststore type and a secret reference for retrieving content and password.
+          truststoreType: PKCS12
+          #truststore_secret_ref:
+            #secret: kafka-cluster-ca-cert
+            #store_key: ca.p12
+            #password_key: ca.password
+          # For mutual TLS authentication, you'll also need a keystore to hold your user private key.
+          # You have to setup a keystore type and a secret reference for retrieving content and password.
+          keystoreType: PKCS12
+          keystoreSecretRef:
+            secret: mtls-user
+            store_key: user.p12
+            password_key: user.password
+          # For SASL authentication, you'll have to specify an additional authentication mechanism
+          # as well as a JAAS configuration line with login module, username and password.
+          #sasl_mechanism: SCRAM-SHA-512
+          #sasl_jaas_config: org.apache.kafka.common.security.scram.ScramLoginModule required username="scram-user" password="tDtDCT3pYKE5";
 
     repositoryFilter:
       enabled: false
