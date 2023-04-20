@@ -46,6 +46,10 @@ public class KeycloakSpec {
    @JsonPropertyDescription("Keycloak root URL to use for access and Ingress if created")
    private String url;
 
+   @JsonProperty("privateUrl")
+   @JsonPropertyDescription("A private URL - a full URL here - used by the Microcks component to internally join Keycloak. This is also known as `backendUrl` in Keycloak. When specified, the `keycloak.url` is used as `frontendUrl` in Keycloak terms.")
+   private String privateUrl;
+
    @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true.")
    private boolean persistent = true;
 
@@ -86,6 +90,14 @@ public class KeycloakSpec {
 
    public void setUrl(String url) {
       this.url = url;
+   }
+
+   public String getPrivateUrl() {
+      return privateUrl;
+   }
+
+   public void setPrivateUrl(String privateUrl) {
+      this.privateUrl = privateUrl;
    }
 
    public boolean isPersistent() {

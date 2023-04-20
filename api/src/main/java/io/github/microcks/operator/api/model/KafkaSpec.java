@@ -51,6 +51,9 @@ public class KafkaSpec {
    @JsonPropertyDescription("Size of persistent storage volume if persistent")
    private String volumeSize;
 
+   @JsonPropertyDescription("Specification of Schema registry connection")
+   private SchemaRegistrySpec schemaRegistry;
+
    @JsonPropertyDescription("Specification of authentication method when using external Kafka")
    private KafkaAuthenticationSpec authentication;
 
@@ -90,6 +93,14 @@ public class KafkaSpec {
 
    public void setVolumeSize(String volumeSize) {
       this.volumeSize = volumeSize;
+   }
+
+   public SchemaRegistrySpec getSchemaRegistry() {
+      return schemaRegistry;
+   }
+
+   public void setSchemaRegistry(SchemaRegistrySpec schemaRegistry) {
+      this.schemaRegistry = schemaRegistry;
    }
 
    public KafkaAuthenticationSpec getAuthentication() {

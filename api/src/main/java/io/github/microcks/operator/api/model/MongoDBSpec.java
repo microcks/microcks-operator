@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.sundr.builder.annotations.Buildable;
 
 /**
@@ -39,15 +40,30 @@ public class MongoDBSpec {
    @JsonPropertyDescription("Install MongoDB or reuse an existing instance? Default to true.")
    private boolean install = true;
 
-   @JsonProperty("url")
-   @JsonPropertyDescription("MongoDB root URL to use for access")
-   private String url;
+   @JsonProperty("uri")
+   @JsonPropertyDescription("MongoDB root URI to use for access")
+   private String uri;
 
-   @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true.")
+   @JsonPropertyDescription("Parameters added to MongoDB URI connection string. Only if install if false.")
+   private String uriParameters;
+
+   @JsonPropertyDescription("MongoDB database name in case you're reusing existing one. Only if install if false.")
+   private String database;
+
+   @JsonPropertyDescription("Reference of a Secret containing username and password keys for connecting to existing MongoDB instance")
+   private SecretReferenceSpec secretRef;
+
+   @JsonPropertyDescription("Kubernetes resource requirements for MongoDB")
+   private ResourceRequirements resources;
+
+   @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true")
    private boolean persistent = true;
 
    @JsonPropertyDescription("Size of persistent storage volume if persistent")
    private String volumeSize;
+
+   @JsonPropertyDescription("Name of storage class to use if not relying on default")
+   private String storageClassName;
 
    public boolean isInstall() {
       return install;
@@ -57,12 +73,44 @@ public class MongoDBSpec {
       this.install = install;
    }
 
-   public String getUrl() {
-      return url;
+   public String getUri() {
+      return uri;
    }
 
-   public void setUrl(String url) {
-      this.url = url;
+   public void setUri(String uri) {
+      this.uri = uri;
+   }
+
+   public String getUriParameters() {
+      return uriParameters;
+   }
+
+   public void setUriParameters(String uriParameters) {
+      this.uriParameters = uriParameters;
+   }
+
+   public String getDatabase() {
+      return database;
+   }
+
+   public void setDatabase(String database) {
+      this.database = database;
+   }
+
+   public SecretReferenceSpec getSecretRef() {
+      return secretRef;
+   }
+
+   public void setSecretRef(SecretReferenceSpec secretRef) {
+      this.secretRef = secretRef;
+   }
+
+   public ResourceRequirements getResources() {
+      return resources;
+   }
+
+   public void setResources(ResourceRequirements resources) {
+      this.resources = resources;
    }
 
    public boolean isPersistent() {
@@ -79,5 +127,13 @@ public class MongoDBSpec {
 
    public void setVolumeSize(String volumeSize) {
       this.volumeSize = volumeSize;
+   }
+
+   public String getStorageClassName() {
+      return storageClassName;
+   }
+
+   public void setStorageClassName(String storageClassName) {
+      this.storageClassName = storageClassName;
    }
 }
