@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
+package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
-import io.github.microcks.operator.api.Microcks;
-import io.github.microcks.operator.api.MicrocksSpec;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -33,19 +33,20 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDep
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes Database Deployment dependent resource.
+ * A MongoDB Kubernetes Deployment dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakDatabaseDeploymentDependentResource extends CRUDKubernetesDependentResource<Deployment, Microcks>
+public class MongoDBDeploymentDependentResource extends CRUDKubernetesDependentResource<Deployment, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
+
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String RESOURCE_SUFFIX = "-keycloak-postgresql";
+   private static final String RESOURCE_SUFFIX = "-mongodb";
 
-   public KeycloakDatabaseDeploymentDependentResource() {
+   public MongoDBDeploymentDependentResource() {
       super(Deployment.class);
    }
 
@@ -60,13 +61,13 @@ public class KeycloakDatabaseDeploymentDependentResource extends CRUDKubernetesD
 
    @Override
    protected Deployment desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak DB Deployment for '%s'", microcks.getMetadata().getName());
+      logger.infof("Building desired MongoDB Deployment for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
       final MicrocksSpec spec = microcks.getSpec();
 
-      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-postgresql-deployment.yml");
+      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/mongodb-deployment.yml");
       DeploymentBuilder builder = new DeploymentBuilder(deployment)
             .editMetadata()
                .withName(getDeploymentName(microcks))
@@ -83,24 +84,38 @@ public class KeycloakDatabaseDeploymentDependentResource extends CRUDKubernetesD
                   .editMetadata().addToLabels("app", microcksName).endMetadata()
                   .editSpec()
                      .editFirstContainer()
-                        .withImage("centos/postgresql-10-centos7")
+                        .withImage("centos/mongodb-34-centos7:latest")
+                        .withResources(spec.getMongoDB().getResources())
                         .addNewEnv()
-                           .withName("POSTGRESQL_USER")
+                           .withName("MONGODB_USER")
                            .withNewValueFrom()
                               .withNewSecretKeyRef()
-                                 .withName(KeycloakSecretDependentResource.getSecretName(microcks))
-                                 .withKey(KeycloakSecretDependentResource.DATABASE_USER_KEY)
+                                 .withName(MongoDBSecretDependentResource.getSecretName(microcks))
+                                 .withKey(MongoDBSecretDependentResource.MONGODB_USER_KEY)
                               .endSecretKeyRef()
                            .endValueFrom()
                         .endEnv()
                         .addNewEnv()
-                           .withName("POSTGRESQL_PASSWORD")
+                           .withName("MONGODB_PASSWORD")
                            .withNewValueFrom()
                               .withNewSecretKeyRef()
-                                 .withName(KeycloakSecretDependentResource.getSecretName(microcks))
-                                 .withKey(KeycloakSecretDependentResource.DATABASE_USER_PASSWORD_KEY)
+                                 .withName(MongoDBSecretDependentResource.getSecretName(microcks))
+                                 .withKey(MongoDBSecretDependentResource.MONGODB_PASSWORD_KEY)
                               .endSecretKeyRef()
                            .endValueFrom()
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("MONGODB_ADMIN_PASSWORD")
+                           .withNewValueFrom()
+                              .withNewSecretKeyRef()
+                                 .withName(MongoDBSecretDependentResource.getSecretName(microcks))
+                                 .withKey(MongoDBSecretDependentResource.MONGODB_ADMIN_PASSWORD_KEY)
+                              .endSecretKeyRef()
+                           .endValueFrom()
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("MONGODB_DATABASE")
+                           .withValue(microcksName)
                         .endEnv()
                      .endContainer()
                   .endSpec()
@@ -113,7 +128,7 @@ public class KeycloakDatabaseDeploymentDependentResource extends CRUDKubernetesD
                   .editSpec()
                      .editFirstVolume()
                         .editOrNewPersistentVolumeClaim()
-                           .withClaimName(KeycloakDatabasePVCDependentResource.getPVCName(microcks))
+                           .withClaimName(MongoDBPVCDependentResource.getPVCName(microcks))
                         .endPersistentVolumeClaim()
                      .endVolume()
                   .endSpec()

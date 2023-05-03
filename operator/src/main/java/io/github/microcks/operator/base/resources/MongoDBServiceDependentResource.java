@@ -16,73 +16,73 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
+package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
-import io.github.microcks.operator.api.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
+import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
-import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes Persistent Volume Claim dependent resource.
+ * A MongoDB Kubernetes Service dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakDatabasePVCDependentResource extends CRUDKubernetesDependentResource<PersistentVolumeClaim, Microcks>
+public class MongoDBServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
+
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   public KeycloakDatabasePVCDependentResource() {
-      super(PersistentVolumeClaim.class);
-   }
-
-   public static final String getPVCName(Microcks microcks) {
-      return KeycloakDatabaseDeploymentDependentResource.getDeploymentName(microcks) ;
+   public MongoDBServiceDependentResource() {
+      super(Service.class);
    }
 
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return getPVCName(primary);
+      return MongoDBDeploymentDependentResource.getDeploymentName(primary);
    }
 
    @Override
-   protected PersistentVolumeClaim desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak DB PersistentVolumeClaim for '%s'", microcks.getMetadata().getName());
+   protected Service desired(Microcks microcks, Context<Microcks> context) {
+      logger.infof("Building desired MongoDB Service for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
+      final MicrocksSpec spec = microcks.getSpec();
 
-      PersistentVolumeClaimBuilder builder = new PersistentVolumeClaimBuilder()
+      ServiceBuilder builder = new ServiceBuilder()
             .withNewMetadata()
-               .withName(getPVCName(microcks))
+               .withName(getSecondaryResourceName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
-               .addToLabels("container", "keycloak-postgresql")
+               .addToLabels("container", "mongodb")
                .addToLabels("group", "microcks")
             .endMetadata()
             .withNewSpec()
-               .withAccessModes("ReadWriteOnce")
-               .withNewResources()
-                  .addToRequests("storage", new Quantity(microcks.getSpec().getKeycloak().getVolumeSize()))
-               .endResources()
+               .addToSelector("app", microcksName)
+               .addToSelector("container", "mongodb")
+               .addToSelector("group", "microcks")
+               .addNewPort()
+                  .withName("mongodb")
+                  .withPort(27017)
+                  .withProtocol("TCP")
+                  .withTargetPort(new IntOrString(27017))
+               .endPort()
+               .withSessionAffinity("None")
+               .withType("ClusterIP")
             .endSpec();
 
-      // Add optional storage class name if any.
-      if (microcks.getSpec().getKeycloak().getStorageClassName() != null) {
-         builder.editSpec()
-                  .withStorageClassName(microcks.getSpec().getKeycloak().getStorageClassName())
-               .endSpec();
-      }
       return builder.build();
    }
 }

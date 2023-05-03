@@ -1,0 +1,64 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: "{{name}}-postman-runtime"
+  namespace: '{{ meta.namespace }}'
+  labels:
+    app: "{{name}}"
+    container: postman-runtime
+    group: microcks
+    app.kubernetes.io/component: postman-runtime
+    app.kubernetes.io/managed-by: microcks-operator
+    app.openshift.io/runtime: nodejs
+spec:
+  selector:
+    matchLabels:
+      app: "{{name}}"
+      deployment: "postman-runtime"
+      container: postman-runtime
+      group: microcks
+  template:
+    metadata:
+      labels:
+        app: "{{name}}"
+        deployment: "postman-runtime"
+        container: postman-runtime
+        group: microcks
+    spec:
+      containers:
+        - name: postman-runtime
+          image: "{{registry|default('quay.io')}}/microcks/microcks-postman-runtime:latest"
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: info
+          resources:
+            limits:
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: "/health"
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 4
+            timeoutSeconds: 3
+            periodSeconds: 20
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: "/health"
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+            periodSeconds: 20
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst

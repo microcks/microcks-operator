@@ -7,7 +7,8 @@ spec:
 
   microcks:
     replicas: 1
-    generateCert: true
+    ingress:
+      generateCert: true
 
     mockInvocationStats: true
     logLevel: INFO
@@ -19,10 +20,11 @@ spec:
     env:
       - name: SERVICES_UPDATE_INTERVAL
         value: 0 0 0/2 * * *
+
     openshift:
       route:
         enabled: true
-        type: edge
+        tlsTermination: edge
 
   postman:
     replicas: 1
@@ -30,14 +32,19 @@ spec:
   keycloak:
     install: true
     realm: microcks
-    generateCert: true
+    ingress:
+      generateCert: true
+
+    volumeSize: 1Gi
+
     serviceAccount: microcks-serviceaccount
     serviceAccountCredentials: ab54d329-e435-41ae-a900-ec6b3fe15c54
+
     resources:
       requests:
         cpu: 400m
         memory: 400Mi
-    volumeSize: 1Gi
+
     openshift:
       route:
         enabled: true
@@ -47,6 +54,7 @@ spec:
     install: true
     persistent: true
     volumeSize: 2Gi
+
     resources:
       requests:
         cpu: 250m
@@ -57,6 +65,10 @@ spec:
       enabled: false
       kafka:
         install: true
+        schemaRegistry:
+          confluent: true
+          username: ""
+          credentialsSource: USER_INFO
         authentication:
           # If not 'NONE', we support 'SSL' for mutual TLS and 'SASL_SSL' for SASL over TLS.
           type: NONE

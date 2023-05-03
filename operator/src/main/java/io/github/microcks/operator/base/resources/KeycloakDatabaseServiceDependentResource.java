@@ -16,78 +16,72 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
+package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
-import io.github.microcks.operator.api.Microcks;
-import io.github.microcks.operator.api.MicrocksSpec;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
+import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import io.quarkus.qute.CheckedTemplate;
-import io.quarkus.qute.TemplateInstance;
 import org.jboss.logging.Logger;
 
 /**
- * A Microcks Kubernetes ConfigMap dependent resource.
+ * A Keycloak Database Kubernetes Service dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentResource<ConfigMap, Microcks>
+public class KeycloakDatabaseServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String RESOURCE_SUFFIX = "-config";
-
-   public MicrocksConfigMapDependentResource() {
-      super(ConfigMap.class);
+   public KeycloakDatabaseServiceDependentResource() {
+      super(Service.class);
    }
 
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return primary.getMetadata().getName() + RESOURCE_SUFFIX;
+      return KeycloakDatabaseDeploymentDependentResource.getDeploymentName(primary);
    }
 
    @Override
-   protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Microcks ConfigMap for '%s'", microcks.getMetadata().getName());
+   protected Service desired(Microcks microcks, Context<Microcks> context) {
+      logger.infof("Building desired Keycloak DB Service for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
+      final MicrocksSpec spec = microcks.getSpec();
 
-      // Compute configuration files with Qute templates.
-      String applicationProperties = Templates.application(microcksName, microcks.getSpec()).render();
-      String featuresProperties = Templates.features(microcksName, microcks.getSpec()).render();
-      String logbackXml = Templates.logback(microcks.getSpec()).render();
-
-      ConfigMapBuilder builder = new ConfigMapBuilder()
+      ServiceBuilder builder = new ServiceBuilder()
             .withNewMetadata()
-               .withName(getSecondaryResourceName(microcks))
+               .withName(KeycloakDatabaseDeploymentDependentResource.getDeploymentName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
-               .addToLabels("container", "microcks")
+               .addToLabels("container", "keycloak-postgresql")
                .addToLabels("group", "microcks")
             .endMetadata()
-            .addToData("application.properties", applicationProperties)
-            .addToData("features.properties", featuresProperties)
-            .addToData("logback.xml", logbackXml);
+            .withNewSpec()
+               .addToSelector("app", microcksName)
+               .addToSelector("container", "keycloak-postgresql")
+               .addToSelector("group", "microcks")
+               .addNewPort()
+                  .withName("keycloak-postgresql")
+                  .withPort(5432)
+                  .withProtocol("TCP")
+                  .withTargetPort(new IntOrString(5432))
+               .endPort()
+            .withSessionAffinity("None")
+            .withType("ClusterIP")
+            .endSpec();
 
       return builder.build();
-   }
-
-   @CheckedTemplate
-   public static class Templates {
-      public static native TemplateInstance application(String name, MicrocksSpec spec);
-
-      public static native TemplateInstance features(String name, MicrocksSpec spec);
-
-      public static native TemplateInstance logback(MicrocksSpec spec);
    }
 }

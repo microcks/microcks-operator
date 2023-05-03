@@ -15,14 +15,14 @@ spec:
   selector:
     matchLabels:
       app: "{{name}}"
-      deploymentconfig: keycloak-postgresql
+      deployment: keycloak-postgresql
       container: keycloak-postgresql
       group: microcks
   template:
     metadata:
       labels:
         app: "{{name}}"
-        deploymentconfig: keycloak-postgresql
+        deployment: keycloak-postgresql
         container: keycloak-postgresql
         group: microcks
     spec:

@@ -16,18 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator;
+package io.github.microcks.operator.base;
 
-import io.github.microcks.operator.api.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.base.resources.KeycloackReadyCondition;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
-import io.github.microcks.operator.resources.KeycloakConfigMapDependentResource;
-import io.github.microcks.operator.resources.KeycloakDatabaseDeploymentDependentResource;
-import io.github.microcks.operator.resources.KeycloakDatabasePVCDependentResource;
-import io.github.microcks.operator.resources.KeycloakDatabaseServiceDependentResource;
-import io.github.microcks.operator.resources.KeycloakDeploymentDependentResource;
-import io.github.microcks.operator.resources.KeycloakInstallPrecondition;
-import io.github.microcks.operator.resources.KeycloakSecretDependentResource;
-import io.github.microcks.operator.resources.KeycloakServiceDependentResource;
+import io.github.microcks.operator.base.resources.KeycloakConfigMapDependentResource;
+import io.github.microcks.operator.base.resources.KeycloakDatabaseDeploymentDependentResource;
+import io.github.microcks.operator.base.resources.KeycloakDatabasePVCDependentResource;
+import io.github.microcks.operator.base.resources.KeycloakDatabaseServiceDependentResource;
+import io.github.microcks.operator.base.resources.KeycloakDeploymentDependentResource;
+import io.github.microcks.operator.base.resources.KeycloakInstallPrecondition;
+import io.github.microcks.operator.base.resources.KeycloakSecretDependentResource;
+import io.github.microcks.operator.base.resources.KeycloakServiceDependentResource;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
@@ -99,6 +100,8 @@ public class KeycloakDependentResourcesManager {
          }
          builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
       });
+
+      builder.addDependentResource(deploymentDR).withReadyPostcondition(new KeycloackReadyCondition());
 
       return builder.build();
    }

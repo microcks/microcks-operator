@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
+package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
-import io.github.microcks.operator.api.Microcks;
-import io.github.microcks.operator.api.MicrocksSpec;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.IntOrString;
@@ -33,28 +33,28 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDep
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes Service dependent resource.
+ * A Postman runtime Kubernetes Service dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
+public class PostmanRuntimeServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   public KeycloakServiceDependentResource() {
+   public PostmanRuntimeServiceDependentResource() {
       super(Service.class);
    }
 
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return KeycloakDeploymentDependentResource.getDeploymentName(primary);
+      return PostmanRuntimeDeploymentDependentResource.getDeploymentName(primary);
    }
 
    @Override
    protected Service desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak Service for '%s'", microcks.getMetadata().getName());
+      logger.infof("Building desired Postman runtime Service for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
@@ -65,18 +65,18 @@ public class KeycloakServiceDependentResource extends CRUDKubernetesDependentRes
                .withName(getSecondaryResourceName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
-               .addToLabels("container", "keycloak")
+               .addToLabels("container", "postman-runtime")
                .addToLabels("group", "microcks")
             .endMetadata()
             .withNewSpec()
                .addToSelector("app", microcksName)
-               .addToSelector("container", "keycloak")
+               .addToSelector("container", "postman-runtime")
                .addToSelector("group", "microcks")
                .addNewPort()
-                  .withName("keycloak")
+                  .withName("postman-runtime")
                   .withPort(8080)
                   .withProtocol("TCP")
-                  .withTargetPort(new IntOrString(8080))
+                  .withTargetPort(new IntOrString(3000))
                .endPort()
                .withSessionAffinity("None")
                .withType("ClusterIP")

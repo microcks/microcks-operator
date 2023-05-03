@@ -16,22 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
+package io.github.microcks.operator.base.resources;
 
-import io.github.microcks.operator.api.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 
 /**
- * A reconciliation pre-condition that is only met if Keycloak module should be installed.
+ * A reconciliation pre-condition that is only met if MongoDB module resources should be installed.
  * @author laurent
  */
-public class KeycloakInstallPrecondition implements Condition<HasMetadata, Microcks> {
+public class MongoDBInstallPrecondition implements Condition<HasMetadata, Microcks> {
 
    @Override
    public boolean isMet(Microcks primary, HasMetadata secondary, Context<Microcks> context) {
-      return primary.getSpec().getKeycloak().isInstall();
+      return primary.getSpec().getMongoDB().isInstall();
    }
 }

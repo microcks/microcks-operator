@@ -16,72 +16,70 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
+package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
-import io.github.microcks.operator.api.Microcks;
-import io.github.microcks.operator.api.MicrocksSpec;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
-import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
+import io.quarkus.qute.CheckedTemplate;
+import io.quarkus.qute.TemplateInstance;
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Database Kubernetes Service dependent resource.
+ * A Keycloak Kubernetes ConfigMap dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakDatabaseServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
+public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentResource<ConfigMap, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   public KeycloakDatabaseServiceDependentResource() {
-      super(Service.class);
+   private static final String RESOURCE_SUFFIX = "-keycloak-config";
+
+   public KeycloakConfigMapDependentResource() {
+      super(ConfigMap.class);
    }
 
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return KeycloakDatabaseDeploymentDependentResource.getDeploymentName(primary);
+      return primary.getMetadata().getName() + RESOURCE_SUFFIX;
    }
 
    @Override
-   protected Service desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak DB Service for '%s'", microcks.getMetadata().getName());
+   protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
+      logger.infof("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
+
+      // Compute realm-config with Qute template.
+      String realmConfig = Templates.microcksRealm(microcks.getSpec()).render();
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
-      final MicrocksSpec spec = microcks.getSpec();
 
-      ServiceBuilder builder = new ServiceBuilder()
+      ConfigMapBuilder builder = new ConfigMapBuilder()
             .withNewMetadata()
-               .withName(KeycloakDatabaseDeploymentDependentResource.getDeploymentName(microcks))
+               .withName(getSecondaryResourceName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
-               .addToLabels("container", "keycloak-postgresql")
+               .addToLabels("container", "keycloak")
                .addToLabels("group", "microcks")
             .endMetadata()
-            .withNewSpec()
-               .addToSelector("app", microcksName)
-               .addToSelector("container", "keycloak-postgresql")
-               .addToSelector("group", "microcks")
-               .addNewPort()
-                  .withName("keycloak-postgresql")
-                  .withPort(5432)
-                  .withProtocol("TCP")
-                  .withTargetPort(new IntOrString(5432))
-               .endPort()
-            .withSessionAffinity("None")
-            .withType("ClusterIP")
-            .endSpec();
+            .addToData("microcks-realm.json", realmConfig);
 
       return builder.build();
+   }
+
+   @CheckedTemplate
+   public static class Templates {
+      public static native TemplateInstance microcksRealm(MicrocksSpec spec);
    }
 }

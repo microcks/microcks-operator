@@ -16,70 +16,73 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.resources;
+package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
-import io.github.microcks.operator.api.Microcks;
-import io.github.microcks.operator.api.MicrocksSpec;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
+import io.fabric8.kubernetes.api.model.Quantity;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import io.quarkus.qute.CheckedTemplate;
-import io.quarkus.qute.TemplateInstance;
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes ConfigMap dependent resource.
+ * A MongoDB Kubernetes Persistent Volume Claim dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentResource<ConfigMap, Microcks>
+public class MongoDBPVCDependentResource extends CRUDKubernetesDependentResource<PersistentVolumeClaim, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String RESOURCE_SUFFIX = "-keycloak-config";
+   public MongoDBPVCDependentResource() {
+      super(PersistentVolumeClaim.class);
+   }
 
-   public KeycloakConfigMapDependentResource() {
-      super(ConfigMap.class);
+   public static final String getPVCName(Microcks microcks) {
+      return MongoDBDeploymentDependentResource.getDeploymentName(microcks) ;
    }
 
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return primary.getMetadata().getName() + RESOURCE_SUFFIX;
+      return getPVCName(primary);
    }
 
    @Override
-   protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
-
-      // Compute realm-config with Qute template.
-      String realmConfig = Templates.microcksRealm(microcks.getSpec()).render();
+   protected PersistentVolumeClaim desired(Microcks microcks, Context<Microcks> context) {
+      logger.infof("Building desired MongoDB PersistentVolumeClaim for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
 
-      ConfigMapBuilder builder = new ConfigMapBuilder()
+      PersistentVolumeClaimBuilder builder = new PersistentVolumeClaimBuilder()
             .withNewMetadata()
-               .withName(getSecondaryResourceName(microcks))
+               .withName(getPVCName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
-               .addToLabels("container", "keycloak")
+               .addToLabels("container", "mongodb")
                .addToLabels("group", "microcks")
             .endMetadata()
-            .addToData("microcks-realm.json", realmConfig);
+            .withNewSpec()
+               .withAccessModes("ReadWriteOnce")
+               .withNewResources()
+                  .addToRequests("storage", new Quantity(microcks.getSpec().getKeycloak().getVolumeSize()))
+               .endResources()
+            .endSpec();
 
+      // Add optional storage class name if any.
+      if (microcks.getSpec().getMongoDB().getStorageClassName() != null) {
+         builder.editSpec()
+                  .withStorageClassName(microcks.getSpec().getMongoDB().getStorageClassName())
+               .endSpec();
+      }
       return builder.build();
-   }
-
-   @CheckedTemplate
-   public static class Templates {
-      public static native TemplateInstance microcksRealm(MicrocksSpec spec);
    }
 }

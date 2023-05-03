@@ -1,0 +1,61 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: "{{name}}"
+    container: mongodb
+    group: microcks
+    app.kubernetes.io/component: mongodb
+    app.kubernetes.io/managed-by: microcks-operator
+    app.openshift.io/runtime: mongodb
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{name}}"
+      deployment: mongodb
+      container: mongodb
+      group: microcks
+  template:
+    metadata:
+      labels:
+        app: "{{name}}"
+        deployment: mongodb
+        container: mongodb
+        group: microcks
+    spec:
+      containers:
+        - name: mongodb
+          image: "{{mongodb.image}}"
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          readinessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 3
+            exec:
+              command:
+                - "/bin/sh"
+                - "-i"
+                - "-c"
+                - mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
+                  --eval="quit()"
+          livenessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 30
+            tcpSocket:
+              port: 27017
+          volumeMounts:
+            - name: "mongodb-data"
+              mountPath: "/var/lib/mongodb/data"
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities: {}
+            privileged: false
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
+      volumes:
+        - name: "mongodb-data"

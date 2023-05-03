@@ -15,14 +15,14 @@ spec:
   selector:
     matchLabels:
       app: "{{name}}"
-      deploymentconfig: keycloak
+      deployment: keycloak
       container: keycloak
       group: microcks
   template:
     metadata:
       labels:
         app: "{{name}}"
-        deploymentconfig: keycloak
+        deployment: keycloak
         container: keycloak
         group: microcks
     spec:
