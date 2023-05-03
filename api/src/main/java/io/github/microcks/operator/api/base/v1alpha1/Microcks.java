@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api;
+package io.github.microcks.operator.api.base.v1alpha1;
 
 import io.fabric8.kubernetes.api.model.Namespaced;
 import io.fabric8.kubernetes.api.model.ObjectMeta;

@@ -16,12 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api.model;
+package io.github.microcks.operator.api.base.v1alpha1;
+
+import io.github.microcks.operator.api.model.IngressSpec;
+import io.github.microcks.operator.api.model.OpenShiftSpec;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
 /**
@@ -30,6 +34,9 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({ "install", "realm", "url", "privateUrl", "ingress", "persistent",
+      "volumeSize", "storageClassName", "serviceAccount", "serviceAccountCredentials", "openshift"
+})
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
@@ -50,6 +57,9 @@ public class KeycloakSpec {
    @JsonPropertyDescription("A private URL - a full URL here - used by the Microcks component to internally join Keycloak. This is also known as `backendUrl` in Keycloak. When specified, the `keycloak.url` is used as `frontendUrl` in Keycloak terms.")
    private String privateUrl;
 
+   @JsonPropertyDescription("Configuration to apply to Ingress if created")
+   private IngressSpec ingress;
+
    @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true.")
    private boolean persistent = true;
 
@@ -64,6 +74,9 @@ public class KeycloakSpec {
 
    @JsonPropertyDescription("Service Account credentials for external services")
    private String serviceAccountCredentials;
+
+   @JsonPropertyDescription("Configuration of OpenShift specific settings")
+   private OpenShiftSpec openshift;
 
    public KeycloakSpec() {
    }
@@ -98,6 +111,14 @@ public class KeycloakSpec {
 
    public void setPrivateUrl(String privateUrl) {
       this.privateUrl = privateUrl;
+   }
+
+   public IngressSpec getIngress() {
+      return ingress;
+   }
+
+   public void setIngress(IngressSpec ingress) {
+      this.ingress = ingress;
    }
 
    public boolean isPersistent() {
@@ -138,5 +159,13 @@ public class KeycloakSpec {
 
    public void setServiceAccountCredentials(String serviceAccountCredentials) {
       this.serviceAccountCredentials = serviceAccountCredentials;
+   }
+
+   public OpenShiftSpec getOpenshift() {
+      return openshift;
+   }
+
+   public void setOpenshift(OpenShiftSpec openshift) {
+      this.openshift = openshift;
    }
 }
