@@ -16,33 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api.model;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import io.sundr.builder.annotations.Buildable;
+package io.github.microcks.operator.api.base.v1alpha1;
 
 /**
- * Representation of the Postman runtime part of an operator-managed Microcks installation.
+ * The different supported Avro encoding modes. <br/>
+ * <ul>
+ *    <li>{@code RAW} should be used for encoding/deconding without a schema registry</li>
+ *    <li>{@code REGISTRY} should be used for encoding/deconding with a schema registry that may be configured</li>
+ * </ul>
  * @author laurent
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@Buildable(
-      editableEnabled = false,
-      builderPackage = "io.fabric8.kubernetes.api.builder"
-)
-public class PostmanRuntimeSpec {
-
-   @JsonPropertyDescription("Number of desired pods for Postman runtime")
-   private int replicas;
-
-   public int getReplicas() {
-      return replicas;
-   }
-
-   public void setReplicas(int replicas) {
-      this.replicas = replicas;
-   }
+public enum AvroEncoding {
+   RAW,
+   REGISTRY
 }

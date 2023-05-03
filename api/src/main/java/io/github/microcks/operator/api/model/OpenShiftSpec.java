@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.sundr.builder.annotations.Buildable;
 
 /**
- * Representation of the Microcks Hub config of an operator-managed Microcks installation.
+ * Representation of the OpenShift part of an operator-managed Microcks installation.
  * @author laurent
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -33,26 +33,14 @@ import io.sundr.builder.annotations.Buildable;
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
 )
-public class MicrocksHubSpec {
+public class OpenShiftSpec {
+   @JsonPropertyDescription("Allow configuration of settings for OpenShift routes")
+   private OpenShiftRouteSpec route;
 
-   @JsonPropertyDescription("Enable/disable this feature. Default is false.")
-   private boolean enabled = false;
-
-   private String allowedRoles;
-
-   public boolean isEnabled() {
-      return enabled;
+   public OpenShiftRouteSpec getRoute() {
+      return route;
    }
-
-   public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
-   }
-
-   public String getAllowedRoles() {
-      return allowedRoles;
-   }
-
-   public void setAllowedRoles(String allowedRoles) {
-      this.allowedRoles = allowedRoles;
+   public void setRoute(OpenShiftRouteSpec route) {
+      this.route = route;
    }
 }

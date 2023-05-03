@@ -16,11 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api.model;
+package io.github.microcks.operator.api.base.v1alpha1;
+
+import io.github.microcks.operator.api.model.IngressSpec;
+import io.github.microcks.operator.api.model.LogLevel;
+import io.github.microcks.operator.api.model.OpenShiftSpec;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.fabric8.kubernetes.api.model.AnyType;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.sundr.builder.annotations.Buildable;
@@ -34,6 +40,8 @@ import java.util.Map;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({ "url", "replicas", "ingress", "resources",
+      "mockInvocationStats", "logLevel", "openshift", "env", "extraProperties" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
@@ -41,25 +49,31 @@ import java.util.Map;
 public class MicrocksServiceSpec {
 
    @JsonPropertyDescription("Number of desired pods for Microcks service")
-   private int replicas;
+   private int replicas = 1;
 
    @JsonPropertyDescription("The URL to use for exposing Microcks main ingress")
    private String url;
 
-   @JsonPropertyDescription("Annotations to apply to Ingress if created")
-   private Map<String, String> ingressAnnotations;
+   @JsonPropertyDescription("Configuration to apply to Ingress if created")
+   private IngressSpec ingress;
 
    @JsonPropertyDescription("Kubernetes resource requirements for Microcks service")
    private ResourceRequirements resources;
 
-   @JsonPropertyDescription("Environment variables for Microcks service")
-   private List<EnvVar> env;
-
    @JsonPropertyDescription("Enable/disable statistics for mocks invocation. Defaults to true")
-   private boolean mockInvocationStats;
+   private Boolean mockInvocationStats;
 
    @JsonPropertyDescription("Allow configuration of logging level. Defaults to INFO")
    private LogLevel logLevel;
+
+   @JsonPropertyDescription("Configuration of OpenShift specific settings")
+   private OpenShiftSpec openshift;
+
+   @JsonPropertyDescription("Environment variables for Microcks service")
+   private List<EnvVar> env;
+
+   @JsonPropertyDescription("Extra properties to integration into application-extra configuration")
+   private Map<String, AnyType> extraProperties;
 
    public int getReplicas() {
       return replicas;
@@ -77,12 +91,12 @@ public class MicrocksServiceSpec {
       this.url = url;
    }
 
-   public Map<String, String> getIngressAnnotations() {
-      return ingressAnnotations;
+   public IngressSpec getIngress() {
+      return ingress;
    }
 
-   public void setIngressAnnotations(Map<String, String> ingressAnnotations) {
-      this.ingressAnnotations = ingressAnnotations;
+   public void setIngress(IngressSpec ingress) {
+      this.ingress = ingress;
    }
 
    public ResourceRequirements getResources() {
@@ -93,19 +107,11 @@ public class MicrocksServiceSpec {
       this.resources = resources;
    }
 
-   public List<EnvVar> getEnv() {
-      return env;
-   }
-
-   public void setEnv(List<EnvVar> env) {
-      this.env = env;
-   }
-
-   public boolean isMockInvocationStats() {
+   public Boolean isMockInvocationStats() {
       return mockInvocationStats;
    }
 
-   public void setMockInvocationStats(boolean mockInvocationStats) {
+   public void setMockInvocationStats(Boolean mockInvocationStats) {
       this.mockInvocationStats = mockInvocationStats;
    }
 
@@ -115,5 +121,29 @@ public class MicrocksServiceSpec {
 
    public void setLogLevel(LogLevel logLevel) {
       this.logLevel = logLevel;
+   }
+
+   public OpenShiftSpec getOpenshift() {
+      return openshift;
+   }
+
+   public void setOpenshift(OpenShiftSpec openshift) {
+      this.openshift = openshift;
+   }
+
+   public List<EnvVar> getEnv() {
+      return env;
+   }
+
+   public void setEnv(List<EnvVar> env) {
+      this.env = env;
+   }
+
+   public Map<String, AnyType> getExtraProperties() {
+      return extraProperties;
+   }
+
+   public void setExtraProperties(Map<String, AnyType> extraProperties) {
+      this.extraProperties = extraProperties;
    }
 }

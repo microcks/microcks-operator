@@ -16,13 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api;
-
-import io.github.microcks.operator.api.model.FeaturesSpec;
-import io.github.microcks.operator.api.model.KeycloakSpec;
-import io.github.microcks.operator.api.model.MicrocksServiceSpec;
-import io.github.microcks.operator.api.model.MongoDBSpec;
-import io.github.microcks.operator.api.model.PostmanRuntimeSpec;
+package io.github.microcks.operator.api.base.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api.model;
+package io.github.microcks.operator.api.base.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,48 +25,59 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
 /**
- * Representation of a generic Broker connection configuration of an operator-managed Microcks installation.
+ * Representation of the Repository filtering config of an operator-managed Microcks installation.
  * @author laurent
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "url", "username", "password" })
+@JsonPropertyOrder({ "enabled", "labelKey", "labelLabel", "labelList" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
 )
-public class GenericBrokerConnectionSpec {
+public class RepositoryFilterSpec {
 
-   @JsonPropertyDescription("The URL to use for connecting to the broker")
-   private String url;
+   @JsonPropertyDescription("Enable/disable this feature. Default is false")
+   private boolean enabled = false;
 
-   @JsonPropertyDescription("The username to use for authenticating to the broker")
-   private String username;
+   @JsonPropertyDescription("The label key to consider for repository filtering")
+   private String labelKey;
 
-   @JsonPropertyDescription("The password to use for authenticating to the broker")
-   private String password;
+   @JsonPropertyDescription("The label of label used for repository filtering")
+   private String labelLabel;
 
-   public String getUrl() {
-      return url;
+   @JsonPropertyDescription("The list of labels (separated by ,) to display on services list")
+   private String labelList;
+
+   public boolean isEnabled() {
+      return enabled;
    }
 
-   public void setUrl(String url) {
-      this.url = url;
+   public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
    }
 
-   public String getUsername() {
-      return username;
+   public String getLabelKey() {
+      return labelKey;
    }
 
-   public void setUsername(String username) {
-      this.username = username;
+   public void setLabelKey(String labelKey) {
+      this.labelKey = labelKey;
    }
 
-   public String getPassword() {
-      return password;
+   public String getLabelLabel() {
+      return labelLabel;
    }
 
-   public void setPassword(String password) {
-      this.password = password;
+   public void setLabelLabel(String labelLabel) {
+      this.labelLabel = labelLabel;
+   }
+
+   public String getLabelList() {
+      return labelList;
+   }
+
+   public void setLabelList(String labelList) {
+      this.labelList = labelList;
    }
 }

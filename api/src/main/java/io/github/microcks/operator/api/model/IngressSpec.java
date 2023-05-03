@@ -21,63 +21,54 @@ package io.github.microcks.operator.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
+import java.util.Map;
+
 /**
- * Representation of the Repository filtering config of an operator-managed Microcks installation.
+ * Representation of a Kubernetes Ingress configuration of an operator-managed Microcks installation.
  * @author laurent
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "enabled", "labelKey", "labelLabel", "labelList" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
 )
-public class RepositoryFilterSpec {
+public class IngressSpec {
 
-   @JsonPropertyDescription("Enable/disable this feature. Default is false")
-   private boolean enabled = false;
+   @JsonPropertyDescription("Whether operator should generate self-signed certificate for this ingress")
+   private boolean generateCert = true;
 
-   @JsonPropertyDescription("The label key to consider for repository filtering")
-   private String labelKey;
+   @JsonPropertyDescription("Existing Secret holding TLS key and certificate name")
+   private String secretRef;
 
-   @JsonPropertyDescription("The label of label used for repository filtering")
-   private String labelLabel;
+   @JsonPropertyDescription("Annotations to apply to Ingress if created")
+   private Map<String, String> annotations;
 
-   @JsonPropertyDescription("The list of labels (separated by ,) to display on services list")
-   private String labelList;
-
-   public boolean isEnabled() {
-      return enabled;
+   public IngressSpec() {
+   }
+   public boolean isGenerateCert() {
+      return generateCert;
    }
 
-   public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
+   public void setGenerateCert(boolean generateCert) {
+      this.generateCert = generateCert;
    }
 
-   public String getLabelKey() {
-      return labelKey;
+   public String getSecretRef() {
+      return secretRef;
    }
 
-   public void setLabelKey(String labelKey) {
-      this.labelKey = labelKey;
+   public void setSecretRef(String secretRef) {
+      this.secretRef = secretRef;
    }
 
-   public String getLabelLabel() {
-      return labelLabel;
+   public Map<String, String> getAnnotations() {
+      return annotations;
    }
 
-   public void setLabelLabel(String labelLabel) {
-      this.labelLabel = labelLabel;
-   }
-
-   public String getLabelList() {
-      return labelList;
-   }
-
-   public void setLabelList(String labelList) {
-      this.labelList = labelList;
+   public void setAnnotations(Map<String, String> annotations) {
+      this.annotations = annotations;
    }
 }

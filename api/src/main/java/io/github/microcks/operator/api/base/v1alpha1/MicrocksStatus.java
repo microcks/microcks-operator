@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api;
+package io.github.microcks.operator.api.base.v1alpha1;
 
 import io.github.microcks.operator.api.model.AdditionalPropertyPreserving;
 import io.github.microcks.operator.api.model.Condition;

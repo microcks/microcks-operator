@@ -16,40 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api.model;
+package io.github.microcks.operator.api.base.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
+/**
+ * Representation of a generic Broker connection configuration of an operator-managed Microcks installation.
+ * @author laurent
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "url", "confluent", "username", "credentialsSource" })
+@JsonPropertyOrder({ "url", "username", "password" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
 )
-/**
- * Representation of the Schema registry config of an operator-managed Microcks installation.
- * @author laurent
- */
-public class SchemaRegistrySpec {
+public class GenericBrokerConnectionSpec {
 
-   @JsonProperty("url")
-   @JsonPropertyDescription("The URL for accessing external Schema Registry")
+   @JsonPropertyDescription("The URL to use for connecting to the broker")
    private String url;
 
-   @JsonPropertyDescription("Whether you should use the Confluent compatibility API layer. Default to true.")
-   private boolean confluentCompatibility = true;
-
-   @JsonPropertyDescription("The username for authenticating the connection to Schema Registry")
+   @JsonPropertyDescription("The username to use for authenticating to the broker")
    private String username;
 
-   @JsonPropertyDescription("The source of credentials for authenticating the connection to Schema Registry. Defaults to USER_INFO.")
-   private String credentialsSource;
+   @JsonPropertyDescription("The password to use for authenticating to the broker")
+   private String password;
 
    public String getUrl() {
       return url;
@@ -57,14 +52,6 @@ public class SchemaRegistrySpec {
 
    public void setUrl(String url) {
       this.url = url;
-   }
-
-   public boolean isConfluentCompatibility() {
-      return confluentCompatibility;
-   }
-
-   public void setConfluentCompatibility(boolean confluentCompatibility) {
-      this.confluentCompatibility = confluentCompatibility;
    }
 
    public String getUsername() {
@@ -75,11 +62,11 @@ public class SchemaRegistrySpec {
       this.username = username;
    }
 
-   public String getCredentialsSource() {
-      return credentialsSource;
+   public String getPassword() {
+      return password;
    }
 
-   public void setCredentialsSource(String credentialsSource) {
-      this.credentialsSource = credentialsSource;
+   public void setPassword(String password) {
+      this.password = password;
    }
 }

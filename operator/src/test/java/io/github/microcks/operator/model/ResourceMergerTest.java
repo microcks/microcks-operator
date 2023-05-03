@@ -18,9 +18,9 @@
  */
 package io.github.microcks.operator.model;
 
-import io.github.microcks.operator.api.Microcks;
-import io.github.microcks.operator.api.MicrocksSpec;
-import io.github.microcks.operator.api.model.KeycloakSpec;
+import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
+import io.github.microcks.operator.api.base.v1alpha1.KeycloakSpec;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;

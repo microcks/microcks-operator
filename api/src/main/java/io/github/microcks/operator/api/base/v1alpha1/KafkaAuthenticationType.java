@@ -16,17 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.github.microcks.operator.api.model;
+package io.github.microcks.operator.api.base.v1alpha1;
 
 /**
- * The different supported Avro encoding modes. <br/>
- * <ul>
- *    <li>{@code RAW} should be used for encoding/deconding without a schema registry</li>
- *    <li>{@code REGISTRY} should be used for encoding/deconding with a schema registry that may be configured</li>
- * </ul>
+ * Different types of Kafka client authentication managed by Microcks operator.
  * @author laurent
  */
-public enum AvroEncoding {
-   RAW,
-   REGISTRY
+public enum KafkaAuthenticationType {
+   NONE,
+   SSL,
+   SASL_SSL
 }
