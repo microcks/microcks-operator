@@ -1,0 +1,8 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  features:
+    async:
+      enabled: true

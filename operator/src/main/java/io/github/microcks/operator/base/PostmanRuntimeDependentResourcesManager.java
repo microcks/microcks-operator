@@ -19,6 +19,7 @@
 package io.github.microcks.operator.base;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.base.resources.PostmanRuntimeReadyCondition;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.github.microcks.operator.base.resources.PostmanRuntimeDeploymentDependentResource;
 import io.github.microcks.operator.base.resources.PostmanRuntimeServiceDependentResource;
@@ -77,6 +78,8 @@ public class PostmanRuntimeDependentResourcesManager {
          }
          builder.addDependentResource(dr);
       });
+
+      builder.addDependentResource(deploymentDR).withReadyPostcondition(new PostmanRuntimeReadyCondition());
 
       return builder.build();
    }

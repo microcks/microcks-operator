@@ -19,6 +19,7 @@
 package io.github.microcks.operator.base;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.base.resources.MongoDBReadyCondition;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.github.microcks.operator.base.resources.MongoDBDeploymentDependentResource;
 import io.github.microcks.operator.base.resources.MongoDBInstallPrecondition;
@@ -89,6 +90,8 @@ public class MongoDBDependentResourcesManager {
          }
          builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
       });
+
+      builder.addDependentResource(dbDeploymentDR).withReadyPostcondition(new MongoDBReadyCondition());
 
       return builder.build();
    }

@@ -1,0 +1,23 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  microcks:
+    url: microcks.192.168.49.2.nip.io
+    ingress:
+      annotations:
+        cert-manager.io/issuer: my-cert-issuer
+        kubernetes.io/tls-acme: "true"
+        kubernetes.io/ingress.class: nginx
+    extraProperties:
+      server:
+        tomcat:
+          remoteip:
+            internal-proxies: 172.16.0.0/12
+    openshift:
+      route:
+        enabled: false
+  keycloak:
+    url: keycloak.192.168.49.2.nip.io
+    privateUrl: microcks-keycloak

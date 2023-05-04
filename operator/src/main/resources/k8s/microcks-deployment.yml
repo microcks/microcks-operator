@@ -1,0 +1,78 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: "{{name}}"
+  labels:
+    app: "{{name}}"
+    container: spring
+    group: microcks
+    app.kubernetes.io/component: webapp
+    app.kubernetes.io/managed-by: microcks-operator
+    app.openshift.io/runtime: java
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{name}}"
+      deployment: microcks
+      container: spring
+      group: microcks
+  template:
+    metadata:
+      labels:
+        app: "{{name}}"
+        deployment: microcks
+        container: spring
+        group: microcks
+    spec:
+      containers:
+        - name: spring
+          image: "quay.io/microcks/microcks:nightly"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: JAVA_OPTIONS
+              value: "-XX:+TieredCompilation -XX:TieredStopAtLevel=2"
+            - name: JAVA_MAJOR_VERSION
+              value: "11"
+          livenessProbe:
+            httpGet:
+              path: "/api/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: "/api/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 20
+            timeoutSeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: "/api/health"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 10
+          volumeMounts:
+            - name: "microcks-config"
+              mountPath: "/deployments/config"
+            - name: "microcks-grpc-certs"
+              mountPath: "/deployments/config/grpc"
+          terminationMessagePath: "/dev/termination-log"
+      volumes:
+        - name: "microcks-config"
+        - name: "microcks-grpc-certs"
