@@ -177,14 +177,14 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       final List<OwnerReference> refs = List.of(getOwnerReference(completeCR));
 
       String microcksUrl = null;
-      if (isOpenShift && spec.getMicrocks().getOpenshift().getRoute().isEnabled()) {
+      if (isOpenShift && completeCR.getSpec().getMicrocks().getOpenshift().getRoute().isEnabled()) {
          // We can create an OpenShift Route here to get the Url.
          microcksUrl = manageRouteAndGetURL(MicrocksIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
          logger.infof("Retrieved Microcks URL from Route: %s", microcksUrl);
-      } else if (spec.getMicrocks().getUrl() != null) {
+      } else if (completeCR.getSpec().getMicrocks() != null && completeCR.getSpec().getMicrocks().getUrl() != null) {
          // We can create an Ingress here to get the Url.
          microcksUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getMicrocks().getIngress(),
-               MicrocksIngressesPreparer.getIngressSecretName(microcks), spec.getMicrocks().getUrl(),
+               MicrocksIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getMicrocks().getUrl(),
                MicrocksIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
          logger.infof("Retrieved Microcks URL from Ingress: %s", microcksUrl);
       } else {
@@ -206,10 +206,10 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             // We can create an OpenShift Route here to get the Url.
             keycloakUrl = manageRouteAndGetURL(KeycloakIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
             logger.infof("Retrieved Keycloak URL from Route: %s", keycloakUrl);
-         } else if (spec.getKeycloak().isInstall() && spec.getKeycloak().getUrl() != null) {
+         } else if (completeCR.getSpec().getKeycloak().isInstall() && completeCR.getSpec().getKeycloak().getUrl() != null) {
             // We can create an Ingress here to get the Url.
             keycloakUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getKeycloak().getIngress(), KeycloakIngressesPreparer.getIngressSecretName(microcks),
-                  spec.getKeycloak().getUrl(), KeycloakIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
+                  completeCR.getSpec().getKeycloak().getUrl(), KeycloakIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
 
             logger.infof("Retrieved Keycloak URL from Ingress: %s", keycloakUrl);
          } else {
@@ -222,7 +222,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
          }
 
       } else {
-         if (spec.getKeycloak().getUrl() != null) {
+         if (spec.getKeycloak() != null && spec.getKeycloak().getUrl() != null) {
             keycloakUrl = spec.getKeycloak().getUrl();
          } else {
             logger.error("Not installing Keycloak but no URL specified. You must either add spec.keycloak.url or spec.keycloak.install=true with OpenShift support.");

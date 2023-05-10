@@ -31,3 +31,19 @@ jobs:
 
       - name: Build Java components
         run: mvn -B clean install
+
+      #- name: Verify Javadoc completion
+      #  run: mvn -B javadoc:javadoc
+
+      - name: Set up QEMU
+        if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
+        uses: docker/setup-buildx-action@v2
+
+      - name: Launch native executable build
+        run: |
+          cd ${{github.workspace}}/operator
+          mvn -B package -Pnative -Dquarkus.native.container-build=true
