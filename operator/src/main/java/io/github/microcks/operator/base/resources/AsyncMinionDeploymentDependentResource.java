@@ -19,6 +19,8 @@
 package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
+import io.github.microcks.operator.api.base.v1alpha1.AmazonServiceConnectionSpec;
+import io.github.microcks.operator.api.base.v1alpha1.AsyncFeatureSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationSpec;
@@ -67,6 +69,7 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
       final MicrocksSpec spec = microcks.getSpec();
+      final AsyncFeatureSpec asyncFeatureSpec = spec.getFeatures().getAsync();
 
       Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/async-minion-deployment.yml");
       DeploymentBuilder builder = new DeploymentBuilder(deployment)
@@ -157,7 +160,7 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
       }
 
       // If using Google PubSub, mount service account token from secret.
-      if (spec.getFeatures().getAsync().getGooglepubsub() != null && spec.getFeatures().getAsync().getGooglepubsub().getServiceAccountSecretRef() != null) {
+      if (asyncFeatureSpec.getGooglepubsub() != null && asyncFeatureSpec.getGooglepubsub().getServiceAccountSecretRef() != null) {
          builder.editSpec()
                .editTemplate()
                   .editSpec()
@@ -170,13 +173,76 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
                      .addNewVolume()
                         .withName("googlepubsub-sa")
                         .withNewSecret()
-                           .withSecretName(spec.getFeatures().getAsync().getGooglepubsub().getServiceAccountSecretRef().getName())
+                           .withSecretName(asyncFeatureSpec.getGooglepubsub().getServiceAccountSecretRef().getName())
                         .endSecret()
                      .endVolume()
                   .endSpec()
                .endTemplate().endSpec();
       }
 
+      // If using Amazon SQS, mount credentials variables from secret if env-variable authentication.
+      if (asyncFeatureSpec.getSqs() != null && asyncFeatureSpec.getSqs().getRegion() != null) {
+         if (asyncFeatureSpec.getSqs().getCredentialsType().equals(AmazonServiceConnectionSpec.AmazonCredentialsProviderType.ENV_VARIABLE)
+               && asyncFeatureSpec.getSqs().getCredentialsSecretRef() != null && asyncFeatureSpec.getSqs().getCredentialsSecretRef().getName() != null) {
+            addAmazonServicesEnvVariables(builder, asyncFeatureSpec.getSqs());
+         }
+      }
+
+      // If using Amazon SNS, mount credentials variables from secret if env-variable authentication.
+      if (asyncFeatureSpec.getSns() != null && asyncFeatureSpec.getSns().getRegion() != null) {
+         if (asyncFeatureSpec.getSns().getCredentialsType().equals(AmazonServiceConnectionSpec.AmazonCredentialsProviderType.ENV_VARIABLE)
+               && asyncFeatureSpec.getSns().getCredentialsSecretRef() != null && asyncFeatureSpec.getSns().getCredentialsSecretRef().getName() != null) {
+            addAmazonServicesEnvVariables(builder, asyncFeatureSpec.getSns());
+         }
+      }
+
       return builder.build();
+   }
+
+   private void addAmazonServicesEnvVariables(DeploymentBuilder builder, AmazonServiceConnectionSpec awsSpec) {
+      builder.editSpec()
+            .editTemplate()
+               .editSpec()
+                  .editFirstContainer()
+                     .addNewEnv()
+                        .withName("AWS_ACCESS_KEY_ID")
+                        .withNewValueFrom()
+                           .withNewSecretKeyRef()
+                              .withName(awsSpec.getCredentialsSecretRef().getName())
+                              .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("accessKeyIdKey").toString())
+                           .endSecretKeyRef()
+                        .endValueFrom()
+                     .endEnv()
+                     .addNewEnv()
+                        .withName("AWS_SECRET_ACCESS_KEY")
+                        .withNewValueFrom()
+                           .withNewSecretKeyRef()
+                              .withName(awsSpec.getCredentialsSecretRef().getName())
+                              .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("secretAccessKeyKey").toString())
+                           .endSecretKeyRef()
+                        .endValueFrom()
+                     .endEnv()
+                  .endContainer()
+               .endSpec()
+            .endTemplate().endSpec();
+
+      if (awsSpec.getCredentialsSecretRef().getAdditionalProperties().containsKey("sessionTokenKey")) {
+         builder.editSpec()
+            .editTemplate()
+               .editSpec()
+                  .editFirstContainer()
+                     .addNewEnv()
+                        .withName("AWS_SESSION_TOKEN")
+                        .withNewValueFrom()
+                           .withNewSecretKeyRef()
+                              .withName(awsSpec.getCredentialsSecretRef().getName())
+                              .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("sessionTokenKey").toString())
+                           .endSecretKeyRef()
+                        .endValueFrom()
+                     .endEnv()
+                  .endContainer()
+               .endSpec()
+            .endTemplate().endSpec();
+      }
    }
 }

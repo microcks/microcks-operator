@@ -18,12 +18,25 @@
  */
 package io.github.microcks.operator.api.model;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.sundr.builder.annotations.Buildable;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Representation of a generic Secret reference config of an operator-managed Microcks installation.
  * @author laurent
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Buildable(
+      editableEnabled = false,
+      builderPackage = "io.fabric8.kubernetes.api.builder"
+)
 public class SecretReferenceSpec implements AdditionalPropertyPreserving {
 
    private Map<String, Object> additionalProperties = new HashMap<>(0);
@@ -39,11 +52,13 @@ public class SecretReferenceSpec implements AdditionalPropertyPreserving {
    }
 
    @Override
+   @JsonAnyGetter
    public Map<String, Object> getAdditionalProperties() {
       return this.additionalProperties;
    }
 
    @Override
+   @JsonAnySetter
    public void setAdditionalProperty(String name, Object value) {
       this.additionalProperties.put(name, value);
    }

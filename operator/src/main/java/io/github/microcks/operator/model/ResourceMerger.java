@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Merger holds utility methods for merging resources together.
@@ -32,7 +33,10 @@ public class ResourceMerger {
    /** List of Java primitive types typically found in Json/Yaml documents. */
    private final List<String> PRIMITIVE_JSON_TYPES = Arrays.asList("Long", "Long[]",
          "Integer", "Integer[]", "String", "String[]",
-         "Boolean", "boolean[]", "ArrayList", "LinkedHashMap");
+         "Boolean", "boolean[]", "ArrayList");
+
+   /** List of Java types that must be merged as associative maps. */
+   private final List<String> MAP_JSON_TYPES = Arrays.asList("HashMap", "LinkedHashMap");
 
    private final List<String> RESOURCES_EXCLUDED_TYPES = Arrays.asList("io.fabric8.kubernetes.api.model.ObjectMeta");
 
@@ -45,7 +49,7 @@ public class ResourceMerger {
     * @return A new instance that is a merge of the two
     * @param <T> The resource class type
     * @throws IllegalAccessException If a reflection error occurs
-    * @throws InstantiationException If an instanciation error occurs
+    * @throws InstantiationException If an instantiation error occurs
     */
    @SuppressWarnings("unchecked")
    public <T> T mergeResources(T local, T remote) throws IllegalAccessException, InstantiationException {
@@ -73,6 +77,9 @@ public class ResourceMerger {
                      if (PRIMITIVE_JSON_TYPES.contains(localValue.getClass().getSimpleName())) {
                         // If remote value is a primitive, use it if not null.
                         field.set(merged, (remoteValue != null) ? remoteValue : localValue);
+                     } else if (MAP_JSON_TYPES.contains(localValue.getClass().getSimpleName())) {
+                        // If remote value if a map, use it as base and add extra values from local.
+                        field.set(merged, (remoteValue != null) ? mergeMaps((Map) remoteValue, (Map) localValue) : localValue);
                      } else if (remoteValue != null) {
                         // If a remote value provided, use this one.
                         field.set(merged, this.mergeResources(localValue, remoteValue));
@@ -95,5 +102,11 @@ public class ResourceMerger {
          }
       }
       return (T) merged;
+   }
+
+   /** Merge additional entries from optional into base map. */
+   private Map mergeMaps(Map base, Map optionalComplement) {
+      optionalComplement.keySet().forEach(k -> base.putIfAbsent(k, optionalComplement.get(k)));
+      return base;
    }
 }

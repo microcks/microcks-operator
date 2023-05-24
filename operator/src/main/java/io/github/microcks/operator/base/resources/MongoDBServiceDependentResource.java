@@ -44,13 +44,18 @@ public class MongoDBServiceDependentResource extends CRUDKubernetesDependentReso
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   public static final int MONGODB_SERVICE_PORT = 27017;
+
    public MongoDBServiceDependentResource() {
       super(Service.class);
    }
 
+   public static final String getServiceName(Microcks microcks) {
+      return MongoDBDeploymentDependentResource.getDeploymentName(microcks);
+   }
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return MongoDBDeploymentDependentResource.getDeploymentName(primary);
+      return getServiceName(primary);
    }
 
    @Override
@@ -75,9 +80,9 @@ public class MongoDBServiceDependentResource extends CRUDKubernetesDependentReso
                .addToSelector("group", "microcks")
                .addNewPort()
                   .withName("mongodb")
-                  .withPort(27017)
+                  .withPort(MONGODB_SERVICE_PORT)
                   .withProtocol("TCP")
-                  .withTargetPort(new IntOrString(27017))
+                  .withTargetPort(new IntOrString(MONGODB_SERVICE_PORT))
                .endPort()
                .withSessionAffinity("None")
                .withType("ClusterIP")

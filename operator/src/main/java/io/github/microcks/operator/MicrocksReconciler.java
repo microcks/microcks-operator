@@ -31,14 +31,22 @@ import io.github.microcks.operator.base.MongoDBDependentResourcesManager;
 import io.github.microcks.operator.base.PostmanRuntimeDependentResourcesManager;
 import io.github.microcks.operator.base.resources.KeycloakIngressesPreparer;
 import io.github.microcks.operator.base.resources.MicrocksIngressesPreparer;
+import io.github.microcks.operator.base.resources.StrimziKafkaResource;
+import io.github.microcks.operator.base.resources.StrimziKafkaTopicResource;
 import io.github.microcks.operator.model.IngressSpecUtil;
 import io.github.microcks.operator.model.ResourceMerger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.javaoperatorsdk.operator.ReconcilerUtils;
@@ -100,27 +108,37 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    private PostmanRuntimeDependentResourcesManager postmanRuntimeReconciler;
    private AsyncFeatureDependentResourcesManager asyncFeatureReconciler;
 
-
+   /**
+    *
+    * @param client
+    */
    public MicrocksReconciler(KubernetesClient client) {
       this.client = client;
+
+      // Build resources manager and reconciliation workflow for Keycloak module.
       keycloakReconciler = new KeycloakDependentResourcesManager(client);
       keycloakModuleWF = keycloakReconciler.buildReconciliationWorkflow();
 
+      // Build resources manager and reconciliation workflow for MongoDB module.
       mongoDBReconciler = new MongoDBDependentResourcesManager(client);
       mongoDBModuleWF = mongoDBReconciler.buildReconciliationWorkflow();
 
+      // Build resources manager and reconciliation workflow for Microcks module.
       microcksReconciler = new MicrocksDependentResourcesManager(client);
       microcksModuleWF = microcksReconciler.buildReconcialiationWorkflow();
 
+      // Build resources manager and reconciliation workflow for Postman module.
       postmanRuntimeReconciler = new PostmanRuntimeDependentResourcesManager(client);
       postmanRuntimeModuleWF = postmanRuntimeReconciler.buildReconciliationWorkflow();
 
+      // Build resources manager and reconciliation workflow for Async minion module.
       asyncFeatureReconciler = new AsyncFeatureDependentResourcesManager(client);
       asyncFeatureModuleWF = asyncFeatureReconciler.buildReconciliationWorkflow();
    }
 
    @Override
    public Map<String, EventSource> prepareEventSources(EventSourceContext<Microcks> context) {
+      // Build names event sources from event sources coming from all the modules reconcilers.
       return EventSourceInitializer.nameEventSources(
             Stream.concat(
                Stream.concat(
@@ -152,14 +170,16 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       logger.infof("Starting reconcile operation for '%s'", microcks.getMetadata().getName());
 
 
-      /*
       ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+      /*
       logger.info("initSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(spec));
       logger.info("ExtraProperties before: " + spec.getMicrocks().getExtraProperties());
       logger.info("mockInvocationStats before: " + spec.getMicrocks().isMockInvocationStats());
-      */
+       */
 
       Microcks defaultCR = loadDefaultMicrocksCR();
+      //logger.info("defaultCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultCR.getSpec()));
+
       MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
       Microcks completeCR = new Microcks();
       completeCR.setKind(microcks.getKind());
@@ -171,7 +191,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
       logger.info("ExtraProperties after: " + completeCR.getSpec().getMicrocks().getExtraProperties());
       logger.info("mockInvocationStats after: " + completeCR.getSpec().getMicrocks().isMockInvocationStats());
-      */
+       */
 
       boolean isOpenShift = client.adapt(OpenShiftClient.class).isSupported();
       final List<OwnerReference> refs = List.of(getOwnerReference(completeCR));
@@ -242,13 +262,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       updateStatus = handleWorkflowReconcileResult(mongoDBResult, microcks.getStatus(), "Mongo") || updateStatus;
 
       WorkflowReconcileResult microcksResult = microcksModuleWF.reconcile(completeCR, context);
-      updateStatus = handleWorkflowReconcileResult(mongoDBResult, microcks.getStatus(), "Microcks") || updateStatus;
+      updateStatus = handleWorkflowReconcileResult(microcksResult, microcks.getStatus(), "Microcks") || updateStatus;
 
       WorkflowReconcileResult postmanResult = postmanRuntimeModuleWF.reconcile(completeCR, context);
-      updateStatus = handleWorkflowReconcileResult(mongoDBResult, microcks.getStatus(), "Postman") || updateStatus;
+      updateStatus = handleWorkflowReconcileResult(postmanResult, microcks.getStatus(), "Postman") || updateStatus;
 
       WorkflowReconcileResult asyncFeatureResult = asyncFeatureModuleWF.reconcile(completeCR, context);
-      updateStatus = handleWorkflowReconcileResult(mongoDBResult, microcks.getStatus(), "Async") || updateStatus;
+      updateStatus = handleWorkflowReconcileResult(asyncFeatureResult, microcks.getStatus(), "Async") || updateStatus;
 
       /*
       Optional<WorkflowReconcileResult> workflowReconcileResult = context.managedDependentResourceContext().getWorkflowReconcileResult();
@@ -259,11 +279,19 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       }
       */
 
-      if (updateStatus) {
-         return UpdateControl.updateStatus(microcks);
+
+      //
+      if (installStrimziKafka(completeCR)) {
+         manageStrimziKafkaInstall(completeCR, context);
       }
 
       logger.infof("Finishing reconcile operation for '%s'", microcks.getMetadata().getName());
+      logger.infof("=====================================================");
+
+
+      if (updateStatus) {
+         return UpdateControl.updateStatus(microcks);
+      }
 
       return UpdateControl.noUpdate();
    }
@@ -272,6 +300,24 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    public DeleteControl cleanup(Microcks microcks, Context<Microcks> context) {
       final MicrocksSpec spec = microcks.getSpec();
       logger.infof("Starting cleanup operation for '%s'", microcks.getMetadata().getName());
+
+      try {
+         // Do our best to recreate complete CR in order to remove Strimzi watchers.
+         Microcks defaultCR = loadDefaultMicrocksCR();
+         MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
+
+         Microcks completeCR = new Microcks();
+         completeCR.setKind(microcks.getKind());
+         completeCR.setMetadata(microcks.getMetadata());
+         completeCR.setSpec(completeSpec);
+         completeCR.setStatus(microcks.getStatus());
+
+         if (installStrimziKafka(completeCR)) {
+            unmanageStrimziKafkaInstall(completeCR, context);
+         }
+      } catch (Exception e) {
+         logger.warnf("Failed re-building the complete CR during cleanup with %s", e.getMessage());
+      }
 
       return DeleteControl.defaultDelete();
    }
@@ -292,6 +338,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             .build();
    }
 
+   /** */
    protected String manageRouteAndGetURL(Route route, String ns, List<OwnerReference> refs) {
       route.getMetadata().setOwnerReferences(refs);
       route = client.adapt(OpenShiftClient.class).routes().inNamespace(ns).resource(route).createOrReplace();
@@ -299,6 +346,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       return route.getSpec().getHost();
    }
 
+   /** */
    protected String manageIngressAndGetURL(Microcks microcks, IngressSpec ingressSpec, String secretName, String host,
                                         Ingress ingress, String ns, List<OwnerReference> refs) {
       createIngressSecretIfNeeded(microcks, ingressSpec, secretName, host);
@@ -326,25 +374,27 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       }
    }
 
+   /** */
    protected boolean handleWorkflowReconcileResult(WorkflowReconcileResult result, MicrocksStatus status, String module) {
       logger.debugf("Reconciled %s dependents: %s", module,  result.getReconciledDependents());
       boolean updateStatus = false;
 
       if (result.getReconciledDependents() != null && result.getReconciledDependents().size() > 0) {
-         logger.infof("We've reconciled %d dependents for module '%s'", result.getReconciledDependents().size(), module);
+         logger.debugf("We've reconciled %d dependent resources for module '%s'", result.getReconciledDependents().size(), module);
 
          if (result.getNotReadyDependents().size() > 0) {
             logger.info("  Got not ready dependents: " + result.getNotReadyDependents().size());
             Condition condition = getOrCreateCondition(status, module + "Deploying");
             condition.setStatus(Status.DEPLOYING);
             condition.setLastTransitionTime(getCurrentTransitionTime());
+            updateStatus = true;
          }  else if (result.allDependentResourcesReady()) {
             logger.info("  All dependents are ready!");
             Condition condition = getOrCreateCondition(status, module + "Ready");
             condition.setStatus(Status.READY);
             condition.setLastTransitionTime(getCurrentTransitionTime());
+            updateStatus = true;
          }
-         updateStatus = true;
 
          if (result.erroredDependentsExist()) {
             logger.error("  Some dependents are in error...");
@@ -353,14 +403,50 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             }
          }
 
+         /*
          for (DependentResource depRes : result.getReconciledDependents()) {
             ReconcileResult recRes = result.getReconcileResults().get(depRes);
-            logger.debugf("- reconciled: '%s' with op %s", depRes.getClass().getSimpleName(), recRes.getSingleOperation());
+            logger.debugf("- reconciled: '%s' with op", depRes.getClass().getSimpleName());
+            logger.infof("- reconciled: '%s' with op %s", depRes.getClass().getSimpleName(), recRes.getSingleOperation());
          }
+         */
       }
       return updateStatus;
    }
 
+   /** */
+   protected boolean installStrimziKafka(Microcks microcks) {
+      return microcks.getSpec().getFeatures().getAsync().isEnabled()
+            && microcks.getSpec().getFeatures().getAsync().getKafka().isInstall();
+   }
+
+   /** */
+   protected void manageStrimziKafkaInstall(Microcks microcks, Context<Microcks> context) {
+      // Build desired Strimzi Kafka broker and topic.
+      StrimziKafkaResource strimziKafka = new StrimziKafkaResource(client);
+      StrimziKafkaTopicResource strimziTopic = new StrimziKafkaTopicResource(client);
+      GenericKubernetesResource strimziKafkaRes = strimziKafka.desired(microcks, context);
+      GenericKubernetesResource strimziTopicRes = strimziTopic.desired(microcks, context);
+
+      // Force the owner reference before creating or replacing those resources.
+      strimziKafkaRes.getMetadata().setOwnerReferences(List.of(getOwnerReference(microcks)));
+      strimziTopicRes.getMetadata().setOwnerReferences(List.of(getOwnerReference(microcks)));
+      createOrReplaceGenericResource(strimziKafkaRes, microcks.getMetadata().getNamespace());
+      createOrReplaceGenericResource(strimziTopicRes, microcks.getMetadata().getNamespace());
+   }
+
+   protected void unmanageStrimziKafkaInstall(Microcks microcks, Context<Microcks> context) {
+      // Build desired Strimzi Kafka broker and topic.
+      StrimziKafkaResource strimziKafka = new StrimziKafkaResource(client);
+      StrimziKafkaTopicResource strimziTopic = new StrimziKafkaTopicResource(client);
+      GenericKubernetesResource strimziKafkaRes = strimziKafka.desired(microcks, context);
+      GenericKubernetesResource strimziTopicRes = strimziTopic.desired(microcks, context);
+
+      removeGenericResourceWatcher(strimziKafkaRes, microcks.getMetadata().getNamespace());
+      removeGenericResourceWatcher(strimziTopicRes, microcks.getMetadata().getNamespace());
+   }
+
+   /** */
    protected Condition getOrCreateCondition(MicrocksStatus status, String type) {
       Condition result = null;
       if (status.getConditions() != null) {
@@ -379,7 +465,53 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       return result;
    }
 
+   /** */
    protected String getCurrentTransitionTime() {
       return transitionFormat.format(Calendar.getInstance().getTime());
+   }
+
+   /** */
+   private void createOrReplaceGenericResource(GenericKubernetesResource genericResource, String namespace) {
+      // Create the generic Kubernetes resource.
+      client.genericKubernetesResources(genericResource.getApiVersion(), genericResource.getKind())
+            .inNamespace(namespace)
+            .resource(genericResource)
+            .createOrReplace();
+
+      // Now take care about registering a watcher if necessary.
+      WatcherKey watcherKey = new WatcherKey(genericResource.getMetadata().getName(),
+            genericResource.getKind(), genericResource.getApiVersion());
+
+      WatcherManager watchers = WatcherManager.getInstance();
+      if (!watchers.hasWatcher(watcherKey)) {
+         logger.infof("Registering a new watcher with key %s", watcherKey);
+         Watcher watcher = new Watcher<GenericKubernetesResource>() {
+            @Override
+            public void eventReceived(Action action, GenericKubernetesResource resource) {
+               logger.infof("Received event, action %s for %s", action.name(), resource.getMetadata().getName());
+               if (Action.DELETED.equals(action)) {
+                  logger.infof("Been deleted, current resource is %s", resource);
+               }
+            }
+            @Override
+            public void onClose(WatcherException cause) {
+               logger.infof("Watcher was closed due to %e", cause.getMessage());
+            }
+         };
+         client.genericKubernetesResources(genericResource.getApiVersion(), genericResource.getKind())
+               .inNamespace(namespace)
+               .withName(genericResource.getMetadata().getName())
+               .watch(watcher);
+         watchers.registerWatcher(watcherKey, watcher);
+      }
+   }
+
+   /** */
+   private void removeGenericResourceWatcher(GenericKubernetesResource genericResource, String namespace) {
+      WatcherKey watcherKey = new WatcherKey(genericResource.getMetadata().getName(),
+            genericResource.getKind(), genericResource.getApiVersion());
+
+      WatcherManager watchers = WatcherManager.getInstance();
+      watchers.unregisterWatcher(watcherKey);
    }
 }

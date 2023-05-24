@@ -3,6 +3,17 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
+  microcks:
+    url: microcks.192.168.49.2.nip.io
+  keycloak:
+    url: keycloak.192.168.49.2.nip.io
+    privateUrl: http://microcks-keycloak:8080
   features:
     async:
       enabled: true
+      kafka:
+        url: 192.168.49.2.nip.io
+      #sqs:
+      #  region: eu-west-3
+      #  credentialsSecretRef:
+      #    name: aws-credentials

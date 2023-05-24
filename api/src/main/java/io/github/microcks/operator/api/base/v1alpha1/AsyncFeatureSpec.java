@@ -65,6 +65,12 @@ public class AsyncFeatureSpec {
    @JsonPropertyDescription("Configuration of Google PubSub access")
    private GooglePubSubConnectionSpec googlepubsub;
 
+   @JsonPropertyDescription("Configuration of Amazon SQS access")
+   private AmazonServiceConnectionSpec sqs;
+
+   @JsonPropertyDescription("Configuration of Amazon SNS access")
+   private AmazonServiceConnectionSpec sns;
+
 
    public boolean isEnabled() {
       return enabled;
@@ -136,5 +142,21 @@ public class AsyncFeatureSpec {
 
    public void setGooglepubsub(GooglePubSubConnectionSpec googlepubsub) {
       this.googlepubsub = googlepubsub;
+   }
+
+   public AmazonServiceConnectionSpec getSqs() {
+      return sqs;
+   }
+
+   public void setSqs(AmazonServiceConnectionSpec sqs) {
+      this.sqs = sqs;
+   }
+
+   public AmazonServiceConnectionSpec getSns() {
+      return sns;
+   }
+
+   public void setSns(AmazonServiceConnectionSpec sns) {
+      this.sns = sns;
    }
 }

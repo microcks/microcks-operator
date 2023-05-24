@@ -3,7 +3,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  version: latest
+  version: nightly
 
   microcks:
     replicas: 1
@@ -63,8 +63,26 @@ spec:
   features:
     async:
       enabled: false
+      defaultBinding: KAFKA
+      defaultFrequency: 10
+      defaultAvroEncoding: RAW
       kafka:
         install: true
+        ingressClassName: nginx
+        resources:
+          #requests:
+            #cpu: 100m
+            #memory: 256Mi
+          limits:
+            #cpu: 500m
+            memory: 800Mi
+        zkResources:
+          #requests:
+            #cpu: 100m
+            #memory: 256Mi
+          limits:
+            #cpu: 500m
+            memory: 800Mi
         schemaRegistry:
           confluent: true
           username: ""
@@ -76,20 +94,45 @@ spec:
           # You have to setup a truststore type and a secret reference for retrieving content and password.
           truststoreType: PKCS12
           #truststore_secret_ref:
-            #secret: kafka-cluster-ca-cert
+            #name: kafka-cluster-ca-cert
             #store_key: ca.p12
             #password_key: ca.password
           # For mutual TLS authentication, you'll also need a keystore to hold your user private key.
           # You have to setup a keystore type and a secret reference for retrieving content and password.
           keystoreType: PKCS12
           keystoreSecretRef:
-            secret: mtls-user
+            name: mtls-user
             store_key: user.p12
             password_key: user.password
           # For SASL authentication, you'll have to specify an additional authentication mechanism
           # as well as a JAAS configuration line with login module, username and password.
           #sasl_mechanism: SCRAM-SHA-512
           #sasl_jaas_config: org.apache.kafka.common.security.scram.ScramLoginModule required username="scram-user" password="tDtDCT3pYKE5";
+
+      sqs:
+        #region: eu-west-3
+        credentialsType: env-variable
+        #credentialsType: profile
+        credentialsProfile: microcks-sqs-admin
+        credentialsSecretRef:
+          #name: aws-credentials
+          accessKeyIdKey: access_key_id
+          secretAccessKeyKey: secret_access_key
+          #sessionTokenKey: session_token
+          #fileKey: aws.profile
+
+      sns:
+        #region: eu-west-3
+        credentialsType: env-variable
+        #credentialsType: profile
+        credentialsProfile: microcks-sns-admin
+        credentialsSecretRef:
+          #name: aws-credentials
+          accessKeyIdKey: access_key_id
+          secretAccessKeyKey: secret_access_key
+          #sessionTokenKey: session_token
+          #fileKey: aws.profile
+
 
     repositoryFilter:
       enabled: false

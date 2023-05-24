@@ -15,23 +15,13 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- */
-package io.github.microcks.operator.base.resources;
-
-import io.github.microcks.operator.api.base.v1alpha1.Microcks;
-
-import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
+ */package io.github.microcks.operator;
 
 /**
- * A reconciliation pre-condition that is only met if Kafka broker resources should be installed.
- * @author laurent
+ * A simple record that serves as a key for the {@code WatcherManager}.
+ * @param name The name of watched resource
+ * @param kind The kind of watched resource
+ * @param apiVersion The api version of watched resource
  */
-public class StrimziKafkaInstallPrecondition implements Condition<HasMetadata, Microcks> {
-
-   @Override
-   public boolean isMet(Microcks primary, HasMetadata secondary, Context<Microcks> context) {
-      return primary.getSpec().getFeatures().getAsync().isEnabled() && primary.getSpec().getFeatures().getAsync().getKafka().isInstall();
-   }
+public record WatcherKey(String name, String kind, String apiVersion) {
 }

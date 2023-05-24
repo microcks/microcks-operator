@@ -24,12 +24,9 @@ import io.github.microcks.operator.base.resources.AsyncMinionDeploymentDependent
 import io.github.microcks.operator.base.resources.AsyncMinionInstallPrecondition;
 import io.github.microcks.operator.base.resources.AsyncMinionReadyCondition;
 import io.github.microcks.operator.base.resources.AsyncMinionServiceDependentResource;
-import io.github.microcks.operator.base.resources.StrimziKafkaInstallPrecondition;
-import io.github.microcks.operator.base.resources.StrimziKafkaTopicDependentResource;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -57,7 +54,6 @@ public class AsyncFeatureDependentResourcesManager {
    private KubernetesDependentResource<ConfigMap, Microcks> configMapDR;
    private KubernetesDependentResource<Deployment, Microcks> deploymentDR;
    private KubernetesDependentResource<Service, Microcks> serviceDR;
-   private KubernetesDependentResource<HasMetadata, Microcks> strimziTopicDR;
 
    public AsyncFeatureDependentResourcesManager(KubernetesClient client) {
       this.client = client;
@@ -71,12 +67,10 @@ public class AsyncFeatureDependentResourcesManager {
       configMapDR = new AsyncMinionConfigMapDependentResource();
       deploymentDR = new AsyncMinionDeploymentDependentResource();
       serviceDR = new AsyncMinionServiceDependentResource();
-      strimziTopicDR = new StrimziKafkaTopicDependentResource();
 
       // Build the workflow.
       WorkflowBuilder<Microcks> builder = new WorkflowBuilder<>();
       Condition installedCondition = new AsyncMinionInstallPrecondition();
-      Condition kafkaInstalledCondition = new StrimziKafkaInstallPrecondition();
 
       // Configure the dependent resources.
       Arrays.asList(configMapDR, deploymentDR, serviceDR).forEach(dr -> {
@@ -94,21 +88,6 @@ public class AsyncFeatureDependentResourcesManager {
 
       builder.addDependentResource(deploymentDR).withReadyPostcondition(new AsyncMinionReadyCondition());
 
-      /*
-      Arrays.asList(strimziTopicDR).forEach(dr -> {
-         dr.setKubernetesClient(client);
-         if (dr instanceof NamedSecondaryResourceProvider<?>) {
-            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
-                        p -> new ResourceID(
-                              ((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
-                              p.getMetadata().getNamespace())
-                  )
-            );
-         }
-         builder.addDependentResource(dr).withReconcilePrecondition(kafkaInstalledCondition);
-      });
-       */
-
       return builder.build();
    }
 
@@ -122,7 +101,6 @@ public class AsyncFeatureDependentResourcesManager {
             configMapDR.initEventSource(context),
             deploymentDR.initEventSource(context),
             serviceDR.initEventSource(context)
-            //strimziTopicDR.initEventSource(context)
       };
    }
 }

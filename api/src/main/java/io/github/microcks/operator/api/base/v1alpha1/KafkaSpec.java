@@ -27,8 +27,8 @@ import io.sundr.builder.annotations.Buildable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "install", "defaultBinding", "defaultFrequency", "defaultAvroEncoding",
-      "kafka", "amqp", "mqtt", "nats", "googlepubsub" })
+@JsonPropertyOrder({ "install", "url", "ingressClassName", "persistent", "volumeSize",
+      "schemaRegistry", "authentication", "resources", "zkResources" })
 @Buildable(
       editableEnabled = false,
       builderPackage = "io.fabric8.kubernetes.api.builder"
@@ -45,8 +45,11 @@ public class KafkaSpec {
    @JsonPropertyDescription("The URL to use for either exposing embedded Kafka broker or connecting external broker")
    private String url;
 
-   @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true")
-   private boolean persistent = true;
+   @JsonPropertyDescription("When exposed via ingress, sets the ingressClassName property in the Ingress resources")
+   private String ingressClassName;
+
+   @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to false")
+   private boolean persistent = false;
 
    @JsonPropertyDescription("Size of persistent storage volume if persistent")
    private String volumeSize;
@@ -81,6 +84,14 @@ public class KafkaSpec {
 
    public boolean isPersistent() {
       return persistent;
+   }
+
+   public String getIngressClassName() {
+      return ingressClassName;
+   }
+
+   public void setIngressClassName(String ingressClassName) {
+      this.ingressClassName = ingressClassName;
    }
 
    public void setPersistent(boolean persistent) {

@@ -101,6 +101,12 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
                            .endValueFrom()
                         .endEnv()
                      .endContainer()
+                     .addNewVolume()
+                        .withName("keycloak-config")
+                        .withNewConfigMap()
+                           .withName(KeycloakConfigMapDependentResource.getConfigMapName(microcks))
+                        .endConfigMap()
+                     .endVolume()
                   .endSpec()
                .endTemplate()
             .endSpec();

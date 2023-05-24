@@ -50,9 +50,13 @@ public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentR
       super(ConfigMap.class);
    }
 
+   public static final String getConfigMapName(Microcks microcks) {
+      return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
+   }
+
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return primary.getMetadata().getName() + RESOURCE_SUFFIX;
+      return getConfigMapName(primary);
    }
 
    @Override

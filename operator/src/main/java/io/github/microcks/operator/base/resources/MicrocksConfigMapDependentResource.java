@@ -86,7 +86,6 @@ public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentR
             .addToData("features.properties", featuresProperties)
             .addToData("logback.xml", logbackXml);
 
-      logger.info(microcks.getSpec().getMicrocks().getExtraProperties());
       if (microcks.getSpec().getMicrocks().getExtraProperties() != null && !microcks.getSpec().getMicrocks().getExtraProperties().isEmpty()) {
          try {
             builder.addToData("application-extra.yaml",

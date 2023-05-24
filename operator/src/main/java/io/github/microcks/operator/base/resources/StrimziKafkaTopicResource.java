@@ -18,44 +18,51 @@
  */
 package io.github.microcks.operator.base.resources;
 
-import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
-import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResourceBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.api.reconciler.dependent.GarbageCollected;
-import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
-import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependentResource;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
 import org.jboss.logging.Logger;
+
+import java.util.Map;
 
 /**
  * A Strimzi Kubernetes KafkaTopic dependent resource.
  * @author laurent
  */
-@KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class StrimziKafkaTopicDependentResource extends KubernetesDependentResource<HasMetadata, Microcks>
-      implements NamedSecondaryResourceProvider<Microcks>, GarbageCollected<Microcks> {
+public class StrimziKafkaTopicResource {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
    private static final String RESOURCE_SUFFIX = "-kafka-services-updates";
 
-   public StrimziKafkaTopicDependentResource() {
-      super(HasMetadata.class);
+   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+
+   private KubernetesClient client;
+
+   /**
+    *
+    * @param client
+    */
+   public StrimziKafkaTopicResource(KubernetesClient client) {
+      this.client = client;
    }
 
-   @Override
-   public String getSecondaryResourceName(Microcks primary) {
-      return primary.getMetadata().getName() + RESOURCE_SUFFIX;
-   }
-
-   @Override
-   protected HasMetadata desired(Microcks microcks, Context<Microcks> context) {
+   /**
+    *
+    * @param microcks
+    * @param context
+    * @return
+    */
+   public GenericKubernetesResource desired(Microcks microcks, Context<Microcks> context) {
       logger.infof("Building desired Strimzi Kafka Topic for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
@@ -64,10 +71,26 @@ public class StrimziKafkaTopicDependentResource extends KubernetesDependentResou
       // Compute strimzi-topic with Qute template.
       String strimziTopic = Templates.kafkaTopic(microcksName, microcksMetadata.getNamespace()).render();
 
-      return getKubernetesClient().resource(strimziTopic).inNamespace(microcksMetadata.getNamespace()).get();
+      Map topicMap = null;
+      try {
+         topicMap = mapper.readValue(strimziTopic, Map.class);
+      } catch (Exception e) {
+         logger.error("Exception while deserializing the Strimzi Kafka YAML", e);
+         return null;
+      }
+
+      GenericKubernetesResource genericTopic = new GenericKubernetesResourceBuilder()
+            .withApiVersion(topicMap.get("apiVersion").toString())
+            .withKind(topicMap.get("kind").toString())
+            .withNewMetadata()
+               .withName(microcksName + RESOURCE_SUFFIX)
+               .addToLabels("strimzi.io/cluster", StrimziKafkaResource.getKafkaName(microcks))
+            .endMetadata()
+            .addToAdditionalProperties("spec", topicMap.get("spec"))
+            .build();
+
+      return genericTopic;
    }
-
-
 
    @CheckedTemplate
    public static class Templates {

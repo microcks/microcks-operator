@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: async-minion
-          image: "quay.io/microcks/microcks-async-minion:latest"
+          image: "quay.io/microcks/microcks-async-minion:nightly"
           imagePullPolicy: IfNotPresent
           env:
             - name: QUARKUS_PROFILE

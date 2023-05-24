@@ -96,6 +96,9 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             failureThreshold: 5
+          volumeMounts:
+            - name: "keycloak-config"
+              mountPath: "/opt/keycloak/data/import"
           securityContext:
             privileged: false
       restartPolicy: Always

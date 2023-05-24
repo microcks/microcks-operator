@@ -19,6 +19,8 @@
 package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
+import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationType;
+import io.github.microcks.operator.api.base.v1alpha1.KafkaSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
@@ -30,6 +32,8 @@ import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.logging.Logger;
+
+import java.util.Objects;
 
 /**
  * A Microcks Kubernetes Deployment dependent resource.
@@ -87,13 +91,170 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                            .withName("SPRING_PROFILES_ACTIVE")
                            .withValue("prod")
                         .endEnv()
+                        .addNewEnv()
+                           .withName("SPRING_DATA_MONGODB_URI")
+                           .withValue(getMongoDBConnection(microcks))
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("SPRING_DATA_MONGODB_DATABASE")
+                           .withValue(getMongoDBDatabase(microcks))
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("SPRING_DATA_MONGODB_USER")
+                           .withNewValueFrom()
+                              .withNewSecretKeyRef()
+                                 .withName(getMongoDBSecretName(microcks))
+                                 .withKey(getMongoDBSecretUsernameKey(microcks))
+                              .endSecretKeyRef()
+                           .endValueFrom()
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("SPRING_DATA_MONGODB_PASSWORD")
+                           .withNewValueFrom()
+                              .withNewSecretKeyRef()
+                                 .withName(getMongoDBSecretName(microcks))
+                                 .withKey(getMongoDBSecretPasswordKey(microcks))
+                              .endSecretKeyRef()
+                           .endValueFrom()
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("KEYCLOAK_URL")
+                           .withValue(getKeycloakUrl(microcks))
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("KAFKA_BOOTSTRAP_SERVER")
+                           .withValue(getKafkaUrl(microcks))
+                        .endEnv()
                      .endContainer()
                   .endSpec()
                .endTemplate()
             .endSpec();
 
+      if (microcks.getSpec().getKeycloak().getPrivateUrl() != null) {
+         builder.editSpec()
+               .editTemplate()
+                  .editSpec()
+                     .editFirstContainer()
+                        .addNewEnv()
+                           .withName("KEYCLOAK_PUBLIC_URL")
+                           .withValue(getKeycloakPublicUrl(microcks))
+                        .endEnv()
+                     .endContainer()
+                  .endSpec()
+               .endTemplate().endSpec();
+      }
+
+      if (microcks.getSpec().getFeatures().getAsync().isEnabled() &&
+            !microcks.getSpec().getFeatures().getAsync().getKafka().isInstall()) {
+
+         KafkaSpec kafkaSpec = microcks.getSpec().getFeatures().getAsync().getKafka();
+         if (!KafkaAuthenticationType.NONE.equals(kafkaSpec.getAuthentication().getType())) {
+            builder.editSpec()
+                  .editTemplate()
+                     .editSpec()
+                        .editFirstContainer()
+                           .addNewEnv()
+                              .withName("KAFKA_TRUSTSTORE_PASSWORD")
+                                 .withNewValueFrom()
+                                    .withNewSecretKeyRef()
+                                       .withName(kafkaSpec.getAuthentication().getTruststoreSecretRef().getName())
+                                       .withKey(kafkaSpec.getAuthentication().getTruststoreSecretRef().getAdditionalProperties().get("passwordKey").toString())
+                                    .endSecretKeyRef()
+                              .endValueFrom()
+                           .endEnv()
+                        .endContainer()
+                     .endSpec()
+                  .endTemplate().endSpec();
+         }
+         if (KafkaAuthenticationType.SSL.equals(kafkaSpec.getAuthentication().getType())) {
+            builder.editSpec()
+                  .editTemplate()
+                     .editSpec()
+                        .editFirstContainer()
+                           .addNewEnv()
+                              .withName("KAFKA_KEYSTORE_PASSWORD")
+                                 .withNewValueFrom()
+                                    .withNewSecretKeyRef()
+                                       .withName(kafkaSpec.getAuthentication().getKeystoreSecretRef().getName())
+                                       .withKey(kafkaSpec.getAuthentication().getKeystoreSecretRef().getAdditionalProperties().get("passwordKey").toString())
+                                    .endSecretKeyRef()
+                              .endValueFrom()
+                           .endEnv()
+                        .endContainer()
+                     .endSpec()
+                  .endTemplate().endSpec();
+         }
+      }
 
       return builder.build();
    }
 
+   private String getMongoDBConnection(Microcks microcks) {
+      StringBuilder result = new StringBuilder("mongodb://${SPRING_DATA_MONGODB_USER}:${SPRING_DATA_MONGODB_PASSWORD}@");
+
+      if (microcks.getSpec().getMongoDB().getUri() != null) {
+         result.append(microcks.getSpec().getMongoDB().getUri());
+      } else {
+         result.append(MongoDBServiceDependentResource.getServiceName(microcks));
+         result.append(":").append(MongoDBServiceDependentResource.MONGODB_SERVICE_PORT);
+      }
+
+      result.append("/${SPRING_DATA_MONGODB_DATABASE}");
+      result.append(Objects.requireNonNullElse(microcks.getSpec().getMongoDB().getUriParameters(), ""));
+      return result.toString();
+   }
+
+   public String getMongoDBDatabase(Microcks microcks) {
+      return Objects.requireNonNullElse(microcks.getSpec().getMongoDB().getDatabase(),
+            microcks.getMetadata().getName());
+   }
+
+   private String getMongoDBSecretName(Microcks microcks) {
+      if (microcks.getSpec().getMongoDB().getSecretRef() != null) {
+         return microcks.getSpec().getMongoDB().getSecretRef().getName();
+      }
+      return MongoDBSecretDependentResource.getSecretName(microcks);
+   }
+
+   private String getMongoDBSecretUsernameKey(Microcks microcks) {
+      if (microcks.getSpec().getMongoDB().getSecretRef() != null) {
+         return Objects.requireNonNullElse(
+               microcks.getSpec().getMongoDB().getSecretRef().getAdditionalProperties().get("usernameKey"),
+               MongoDBSecretDependentResource.MONGODB_USER_KEY).toString();
+      }
+      return MongoDBSecretDependentResource.MONGODB_USER_KEY;
+   }
+
+   private String getMongoDBSecretPasswordKey(Microcks microcks) {
+      if (microcks.getSpec().getMongoDB().getSecretRef() != null) {
+         return Objects.requireNonNullElse(
+               microcks.getSpec().getMongoDB().getSecretRef().getAdditionalProperties().get("passwordKey"),
+               MongoDBSecretDependentResource.MONGODB_PASSWORD_KEY).toString();
+      }
+      return MongoDBSecretDependentResource.MONGODB_PASSWORD_KEY;
+   }
+
+   private String getKeycloakUrl(Microcks microcks) {
+      if (microcks.getSpec().getKeycloak().getPrivateUrl() != null) {
+         return microcks.getSpec().getKeycloak().getPrivateUrl();
+      }
+      return getKeycloakPublicUrl(microcks);
+   }
+
+   private String getKeycloakPublicUrl(Microcks microcks) {
+      if (microcks.getSpec().getKeycloak().getUrl() != null) {
+         return "https://" + microcks.getSpec().getKeycloak().getUrl();
+      }
+      return "https://" + microcks.getStatus().getKeycloakUrl();
+   }
+
+   private String getKafkaUrl(Microcks microcks) {
+      if (microcks.getSpec().getFeatures().getAsync().isEnabled()) {
+         if (microcks.getSpec().getFeatures().getAsync().getKafka().isInstall()) {
+            return microcks.getMetadata().getName() + "-kafka-kafka-bootstrap:9092";
+         }
+         return microcks.getSpec().getFeatures().getAsync().getKafka().getUrl();
+      }
+      return "";
+   }
 }
