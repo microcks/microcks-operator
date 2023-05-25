@@ -21,7 +21,7 @@ package io.github.microcks.operator.model;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 
 /**
- * As a secondary resource provider of a primary resource {@type P}, it brings the ability to define
+ * As a secondary resource provider of a primary resource {@code P}, it brings the ability to define
  * this second resource name. Resource names can be later used as resource discriminator to easily setup watchers.
  * @author laurent
  */
@@ -30,7 +30,7 @@ public interface NamedSecondaryResourceProvider<P extends HasMetadata> {
    /**
     * The name of the - future - secondary resource that will be created
     * @param primary The primary resource to generate second resource for.
-    * @return
+    * @return The name of the associated secondary resource
     */
    String getSecondaryResourceName(P primary);
 }

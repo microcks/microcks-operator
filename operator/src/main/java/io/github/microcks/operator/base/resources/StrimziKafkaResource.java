@@ -50,27 +50,27 @@ public class StrimziKafkaResource {
    private KubernetesClient client;
 
    /**
-    *
-    * @param client
+    * Create a new StrimziKafkaResource with a client.
+    * @param client Kuebrnetes client to use for connecting to cluster.
     */
    public StrimziKafkaResource(KubernetesClient client) {
       this.client = client;
    }
 
-   /***
-    *
-    * @param microcks
-    * @return
+   /**
+    * Get the name of Kafka given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Kafka
     */
    public static String getKafkaName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }
 
    /**
-    *
-    * @param microcks
-    * @param context
-    * @return
+    * Compute a desired Strimzi Kafka resource using a GenericKubernetesResource representation.
+    * @param microcks The primary microcks resource
+    * @param context The reconciliation context
+    * @return A GenericKubernetesResource holding a Kafka resource from Strimzi
     */
    public GenericKubernetesResource desired(Microcks microcks, Context<Microcks> context) {
       logger.infof("Building desired Strimzi Kafka for '%s'", microcks.getMetadata().getName());
@@ -102,8 +102,10 @@ public class StrimziKafkaResource {
       return genericKafka;
    }
 
+   /** A Qute templates accessor. */
    @CheckedTemplate
    public static class Templates {
+      /** Qute template for Kafka resource. */
       public static native TemplateInstance kafka(String name, MicrocksSpec spec, boolean isOpenShift);
    }
 }

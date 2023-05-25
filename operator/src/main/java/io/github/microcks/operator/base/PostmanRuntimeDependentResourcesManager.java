@@ -38,7 +38,7 @@ import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 import java.util.Arrays;
 
 /**
- * A manager of Kubernetes secondary resources for Postman runtime module defined by a {@type MicrocksSpec} custom
+ * A manager of Kubernetes secondary resources for Postman runtime module defined by a {@code MicrocksSpec} custom
  * resource specification. Takes care of initialising a reconciliation workflow as well as event sources for
  * the different dependent resources.
  * @author laurent
@@ -50,6 +50,10 @@ public class PostmanRuntimeDependentResourcesManager {
    private KubernetesDependentResource<Deployment, Microcks> deploymentDR;
    private KubernetesDependentResource<Service, Microcks> serviceDR;
 
+   /**
+    * Creates a PostmanRuntimeDependentResourcesManager.
+    * @param client Kubernetes cluster client
+    */
    public PostmanRuntimeDependentResourcesManager(KubernetesClient client) {
       this.client = client;
    }

@@ -44,12 +44,19 @@ public class MongoDBServiceDependentResource extends CRUDKubernetesDependentReso
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** The port used for expositation of the service. */
    public static final int MONGODB_SERVICE_PORT = 27017;
 
+   /** Default empty constructor. */
    public MongoDBServiceDependentResource() {
       super(Service.class);
    }
 
+   /**
+    * Get the name of Service given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Service
+    */
    public static final String getServiceName(Microcks microcks) {
       return MongoDBDeploymentDependentResource.getDeploymentName(microcks);
    }

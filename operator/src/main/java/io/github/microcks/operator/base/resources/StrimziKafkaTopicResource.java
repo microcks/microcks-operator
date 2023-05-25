@@ -49,18 +49,18 @@ public class StrimziKafkaTopicResource {
    private KubernetesClient client;
 
    /**
-    *
-    * @param client
+    * Create a new StrimziKafkaTopicResource with a client.
+    * @param client Kuebrnetes client to use for connecting to cluster.
     */
    public StrimziKafkaTopicResource(KubernetesClient client) {
       this.client = client;
    }
 
    /**
-    *
-    * @param microcks
-    * @param context
-    * @return
+    * Compute a desired Strimzi Kafka Topic resource using a GenericKubernetesResource representation.
+    * @param microcks The primary microcks resource
+    * @param context The reconciliation context
+    * @return A GenericKubernetesResource holding a KafkaTopic resource from Strimzi
     */
    public GenericKubernetesResource desired(Microcks microcks, Context<Microcks> context) {
       logger.infof("Building desired Strimzi Kafka Topic for '%s'", microcks.getMetadata().getName());
@@ -92,8 +92,10 @@ public class StrimziKafkaTopicResource {
       return genericTopic;
    }
 
+   /** A Qute templates accessor. */
    @CheckedTemplate
    public static class Templates {
+      /** Qute template for KafkaTopic resource. */
       public static native TemplateInstance kafkaTopic(String name, String namespace);
    }
 }

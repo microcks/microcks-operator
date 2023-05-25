@@ -49,10 +49,16 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
 
    private static final String RESOURCE_SUFFIX  = "-async-minion";
 
+   /** Default empty constructor. */
    public AsyncMinionDeploymentDependentResource() {
       super(Deployment.class);
    }
 
+   /**
+    * Get the name of Deployment given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Deployment
+    */
    public static final String getDeploymentName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }

@@ -46,10 +46,16 @@ public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentR
 
    private static final String RESOURCE_SUFFIX = "-keycloak-config";
 
+   /** Default empty constructor. */
    public KeycloakConfigMapDependentResource() {
       super(ConfigMap.class);
    }
 
+   /**
+    * Get the name of ConfigMap given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of ConfigMap
+    */
    public static final String getConfigMapName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }
@@ -82,8 +88,10 @@ public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentR
       return builder.build();
    }
 
+   /** A Qute templates accessor. */
    @CheckedTemplate
    public static class Templates {
+      /** Qute template for microcks-realm.json. */
       public static native TemplateInstance microcksRealm(MicrocksSpec spec);
    }
 }

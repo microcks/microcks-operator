@@ -43,6 +43,7 @@ public class AsyncMinionServiceDependentResource extends CRUDKubernetesDependent
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** Default empty constructor. */
    public AsyncMinionServiceDependentResource() {
       super(Service.class);
    }

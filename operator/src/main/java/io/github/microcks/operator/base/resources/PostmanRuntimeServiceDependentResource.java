@@ -43,6 +43,7 @@ public class PostmanRuntimeServiceDependentResource extends CRUDKubernetesDepend
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** Default empty constructor. */
    public PostmanRuntimeServiceDependentResource() {
       super(Service.class);
    }

@@ -44,10 +44,16 @@ public class PostmanRuntimeDeploymentDependentResource extends CRUDKubernetesDep
 
    private static final String RESOURCE_SUFFIX = "-postman-runtime";
 
+   /** Default empty constructor. */
    public PostmanRuntimeDeploymentDependentResource() {
       super(Deployment.class);
    }
 
+   /**
+    * Get the name of Deployment given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Deployment
+    */
    public static final String getDeploymentName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }

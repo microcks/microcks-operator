@@ -43,10 +43,16 @@ public class KeycloakServiceDependentResource extends CRUDKubernetesDependentRes
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** Default empty constructor. */
    public KeycloakServiceDependentResource() {
       super(Service.class);
    }
 
+   /**
+    * Get the name of Service given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Service
+    */
    public static String getServiceName(Microcks microcks) {
       return KeycloakDeploymentDependentResource.getDeploymentName(microcks);
    }

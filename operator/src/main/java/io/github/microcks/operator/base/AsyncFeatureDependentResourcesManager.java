@@ -42,7 +42,7 @@ import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 import java.util.Arrays;
 
 /**
- * A manager of Async feature secondary resources for Keycloak module defined by a {@type MicrocksSpec} custom
+ * A manager of Async feature secondary resources for Keycloak module defined by a {@code MicrocksSpec} custom
  * resource specification. Takes care of initialising a reconciliation workflow as well as event sources for
  * the different dependent resources.
  * @author laurent
@@ -55,6 +55,10 @@ public class AsyncFeatureDependentResourcesManager {
    private KubernetesDependentResource<Deployment, Microcks> deploymentDR;
    private KubernetesDependentResource<Service, Microcks> serviceDR;
 
+   /**
+    * Create a new AsyncFeatureDependentResourcesManager.
+    * @param client Kubernetes client to use
+    */
    public AsyncFeatureDependentResourcesManager(KubernetesClient client) {
       this.client = client;
    }

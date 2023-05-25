@@ -78,7 +78,7 @@ import java.util.stream.Stream;
 import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
 
 /**
- * Reconciliation entry point for the {@type Microcks} Kubernetes custom resource.
+ * Reconciliation entry point for the {@code Microcks} Kubernetes custom resource.
  * @author laurent
  */
 @ControllerConfiguration(namespaces = WATCH_CURRENT_NAMESPACE)
@@ -169,16 +169,16 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
       logger.infof("Starting reconcile operation for '%s'", microcks.getMetadata().getName());
 
-
-      ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
       /*
+      // Some diagnostic helpers during development.
+      ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
       logger.info("initSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(spec));
       logger.info("ExtraProperties before: " + spec.getMicrocks().getExtraProperties());
       logger.info("mockInvocationStats before: " + spec.getMicrocks().isMockInvocationStats());
        */
 
+      // Load default values for CR and build a complete representation.
       Microcks defaultCR = loadDefaultMicrocksCR();
-      //logger.info("defaultCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultCR.getSpec()));
 
       MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
       Microcks completeCR = new Microcks();
@@ -188,6 +188,8 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       completeCR.setStatus(microcks.getStatus());
 
       /*
+      // Some diagnostic helpers during development.
+      logger.info("defaultCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultCR.getSpec()));
       logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
       logger.info("ExtraProperties after: " + completeCR.getSpec().getMicrocks().getExtraProperties());
       logger.info("mockInvocationStats after: " + completeCR.getSpec().getMicrocks().isMockInvocationStats());
@@ -271,6 +273,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       updateStatus = handleWorkflowReconcileResult(asyncFeatureResult, microcks.getStatus(), "Async") || updateStatus;
 
       /*
+      // Some diagnostic helpers during development.
       Optional<WorkflowReconcileResult> workflowReconcileResult = context.managedDependentResourceContext().getWorkflowReconcileResult();
       logger.info("workflowReconcileResult: " + workflowReconcileResult);
 
@@ -338,7 +341,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             .build();
    }
 
-   /** */
+   /**
+    * Manage an OpenShift Route creation and retrieval of host name.
+    * @param route The OpenShift Route to created or replace
+    * @param ns The namespace where to create it
+    * @param refs The controller owner references
+    * @return The host to which the route is attached
+    */
    protected String manageRouteAndGetURL(Route route, String ns, List<OwnerReference> refs) {
       route.getMetadata().setOwnerReferences(refs);
       route = client.adapt(OpenShiftClient.class).routes().inNamespace(ns).resource(route).createOrReplace();
@@ -346,7 +355,17 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       return route.getSpec().getHost();
    }
 
-   /** */
+   /**
+    * Manage an Ingress creation and retrieval of host name.
+    * @param microcks The primary resource this Ingress comes from
+    * @param ingressSpec The specification of Ingress to create
+    * @param secretName The name of secret where TLS properties are stored
+    * @param host The host choosen for exposing the ingress
+    * @param ingress The INgress resource to create or replace
+    * @param ns The namespace where to create it
+    * @param refs The controller owner references
+    * @return The host to which the ingress is attached (read from ingress spec).
+    */
    protected String manageIngressAndGetURL(Microcks microcks, IngressSpec ingressSpec, String secretName, String host,
                                         Ingress ingress, String ns, List<OwnerReference> refs) {
       createIngressSecretIfNeeded(microcks, ingressSpec, secretName, host);
@@ -356,7 +375,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       return ingress.getSpec().getRules().get(0).getHost();
    }
 
-   /** Manage creation of Ingress Secret if required. */
+   /**
+    * Manage creation of Ingress Secret if required.
+    * @param microcks The primary resource this Ingress comes from
+    * @param spec The specification of Ingress to create a secret for
+    * @param secretName The name of secret where TLS properties are stored
+    * @param host The host choosen for exposing the ingress
+    */
    protected void createIngressSecretIfNeeded(Microcks microcks, IngressSpec spec, String secretName, String host) {
       if (IngressSpecUtil.generateCertificateSecret(spec)) {
          final String ns = microcks.getMetadata().getNamespace();
@@ -374,7 +399,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       }
    }
 
-   /** */
+   /**
+    * Analyses the result of a reconciliation workflow, update status if needed and tell if updated as a result.
+    * @param result The workflow reconciliation result
+    * @param status The status sub-resource of the Microcks primary resource
+    * @param module THe module to handle the status for
+    * @return Whether the status has been updated.
+    */
    protected boolean handleWorkflowReconcileResult(WorkflowReconcileResult result, MicrocksStatus status, String module) {
       logger.debugf("Reconciled %s dependents: %s", module,  result.getReconciledDependents());
       boolean updateStatus = false;
@@ -404,6 +435,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
          }
 
          /*
+         // Some diagnostic helpers during development.
          for (DependentResource depRes : result.getReconciledDependents()) {
             ReconcileResult recRes = result.getReconcileResults().get(depRes);
             logger.debugf("- reconciled: '%s' with op", depRes.getClass().getSimpleName());
@@ -414,13 +446,21 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       return updateStatus;
    }
 
-   /** */
+   /**
+    * Tell if we should install the Strimzi Kafka resources.
+    * @param microcks The microcks primary resource Strimzi will be attached to
+    * @return True if installation should be done, false otherwise.
+    */
    protected boolean installStrimziKafka(Microcks microcks) {
       return microcks.getSpec().getFeatures().getAsync().isEnabled()
             && microcks.getSpec().getFeatures().getAsync().getKafka().isInstall();
    }
 
-   /** */
+   /**
+    * Manage the installation of the Strimzi Kafka resources.
+    * @param microcks The microcks primary resource Strimzi will be attached to
+    * @param context The reconciliation context
+    */
    protected void manageStrimziKafkaInstall(Microcks microcks, Context<Microcks> context) {
       // Build desired Strimzi Kafka broker and topic.
       StrimziKafkaResource strimziKafka = new StrimziKafkaResource(client);
@@ -435,6 +475,11 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       createOrReplaceGenericResource(strimziTopicRes, microcks.getMetadata().getNamespace());
    }
 
+   /**
+    * Remove and un-watch the Strimzi Kafka resources.
+    * @param microcks The microcks primary resource Strimzi are attached to
+    * @param context The reconciliation context
+    */
    protected void unmanageStrimziKafkaInstall(Microcks microcks, Context<Microcks> context) {
       // Build desired Strimzi Kafka broker and topic.
       StrimziKafkaResource strimziKafka = new StrimziKafkaResource(client);

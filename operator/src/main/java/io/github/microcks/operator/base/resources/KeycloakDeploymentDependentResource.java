@@ -44,10 +44,16 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
 
    private static final String RESOURCE_SUFFIX = "-keycloak";
 
+   /** Default empty constructor. */
    public KeycloakDeploymentDependentResource() {
       super(Deployment.class);
    }
 
+   /**
+    * Get the name of Deployment given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Deployment
+    */
    public static final String getDeploymentName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }

@@ -44,18 +44,28 @@ public class KeycloakSecretDependentResource extends KubernetesDependentResource
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** The secret key used to store username. */
    public static final String KEYCLOAK_ADMIN_KEY = "username";
+   /** The secret key used to store password. */
    public static final String KEYCLOAK_ADMIN_PASSWORD_KEY = "password";
 
+   /** The secret key used to store postgres username. */
    public static final String DATABASE_USER_KEY = "postgresUsername";
+   /** The secret key used to store postgres password. */
    public static final String DATABASE_USER_PASSWORD_KEY = "postgresPassword";
 
    private static final String RESOURCE_SUFFIX = "-keycloak-admin";
 
+   /** Default empty constructor. */
    public KeycloakSecretDependentResource() {
       super(Secret.class);
    }
 
+   /**
+    * Get the name of Secret given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Secret
+    */
    public static final String getSecretName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }

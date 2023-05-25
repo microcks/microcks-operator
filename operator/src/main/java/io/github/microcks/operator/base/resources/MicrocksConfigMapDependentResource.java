@@ -53,6 +53,7 @@ public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentR
    private ObjectMapper EXTRA_PROPERTIES_WRITER = new ObjectMapper(new YAMLFactory()
          .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
 
+   /** Default empty constructor. */
    public MicrocksConfigMapDependentResource() {
       super(ConfigMap.class);
    }
@@ -98,12 +99,16 @@ public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentR
       return builder.build();
    }
 
+   /** A Qute templates accessor. */
    @CheckedTemplate
    public static class Templates {
+      /** Qute template for application.properties. */
       public static native TemplateInstance application(String name, MicrocksSpec spec);
 
+      /** Qute template for features.properties. */
       public static native TemplateInstance features(String name, MicrocksSpec spec);
 
+      /** Qute template for logback.xml. */
       public static native TemplateInstance logback(MicrocksSpec spec);
    }
 }

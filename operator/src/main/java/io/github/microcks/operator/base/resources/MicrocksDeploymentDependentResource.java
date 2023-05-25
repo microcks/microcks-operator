@@ -46,10 +46,16 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** Default empty constructor. */
    public MicrocksDeploymentDependentResource() {
       super(Deployment.class);
    }
 
+   /**
+    * Get the name of Deployment given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Deployment
+    */
    public static final String getDeploymentName(Microcks microcks) {
       return microcks.getMetadata().getName();
    }

@@ -45,16 +45,25 @@ public class MongoDBSecretDependentResource extends KubernetesDependentResource<
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** The secret key used to store username. */
    public static final String MONGODB_USER_KEY = "username";
+   /** The secret key used to store password. */
    public static final String MONGODB_PASSWORD_KEY = "password";
+   /** The secret key used to store admin password. */
    public static final String MONGODB_ADMIN_PASSWORD_KEY = "adminPassword";
 
    private static final String RESOURCE_SUFFIX = "-mongodb-connection";
 
+   /** Default empty constrcutor. */
    public MongoDBSecretDependentResource() {
       super(Secret.class);
    }
 
+   /**
+    * Get the name of Secret given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Srect
+    */
    public static final String getSecretName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }

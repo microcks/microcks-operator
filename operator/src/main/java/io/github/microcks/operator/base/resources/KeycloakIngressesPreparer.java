@@ -44,19 +44,29 @@ public class KeycloakIngressesPreparer {
 
    private static final String RESOURCE_SUFFIX = "-ingress";
 
+   /**
+    * Get the Route resource name given the primary microcks.
+    * @param microcks The primary Microcks resource
+    * @return The name of OpenShift Route
+    */
    public static final String getRouteName(Microcks microcks) {
       return KeycloakServiceDependentResource.getServiceName(microcks);
    }
 
+   /**
+    * Get the Secret name where ingress TLS props are stored given the primary microcks.
+    * @param microcks The primary Microcks resource
+    * @return The name of Kubernetes secret for Ingress
+    */
    public static final String getIngressSecretName(Microcks microcks) {
       return getRouteName(microcks) + RESOURCE_SUFFIX;
    }
 
    /**
-    *
-    * @param microcks
-    * @param context
-    * @return
+    * Prepare a Route resource giving the primary microcks.
+    * @param microcks The primary Microcks resource
+    * @param context The reconciliation context
+    * @return An OpenShift Route resource
     */
    public static final Route prepareRoute(Microcks microcks, Context<Microcks> context) {
       logger.infof("Preparing desired Keycloak Route for '%s'", microcks.getMetadata().getName());
@@ -110,10 +120,10 @@ public class KeycloakIngressesPreparer {
    }
 
    /**
-    *
-    * @param microcks
-    * @param context
-    * @return
+    * Prepare an Ingress resource giving the primary microcks.
+    * @param microcks The primary Microcks resource
+    * @param context The reconciliation context
+    * @return A vanilla Kubernetes Ingress resource
     */
    public static Ingress prepareIngress(Microcks microcks, Context<Microcks> context) {
       logger.infof("Preparing desired Keycloak Ingress for '%s'", microcks.getMetadata().getName());

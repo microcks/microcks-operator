@@ -46,10 +46,16 @@ public class AsyncMinionConfigMapDependentResource extends CRUDKubernetesDepende
 
    private static final String RESOURCE_SUFFIX = "-async-minion-config";
 
+   /** Default empty constructor. */
    public AsyncMinionConfigMapDependentResource() {
       super(ConfigMap.class);
    }
 
+   /**
+    * Get the name of ConfigMap given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of ConfigMap
+    */
    public static String getConfigMapName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }
@@ -82,8 +88,10 @@ public class AsyncMinionConfigMapDependentResource extends CRUDKubernetesDepende
       return builder.build();
    }
 
+   /** A Qute templates accessor. */
    @CheckedTemplate
    public static class Templates {
+      /** Qute template for application.properties. */
       public static native TemplateInstance application(String name, MicrocksSpec spec);
    }
 }

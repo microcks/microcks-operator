@@ -43,6 +43,7 @@ public class KeycloakDatabaseServiceDependentResource extends CRUDKubernetesDepe
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** Default empty constructor. */
    public KeycloakDatabaseServiceDependentResource() {
       super(Service.class);
    }

@@ -45,10 +45,16 @@ public class KeycloakDatabaseDeploymentDependentResource extends CRUDKubernetesD
 
    private static final String RESOURCE_SUFFIX = "-keycloak-postgresql";
 
+   /** Default empty constructor. */
    public KeycloakDatabaseDeploymentDependentResource() {
       super(Deployment.class);
    }
 
+   /**
+    * Get the name of Deployment given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Deployment
+    */
    public static final String getDeploymentName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }

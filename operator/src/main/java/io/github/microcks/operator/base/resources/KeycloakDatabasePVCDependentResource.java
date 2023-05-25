@@ -42,10 +42,16 @@ public class KeycloakDatabasePVCDependentResource extends CRUDKubernetesDependen
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   /** Default empty constructor. */
    public KeycloakDatabasePVCDependentResource() {
       super(PersistentVolumeClaim.class);
    }
 
+   /**
+    * Get the name of PVC given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of PVC
+    */
    public static final String getPVCName(Microcks microcks) {
       return KeycloakDatabaseDeploymentDependentResource.getDeploymentName(microcks) ;
    }

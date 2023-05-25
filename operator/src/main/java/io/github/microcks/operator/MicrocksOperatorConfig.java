@@ -24,7 +24,12 @@ package io.github.microcks.operator;
  */
 public class MicrocksOperatorConfig {
 
+   /** Name of the Microcks operator. */
    public static final String OPERATOR_NAME = "microcks-operator";
+
+   /** Label value for selecting resources managed by operator. */
    public static final String RESOURCE_LABEL_SELECTOR = "app.kubernetes.io/managed-by=" + OPERATOR_NAME;
+
+   /** Label value for the 'group' value. */
    public static final String GROUP_LABEL_VALUE = "microcks";
 }

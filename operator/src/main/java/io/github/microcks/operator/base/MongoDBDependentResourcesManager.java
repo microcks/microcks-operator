@@ -44,7 +44,7 @@ import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 import java.util.Arrays;
 
 /**
- * A manager of Kubernetes secondary resources for MongoDB module defined by a {@type MicrocksSpec} custom
+ * A manager of Kubernetes secondary resources for MongoDB module defined by a {@code MicrocksSpec} custom
  * resource specification. Takes care of initialising a reconciliation workflow as well as event sources for
  * the different dependent resources.
  * @author laurent
@@ -58,6 +58,10 @@ public class MongoDBDependentResourcesManager {
    private KubernetesDependentResource<Deployment, Microcks> dbDeploymentDR;
    private KubernetesDependentResource<Service, Microcks> dbServiceDR;
 
+   /**
+    * Creates a MongoDBDependentResourcesManager.
+    * @param client Kubernetes cluster client
+    */
    public MongoDBDependentResourcesManager(KubernetesClient client) {
       this.client = client;
    }

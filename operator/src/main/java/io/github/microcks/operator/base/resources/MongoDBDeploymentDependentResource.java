@@ -40,16 +40,21 @@ import org.jboss.logging.Logger;
 public class MongoDBDeploymentDependentResource extends CRUDKubernetesDependentResource<Deployment, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
-
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
    private static final String RESOURCE_SUFFIX = "-mongodb";
 
+   /** Default empty constructor. */
    public MongoDBDeploymentDependentResource() {
       super(Deployment.class);
    }
 
+   /**
+    * Get the name of Deployment given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of Deployment
+    */
    public static final String getDeploymentName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }
