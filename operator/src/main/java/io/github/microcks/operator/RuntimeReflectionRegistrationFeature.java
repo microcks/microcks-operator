@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
+ * A GraalVM feature that allows auto-registration of classes for serialization. This to avoid having to maintain the
+ * reflection-config.json with large classes list.
  * @author laurent
  */
 public class RuntimeReflectionRegistrationFeature implements Feature {
@@ -63,6 +65,10 @@ public class RuntimeReflectionRegistrationFeature implements Feature {
       }
    }
 
+   /**
+    * Register all class elements (constructors, methods, fields) for reflection in GraalVM.
+    * @param clazz The class to register.
+    */
    public void registerClassForReflection(Class clazz) {
       logger.infof("Registering %s for reflection", clazz.getCanonicalName());
       RuntimeReflection.register(clazz);
@@ -74,20 +80,27 @@ public class RuntimeReflectionRegistrationFeature implements Feature {
       RuntimeReflection.register(clazz.getFields());
    }
 
-   public Set<Class> findAllClassesInSamePackageAndSameLocation(ClassLoader loader, Class clazz) {
+   /**
+    * Build a set of classes having the same packages and being in same jar/path location that the one
+    * provided as the reference class.
+    * @param loader The classloader to use when instrospecting for classes
+    * @param referenceClazz The reference class to use for finding base package and same location.
+    * @return A Set of classes matching the package and location of reference.
+    */
+   public Set<Class> findAllClassesInSamePackageAndSameLocation(ClassLoader loader, Class referenceClazz) {
       // We used https://www.baeldung.com/java-find-all-classes-in-package as a starting point but
       // since requested package is dispatched in different Jars due to Quarkus class generation mechanisms,
       // we could not find back the package classes. We had to go the hard way through filesystem and path.
-      final String packageName = clazz.getPackageName();
-      final String packagePath = clazz.getPackageName().replace('.', '/');
+      final String packageName = referenceClazz.getPackageName();
+      final String packagePath = referenceClazz.getPackageName().replace('.', '/');
       final String extension = ".class";
 
       URI clazzURI ;
       try {
-         clazzURI = loader.getResource(clazz.getPackageName().replace('.', '/') + "/" + clazz.getSimpleName() + ".class").toURI();
+         clazzURI = loader.getResource(referenceClazz.getPackageName().replace('.', '/') + "/" + referenceClazz.getSimpleName() + ".class").toURI();
       } catch (Exception e) {
          // Return empty set.
-         logger.errorf("Exception while loading URI for clazz %s", clazz.getCanonicalName());
+         logger.errorf("Exception while loading URI for clazz %s", referenceClazz.getCanonicalName());
          return new HashSet<>();
       }
 
