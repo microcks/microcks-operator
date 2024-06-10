@@ -1,20 +1,17 @@
 /*
- * Licensed to Laurent Broudoux (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright The Microcks Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.microcks.operator;
 
@@ -139,20 +136,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    @Override
    public Map<String, EventSource> prepareEventSources(EventSourceContext<Microcks> context) {
       // Build names event sources from event sources coming from all the modules reconcilers.
-      return EventSourceInitializer.nameEventSources(
+      return EventSourceInitializer.nameEventSources(Stream.concat(
             Stream.concat(
-               Stream.concat(
-                  Stream.concat(
-                        Arrays.stream(keycloakReconciler.initEventSources(context)),
-                        Arrays.stream(mongoDBReconciler.initEventSources(context))
-                  ),
-                  Stream.concat(
-                        Arrays.stream(microcksReconciler.initEventSources(context)),
-                        Arrays.stream(postmanRuntimeReconciler.initEventSources(context))
-                  )
-               ), Arrays.stream(asyncFeatureReconciler.initEventSources(context))
-            ).toArray(EventSource[]::new)
-      );
+                  Stream.concat(Arrays.stream(keycloakReconciler.initEventSources(context)),
+                        Arrays.stream(mongoDBReconciler.initEventSources(context))),
+                  Stream.concat(Arrays.stream(microcksReconciler.initEventSources(context)),
+                        Arrays.stream(postmanRuntimeReconciler.initEventSources(context)))),
+            Arrays.stream(asyncFeatureReconciler.initEventSources(context))).toArray(EventSource[]::new));
    }
 
    @Override
@@ -170,11 +160,11 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       logger.infof("Starting reconcile operation for '%s'", microcks.getMetadata().getName());
 
       /*
-      // Some diagnostic helpers during development.
-      ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
-      logger.info("initSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(spec));
-      logger.info("ExtraProperties before: " + spec.getMicrocks().getExtraProperties());
-      logger.info("mockInvocationStats before: " + spec.getMicrocks().isMockInvocationStats());
+       * // Some diagnostic helpers during development. ObjectMapper mapper = new ObjectMapper(new
+       * YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)); logger.info("initSpec: " +
+       * mapper.writerWithDefaultPrettyPrinter().writeValueAsString(spec)); logger.info("ExtraProperties before: " +
+       * spec.getMicrocks().getExtraProperties()); logger.info("mockInvocationStats before: " +
+       * spec.getMicrocks().isMockInvocationStats());
        */
 
       // Load default values for CR and build a complete representation.
@@ -188,11 +178,11 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       completeCR.setStatus(microcks.getStatus());
 
       /*
-      // Some diagnostic helpers during development.
-      logger.info("defaultCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultCR.getSpec()));
-      logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
-      logger.info("ExtraProperties after: " + completeCR.getSpec().getMicrocks().getExtraProperties());
-      logger.info("mockInvocationStats after: " + completeCR.getSpec().getMicrocks().isMockInvocationStats());
+       * // Some diagnostic helpers during development. logger.info("defaultCR: " +
+       * mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultCR.getSpec())); logger.info("CompleteCR: " +
+       * mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR)); logger.info("ExtraProperties after: "
+       * + completeCR.getSpec().getMicrocks().getExtraProperties()); logger.info("mockInvocationStats after: " +
+       * completeCR.getSpec().getMicrocks().isMockInvocationStats());
        */
 
       boolean isOpenShift = client.adapt(OpenShiftClient.class).isSupported();
@@ -214,11 +204,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             // Problem.
             // Either on OpenShift and you should enable route in the CR
             // Either on vanilla Kubernetes and you should specify URL
-            logger.error("No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url " +
-                  "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
+            logger.error(
+                  "No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url "
+                        + "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
             microcks.getStatus().setStatus(Status.ERROR);
-            microcks.getStatus().setMessage("\"No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url " +
-                  "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
+            microcks.getStatus().setMessage(
+                  "\"No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url "
+                        + "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
             return UpdateControl.updateStatus(microcks);
          }
       } else {
@@ -227,7 +219,8 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
          } else {
             logger.error("No Microcks URL specified and not exposing. You must add spec.microcks.url");
             microcks.getStatus().setStatus(Status.ERROR);
-            microcks.getStatus().setMessage("Not exposing Microcks and no URL specified. You must add spec.microcks.url");
+            microcks.getStatus()
+                  .setMessage("Not exposing Microcks and no URL specified. You must add spec.microcks.url");
             return UpdateControl.updateStatus(microcks);
          }
       }
@@ -239,18 +232,22 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             // We can create an OpenShift Route here to get the Url.
             keycloakUrl = manageRouteAndGetURL(KeycloakIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
             logger.infof("Retrieved Keycloak URL from Route: %s", keycloakUrl);
-         } else if (completeCR.getSpec().getKeycloak().isInstall() && completeCR.getSpec().getKeycloak().getUrl() != null) {
+         } else if (completeCR.getSpec().getKeycloak().isInstall()
+               && completeCR.getSpec().getKeycloak().getUrl() != null) {
             // We can create an Ingress here to get the Url.
-            keycloakUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getKeycloak().getIngress(), KeycloakIngressesPreparer.getIngressSecretName(microcks),
-                  completeCR.getSpec().getKeycloak().getUrl(), KeycloakIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
+            keycloakUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getKeycloak().getIngress(),
+                  KeycloakIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getKeycloak().getUrl(),
+                  KeycloakIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
 
             logger.infof("Retrieved Keycloak URL from Ingress: %s", keycloakUrl);
          } else {
-            logger.error("No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url " +
-                  "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
+            logger.error(
+                  "No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url "
+                        + "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
             microcks.getStatus().setStatus(Status.ERROR);
-            microcks.getStatus().setMessage("No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url " +
-                  "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
+            microcks.getStatus().setMessage(
+                  "No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url "
+                        + "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
             return UpdateControl.updateStatus(microcks);
          }
 
@@ -258,10 +255,12 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
          if (spec.getKeycloak() != null && spec.getKeycloak().getUrl() != null) {
             keycloakUrl = spec.getKeycloak().getUrl();
          } else {
-            logger.error("Not installing Keycloak but no URL specified. You must either add spec.keycloak.url or spec.keycloak.install=true with OpenShift support.");
+            logger.error(
+                  "Not installing Keycloak but no URL specified. You must either add spec.keycloak.url or spec.keycloak.install=true with OpenShift support.");
             microcks.getStatus().setStatus(Status.ERROR);
-            microcks.getStatus().setMessage("Not installing Keycloak but no URL specified. You must either add spec.keycloak.url " +
-                  "or spec.keycloak.install=true with OpenShift support.");
+            microcks.getStatus()
+                  .setMessage("Not installing Keycloak but no URL specified. You must either add spec.keycloak.url "
+                        + "or spec.keycloak.install=true with OpenShift support.");
             return UpdateControl.updateStatus(microcks);
          }
       }
@@ -284,14 +283,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       updateStatus = handleWorkflowReconcileResult(asyncFeatureResult, microcks.getStatus(), "Async") || updateStatus;
 
       /*
-      // Some diagnostic helpers during development.
-      Optional<WorkflowReconcileResult> workflowReconcileResult = context.managedDependentResourceContext().getWorkflowReconcileResult();
-      logger.info("workflowReconcileResult: " + workflowReconcileResult);
-
-      for (Deployment deployment : secondaryDeployments) {
-         logger.infof("Deployment %s, ready replicas: %d", deployment.getMetadata().getName(), deployment.getStatus().getReadyReplicas());
-      }
-      */
+       * // Some diagnostic helpers during development. Optional<WorkflowReconcileResult> workflowReconcileResult =
+       * context.managedDependentResourceContext().getWorkflowReconcileResult(); logger.info("workflowReconcileResult: "
+       * + workflowReconcileResult);
+       * 
+       * for (Deployment deployment : secondaryDeployments) { logger.infof("Deployment %s, ready replicas: %d",
+       * deployment.getMetadata().getName(), deployment.getStatus().getReadyReplicas()); }
+       */
 
       //
       if (installStrimziKafka(completeCR)) {
@@ -341,20 +339,16 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
    /** Build a new OwnerReference to assign to CR resources. */
    private OwnerReference getOwnerReference(Microcks primary) {
-      return new OwnerReferenceBuilder()
-            .withController(true)
-            .withKind(primary.getKind())
-            .withApiVersion(primary.getApiVersion())
-            .withName(primary.getMetadata().getName())
-            .withUid(primary.getMetadata().getUid())
-            .build();
+      return new OwnerReferenceBuilder().withController(true).withKind(primary.getKind())
+            .withApiVersion(primary.getApiVersion()).withName(primary.getMetadata().getName())
+            .withUid(primary.getMetadata().getUid()).build();
    }
 
    /**
     * Manage an OpenShift Route creation and retrieval of host name.
     * @param route The OpenShift Route to created or replace
-    * @param ns The namespace where to create it
-    * @param refs The controller owner references
+    * @param ns    The namespace where to create it
+    * @param refs  The controller owner references
     * @return The host to which the route is attached
     */
    protected String manageRouteAndGetURL(Route route, String ns, List<OwnerReference> refs) {
@@ -366,17 +360,17 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
    /**
     * Manage an Ingress creation and retrieval of host name.
-    * @param microcks The primary resource this Ingress comes from
+    * @param microcks    The primary resource this Ingress comes from
     * @param ingressSpec The specification of Ingress to create
-    * @param secretName The name of secret where TLS properties are stored
-    * @param host The host choosen for exposing the ingress
-    * @param ingress The INgress resource to create or replace
-    * @param ns The namespace where to create it
-    * @param refs The controller owner references
+    * @param secretName  The name of secret where TLS properties are stored
+    * @param host        The host choosen for exposing the ingress
+    * @param ingress     The INgress resource to create or replace
+    * @param ns          The namespace where to create it
+    * @param refs        The controller owner references
     * @return The host to which the ingress is attached (read from ingress spec).
     */
    protected String manageIngressAndGetURL(Microcks microcks, IngressSpec ingressSpec, String secretName, String host,
-                                        Ingress ingress, String ns, List<OwnerReference> refs) {
+         Ingress ingress, String ns, List<OwnerReference> refs) {
       createIngressSecretIfNeeded(microcks, ingressSpec, secretName, host);
       ingress.getMetadata().setOwnerReferences(refs);
       ingress = client.network().v1().ingresses().inNamespace(ns).resource(ingress).createOrReplace();
@@ -386,10 +380,10 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
    /**
     * Manage creation of Ingress Secret if required.
-    * @param microcks The primary resource this Ingress comes from
-    * @param spec The specification of Ingress to create a secret for
+    * @param microcks   The primary resource this Ingress comes from
+    * @param spec       The specification of Ingress to create a secret for
     * @param secretName The name of secret where TLS properties are stored
-    * @param host The host choosen for exposing the ingress
+    * @param host       The host choosen for exposing the ingress
     */
    protected void createIngressSecretIfNeeded(Microcks microcks, IngressSpec spec, String secretName, String host) {
       if (IngressSpecUtil.generateCertificateSecret(spec)) {
@@ -415,12 +409,14 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
     * @param module THe module to handle the status for
     * @return Whether the status has been updated.
     */
-   protected boolean handleWorkflowReconcileResult(WorkflowReconcileResult result, MicrocksStatus status, String module) {
-      logger.debugf("Reconciled %s dependents: %s", module,  result.getReconciledDependents());
+   protected boolean handleWorkflowReconcileResult(WorkflowReconcileResult result, MicrocksStatus status,
+         String module) {
+      logger.debugf("Reconciled %s dependents: %s", module, result.getReconciledDependents());
       boolean updateStatus = false;
 
       if (result.getReconciledDependents() != null && result.getReconciledDependents().size() > 0) {
-         logger.debugf("We've reconciled %d dependent resources for module '%s'", result.getReconciledDependents().size(), module);
+         logger.debugf("We've reconciled %d dependent resources for module '%s'",
+               result.getReconciledDependents().size(), module);
 
          if (result.getNotReadyDependents().size() > 0) {
             logger.info("  Got not ready dependents: " + result.getNotReadyDependents().size());
@@ -428,7 +424,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             condition.setStatus(Status.DEPLOYING);
             condition.setLastTransitionTime(getCurrentTransitionTime());
             updateStatus = true;
-         }  else if (result.allDependentResourcesReady()) {
+         } else if (result.allDependentResourcesReady()) {
             logger.info("  All dependents are ready!");
             Condition condition = getOrCreateCondition(status, module + "Ready");
             condition.setStatus(Status.READY);
@@ -444,13 +440,12 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
          }
 
          /*
-         // Some diagnostic helpers during development.
-         for (DependentResource depRes : result.getReconciledDependents()) {
-            ReconcileResult recRes = result.getReconcileResults().get(depRes);
-            logger.debugf("- reconciled: '%s' with op", depRes.getClass().getSimpleName());
-            logger.infof("- reconciled: '%s' with op %s", depRes.getClass().getSimpleName(), recRes.getSingleOperation());
-         }
-         */
+          * // Some diagnostic helpers during development. for (DependentResource depRes :
+          * result.getReconciledDependents()) { ReconcileResult recRes = result.getReconcileResults().get(depRes);
+          * logger.debugf("- reconciled: '%s' with op", depRes.getClass().getSimpleName());
+          * logger.infof("- reconciled: '%s' with op %s", depRes.getClass().getSimpleName(),
+          * recRes.getSingleOperation()); }
+          */
       }
       return updateStatus;
    }
@@ -468,7 +463,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    /**
     * Manage the installation of the Strimzi Kafka resources.
     * @param microcks The microcks primary resource Strimzi will be attached to
-    * @param context The reconciliation context
+    * @param context  The reconciliation context
     */
    protected void manageStrimziKafkaInstall(Microcks microcks, Context<Microcks> context) {
       // Build desired Strimzi Kafka broker and topic.
@@ -487,7 +482,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    /**
     * Remove and un-watch the Strimzi Kafka resources.
     * @param microcks The microcks primary resource Strimzi are attached to
-    * @param context The reconciliation context
+    * @param context  The reconciliation context
     */
    protected void unmanageStrimziKafkaInstall(Microcks microcks, Context<Microcks> context) {
       // Build desired Strimzi Kafka broker and topic.
@@ -528,13 +523,11 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    private void createOrReplaceGenericResource(GenericKubernetesResource genericResource, String namespace) {
       // Create the generic Kubernetes resource.
       client.genericKubernetesResources(genericResource.getApiVersion(), genericResource.getKind())
-            .inNamespace(namespace)
-            .resource(genericResource)
-            .createOrReplace();
+            .inNamespace(namespace).resource(genericResource).createOrReplace();
 
       // Now take care about registering a watcher if necessary.
-      WatcherKey watcherKey = new WatcherKey(genericResource.getMetadata().getName(),
-            genericResource.getKind(), genericResource.getApiVersion());
+      WatcherKey watcherKey = new WatcherKey(genericResource.getMetadata().getName(), genericResource.getKind(),
+            genericResource.getApiVersion());
 
       WatcherManager watchers = WatcherManager.getInstance();
       if (!watchers.hasWatcher(watcherKey)) {
@@ -547,23 +540,22 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
                   logger.infof("Been deleted, current resource is %s", resource);
                }
             }
+
             @Override
             public void onClose(WatcherException cause) {
                logger.infof("Watcher was closed due to %e", cause.getMessage());
             }
          };
          client.genericKubernetesResources(genericResource.getApiVersion(), genericResource.getKind())
-               .inNamespace(namespace)
-               .withName(genericResource.getMetadata().getName())
-               .watch(watcher);
+               .inNamespace(namespace).withName(genericResource.getMetadata().getName()).watch(watcher);
          watchers.registerWatcher(watcherKey, watcher);
       }
    }
 
    /** */
    private void removeGenericResourceWatcher(GenericKubernetesResource genericResource, String namespace) {
-      WatcherKey watcherKey = new WatcherKey(genericResource.getMetadata().getName(),
-            genericResource.getKind(), genericResource.getApiVersion());
+      WatcherKey watcherKey = new WatcherKey(genericResource.getMetadata().getName(), genericResource.getKind(),
+            genericResource.getApiVersion());
 
       WatcherManager watchers = WatcherManager.getInstance();
       watchers.unregisterWatcher(watcherKey);

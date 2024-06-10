@@ -1,20 +1,17 @@
 /*
- * Licensed to Laurent Broudoux (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright The Microcks Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.microcks.operator.base.resources;
 
@@ -74,121 +71,53 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
 
       Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/microcks-deployment.yml");
       DeploymentBuilder builder = new DeploymentBuilder(deployment);
-      builder.editMetadata()
-               .withName(getDeploymentName(microcks))
-               .withNamespace(microcksMetadata.getNamespace())
-               .addToLabels("app", microcksName)
-               .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
-               .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
-               .addToLabels("app.kubernetes.io/part-of", microcksName)
-               .addToAnnotations("app.openshift.io/connects-to", MongoDBDeploymentDependentResource.getDeploymentName(microcks)
-                     + "," + PostmanRuntimeDeploymentDependentResource.getDeploymentName(microcks)
-                     + "," + KeycloakDeploymentDependentResource.getDeploymentName(microcks))
-            .endMetadata()
-            .editSpec()
-               .editSelector().addToMatchLabels("app", microcksName).endSelector()
-               .editTemplate()
-                  // make sure label selector matches label (which has to be matched by service selector too)
-                  .editMetadata().addToLabels("app", microcksName).endMetadata()
-                  .editSpec()
-                     .editFirstContainer()
-                        .withImage("quay.io/microcks/microcks:nightly")
-                        .addNewEnv()
-                           .withName("SPRING_PROFILES_ACTIVE")
-                           .withValue("prod")
-                        .endEnv()
-                        .addNewEnv()
-                           .withName("SPRING_DATA_MONGODB_URI")
-                           .withValue(getMongoDBConnection(microcks))
-                        .endEnv()
-                        .addNewEnv()
-                           .withName("SPRING_DATA_MONGODB_DATABASE")
-                           .withValue(getMongoDBDatabase(microcks))
-                        .endEnv()
-                        .addNewEnv()
-                           .withName("SPRING_DATA_MONGODB_USER")
-                           .withNewValueFrom()
-                              .withNewSecretKeyRef()
-                                 .withName(getMongoDBSecretName(microcks))
-                                 .withKey(getMongoDBSecretUsernameKey(microcks))
-                              .endSecretKeyRef()
-                           .endValueFrom()
-                        .endEnv()
-                        .addNewEnv()
-                           .withName("SPRING_DATA_MONGODB_PASSWORD")
-                           .withNewValueFrom()
-                              .withNewSecretKeyRef()
-                                 .withName(getMongoDBSecretName(microcks))
-                                 .withKey(getMongoDBSecretPasswordKey(microcks))
-                              .endSecretKeyRef()
-                           .endValueFrom()
-                        .endEnv()
-                        .addNewEnv()
-                           .withName("KEYCLOAK_URL")
-                           .withValue(getKeycloakUrl(microcks))
-                        .endEnv()
-                        .addNewEnv()
-                           .withName("KAFKA_BOOTSTRAP_SERVER")
-                           .withValue(getKafkaUrl(microcks))
-                        .endEnv()
-                     .endContainer()
-                  .endSpec()
-               .endTemplate()
-            .endSpec();
+      builder.editMetadata().withName(getDeploymentName(microcks)).withNamespace(microcksMetadata.getNamespace())
+            .addToLabels("app", microcksName).addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
+            .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
+            .addToLabels("app.kubernetes.io/part-of", microcksName)
+            .addToAnnotations("app.openshift.io/connects-to",
+                  MongoDBDeploymentDependentResource.getDeploymentName(microcks) + ","
+                        + PostmanRuntimeDeploymentDependentResource.getDeploymentName(microcks) + ","
+                        + KeycloakDeploymentDependentResource.getDeploymentName(microcks))
+            .endMetadata().editSpec().editSelector().addToMatchLabels("app", microcksName).endSelector().editTemplate()
+            // make sure label selector matches label (which has to be matched by service selector too)
+            .editMetadata().addToLabels("app", microcksName).endMetadata().editSpec().editFirstContainer()
+            .withImage("quay.io/microcks/microcks:nightly").addNewEnv().withName("SPRING_PROFILES_ACTIVE")
+            .withValue("prod").endEnv().addNewEnv().withName("SPRING_DATA_MONGODB_URI")
+            .withValue(getMongoDBConnection(microcks)).endEnv().addNewEnv().withName("SPRING_DATA_MONGODB_DATABASE")
+            .withValue(getMongoDBDatabase(microcks)).endEnv().addNewEnv().withName("SPRING_DATA_MONGODB_USER")
+            .withNewValueFrom().withNewSecretKeyRef().withName(getMongoDBSecretName(microcks))
+            .withKey(getMongoDBSecretUsernameKey(microcks)).endSecretKeyRef().endValueFrom().endEnv().addNewEnv()
+            .withName("SPRING_DATA_MONGODB_PASSWORD").withNewValueFrom().withNewSecretKeyRef()
+            .withName(getMongoDBSecretName(microcks)).withKey(getMongoDBSecretPasswordKey(microcks)).endSecretKeyRef()
+            .endValueFrom().endEnv().addNewEnv().withName("KEYCLOAK_URL").withValue(getKeycloakUrl(microcks)).endEnv()
+            .addNewEnv().withName("KAFKA_BOOTSTRAP_SERVER").withValue(getKafkaUrl(microcks)).endEnv().endContainer()
+            .endSpec().endTemplate().endSpec();
 
       if (microcks.getSpec().getKeycloak().getPrivateUrl() != null) {
-         builder.editSpec()
-               .editTemplate()
-                  .editSpec()
-                     .editFirstContainer()
-                        .addNewEnv()
-                           .withName("KEYCLOAK_PUBLIC_URL")
-                           .withValue(getKeycloakPublicUrl(microcks))
-                        .endEnv()
-                     .endContainer()
-                  .endSpec()
-               .endTemplate().endSpec();
+         builder.editSpec().editTemplate().editSpec().editFirstContainer().addNewEnv().withName("KEYCLOAK_PUBLIC_URL")
+               .withValue(getKeycloakPublicUrl(microcks)).endEnv().endContainer().endSpec().endTemplate().endSpec();
       }
 
-      if (microcks.getSpec().getFeatures().getAsync().isEnabled() &&
-            !microcks.getSpec().getFeatures().getAsync().getKafka().isInstall()) {
+      if (microcks.getSpec().getFeatures().getAsync().isEnabled()
+            && !microcks.getSpec().getFeatures().getAsync().getKafka().isInstall()) {
 
          KafkaSpec kafkaSpec = microcks.getSpec().getFeatures().getAsync().getKafka();
          if (!KafkaAuthenticationType.NONE.equals(kafkaSpec.getAuthentication().getType())) {
-            builder.editSpec()
-                  .editTemplate()
-                     .editSpec()
-                        .editFirstContainer()
-                           .addNewEnv()
-                              .withName("KAFKA_TRUSTSTORE_PASSWORD")
-                                 .withNewValueFrom()
-                                    .withNewSecretKeyRef()
-                                       .withName(kafkaSpec.getAuthentication().getTruststoreSecretRef().getName())
-                                       .withKey(kafkaSpec.getAuthentication().getTruststoreSecretRef().getAdditionalProperties().get("passwordKey").toString())
-                                    .endSecretKeyRef()
-                              .endValueFrom()
-                           .endEnv()
-                        .endContainer()
-                     .endSpec()
-                  .endTemplate().endSpec();
+            builder.editSpec().editTemplate().editSpec().editFirstContainer().addNewEnv()
+                  .withName("KAFKA_TRUSTSTORE_PASSWORD").withNewValueFrom().withNewSecretKeyRef()
+                  .withName(kafkaSpec.getAuthentication().getTruststoreSecretRef().getName())
+                  .withKey(kafkaSpec.getAuthentication().getTruststoreSecretRef().getAdditionalProperties()
+                        .get("passwordKey").toString())
+                  .endSecretKeyRef().endValueFrom().endEnv().endContainer().endSpec().endTemplate().endSpec();
          }
          if (KafkaAuthenticationType.SSL.equals(kafkaSpec.getAuthentication().getType())) {
-            builder.editSpec()
-                  .editTemplate()
-                     .editSpec()
-                        .editFirstContainer()
-                           .addNewEnv()
-                              .withName("KAFKA_KEYSTORE_PASSWORD")
-                                 .withNewValueFrom()
-                                    .withNewSecretKeyRef()
-                                       .withName(kafkaSpec.getAuthentication().getKeystoreSecretRef().getName())
-                                       .withKey(kafkaSpec.getAuthentication().getKeystoreSecretRef().getAdditionalProperties().get("passwordKey").toString())
-                                    .endSecretKeyRef()
-                              .endValueFrom()
-                           .endEnv()
-                        .endContainer()
-                     .endSpec()
-                  .endTemplate().endSpec();
+            builder.editSpec().editTemplate().editSpec().editFirstContainer().addNewEnv()
+                  .withName("KAFKA_KEYSTORE_PASSWORD").withNewValueFrom().withNewSecretKeyRef()
+                  .withName(kafkaSpec.getAuthentication().getKeystoreSecretRef().getName())
+                  .withKey(kafkaSpec.getAuthentication().getKeystoreSecretRef().getAdditionalProperties()
+                        .get("passwordKey").toString())
+                  .endSecretKeyRef().endValueFrom().endEnv().endContainer().endSpec().endTemplate().endSpec();
          }
       }
 
@@ -196,7 +125,8 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
    }
 
    private String getMongoDBConnection(Microcks microcks) {
-      StringBuilder result = new StringBuilder("mongodb://${SPRING_DATA_MONGODB_USER}:${SPRING_DATA_MONGODB_PASSWORD}@");
+      StringBuilder result = new StringBuilder(
+            "mongodb://${SPRING_DATA_MONGODB_USER}:${SPRING_DATA_MONGODB_PASSWORD}@");
 
       if (microcks.getSpec().getMongoDB().getUri() != null) {
          result.append(microcks.getSpec().getMongoDB().getUri());

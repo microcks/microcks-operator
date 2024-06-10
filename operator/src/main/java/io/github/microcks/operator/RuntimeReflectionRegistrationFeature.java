@@ -1,20 +1,17 @@
 /*
- * Licensed to Laurent Broudoux (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright The Microcks Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.microcks.operator;
 
@@ -81,9 +78,9 @@ public class RuntimeReflectionRegistrationFeature implements Feature {
    }
 
    /**
-    * Build a set of classes having the same packages and being in same jar/path location that the one
-    * provided as the reference class.
-    * @param loader The classloader to use when instrospecting for classes
+    * Build a set of classes having the same packages and being in same jar/path location that the one provided as the
+    * reference class.
+    * @param loader         The classloader to use when instrospecting for classes
     * @param referenceClazz The reference class to use for finding base package and same location.
     * @return A Set of classes matching the package and location of reference.
     */
@@ -95,9 +92,11 @@ public class RuntimeReflectionRegistrationFeature implements Feature {
       final String packagePath = referenceClazz.getPackageName().replace('.', '/');
       final String extension = ".class";
 
-      URI clazzURI ;
+      URI clazzURI;
       try {
-         clazzURI = loader.getResource(referenceClazz.getPackageName().replace('.', '/') + "/" + referenceClazz.getSimpleName() + ".class").toURI();
+         clazzURI = loader.getResource(
+               referenceClazz.getPackageName().replace('.', '/') + "/" + referenceClazz.getSimpleName() + ".class")
+               .toURI();
       } catch (Exception e) {
          // Return empty set.
          logger.errorf("Exception while loading URI for clazz %s", referenceClazz.getCanonicalName());
@@ -106,7 +105,7 @@ public class RuntimeReflectionRegistrationFeature implements Feature {
 
       try {
          final String clazzPath = clazzURI.toString();
-         URI pkg = URI.create(clazzPath.substring(0, clazzPath .lastIndexOf('/')));
+         URI pkg = URI.create(clazzPath.substring(0, clazzPath.lastIndexOf('/')));
 
          Path root;
          if (pkg.toString().startsWith("jar:")) {
@@ -123,7 +122,9 @@ public class RuntimeReflectionRegistrationFeature implements Feature {
             // Filter classes having the same package.
             return allPaths
                   .filter(file -> file.toString().endsWith(extension) && file.toString().startsWith(packagePath))
-                  .map(file -> getClass(file.toString().substring(packagePath.length() + 1, file.toString().lastIndexOf(extension)), packageName))
+                  .map(file -> getClass(
+                        file.toString().substring(packagePath.length() + 1, file.toString().lastIndexOf(extension)),
+                        packageName))
                   .collect(Collectors.toSet());
          }
       } catch (Exception e) {

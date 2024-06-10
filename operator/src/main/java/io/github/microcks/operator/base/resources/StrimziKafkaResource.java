@@ -1,20 +1,17 @@
 /*
- * Licensed to Laurent Broudoux (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright The Microcks Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.microcks.operator.base.resources;
 
@@ -69,7 +66,7 @@ public class StrimziKafkaResource {
    /**
     * Compute a desired Strimzi Kafka resource using a GenericKubernetesResource representation.
     * @param microcks The primary microcks resource
-    * @param context The reconciliation context
+    * @param context  The reconciliation context
     * @return A GenericKubernetesResource holding a Kafka resource from Strimzi
     */
    public GenericKubernetesResource desired(Microcks microcks, Context<Microcks> context) {
@@ -79,7 +76,8 @@ public class StrimziKafkaResource {
       final String microcksName = microcksMetadata.getName();
 
       // Compute strimzi-kafka with Qute template.
-      String strimziKafka = Templates.kafka(microcksName, microcks.getSpec(), client.adapt(OpenShiftClient.class).isSupported()).render();
+      String strimziKafka = Templates
+            .kafka(microcksName, microcks.getSpec(), client.adapt(OpenShiftClient.class).isSupported()).render();
 
       Map kafkaMap = null;
       try {
@@ -91,13 +89,9 @@ public class StrimziKafkaResource {
 
       // Build the generic Kubernetes resource from map content.
       GenericKubernetesResource genericKafka = new GenericKubernetesResourceBuilder()
-            .withApiVersion(kafkaMap.get("apiVersion").toString())
-            .withKind(kafkaMap.get("kind").toString())
-            .withNewMetadata()
-               .withName(microcksName + RESOURCE_SUFFIX)
-            .endMetadata()
-            .addToAdditionalProperties("spec", kafkaMap.get("spec"))
-            .build();
+            .withApiVersion(kafkaMap.get("apiVersion").toString()).withKind(kafkaMap.get("kind").toString())
+            .withNewMetadata().withName(microcksName + RESOURCE_SUFFIX).endMetadata()
+            .addToAdditionalProperties("spec", kafkaMap.get("spec")).build();
 
       return genericKafka;
    }

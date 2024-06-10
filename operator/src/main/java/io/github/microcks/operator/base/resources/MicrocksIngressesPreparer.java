@@ -1,20 +1,17 @@
 /*
- * Licensed to Laurent Broudoux (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright The Microcks Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.microcks.operator.base.resources;
 
@@ -65,7 +62,7 @@ public class MicrocksIngressesPreparer {
    /**
     * Prepare a Route resource giving the primary microcks.
     * @param microcks The primary Microcks resource
-    * @param context The reconciliation context
+    * @param context  The reconciliation context
     * @return An OpenShift Route resource
     */
    public static Route prepareRoute(Microcks microcks, Context<Microcks> context) {
@@ -74,24 +71,12 @@ public class MicrocksIngressesPreparer {
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
 
-      RouteBuilder builder = new RouteBuilder()
-         .withNewMetadata()
-            .withName(getRouteName(microcks))
-            .addToLabels("app", microcksName)
-            .addToLabels("group", "microcks")
-         .endMetadata()
-         .withNewSpec()
-            .withNewTo()
-               .withKind("Service")
-               .withName(MicrocksServiceDependentResource.getServiceName(microcks))
-            .endTo()
-            .withNewPort()
-               .withNewTargetPort("spring")
-            .endPort()
-            .withNewTls()
-               .withTermination(microcks.getSpec().getMicrocks().getOpenshift().getRoute().getTlsTermination())
-            .endTls()
-         .endSpec();
+      RouteBuilder builder = new RouteBuilder().withNewMetadata().withName(getRouteName(microcks))
+            .addToLabels("app", microcksName).addToLabels("group", "microcks").endMetadata().withNewSpec().withNewTo()
+            .withKind("Service").withName(MicrocksServiceDependentResource.getServiceName(microcks)).endTo()
+            .withNewPort().withNewTargetPort("spring").endPort().withNewTls()
+            .withTermination(microcks.getSpec().getMicrocks().getOpenshift().getRoute().getTlsTermination()).endTls()
+            .endSpec();
 
       // Add custom url is present in the spec.
       if (microcks.getSpec().getMicrocks().getUrl() != null) {
@@ -110,10 +95,12 @@ public class MicrocksIngressesPreparer {
          builder.editSpec().editTls().withCertificate(routeSpec.getTlsCertificate()).endTls().endSpec();
       }
       if (routeSpec.getTlsDestinationCaCertificate() != null) {
-         builder.editSpec().editTls().withDestinationCACertificate(routeSpec.getTlsDestinationCaCertificate()).endTls().endSpec();
+         builder.editSpec().editTls().withDestinationCACertificate(routeSpec.getTlsDestinationCaCertificate()).endTls()
+               .endSpec();
       }
       if (routeSpec.getTlsInsecureEdgeTerminationPolicy() != null) {
-         builder.editSpec().editTls().withInsecureEdgeTerminationPolicy(routeSpec.getTlsInsecureEdgeTerminationPolicy()).endTls().endSpec();
+         builder.editSpec().editTls().withInsecureEdgeTerminationPolicy(routeSpec.getTlsInsecureEdgeTerminationPolicy())
+               .endTls().endSpec();
       }
 
       return builder.build();
@@ -122,7 +109,7 @@ public class MicrocksIngressesPreparer {
    /**
     * Prepare an Ingress resource giving the primary microcks.
     * @param microcks The primary Microcks resource
-    * @param context The reconciliation context
+    * @param context  The reconciliation context
     * @return A vanilla Kubernetes Ingress resource
     */
    public static Ingress prepareIngress(Microcks microcks, Context<Microcks> context) {
@@ -132,36 +119,15 @@ public class MicrocksIngressesPreparer {
       final String microcksName = microcksMetadata.getName();
       final IngressSpec spec = microcks.getSpec().getMicrocks().getIngress();
 
-      IngressBuilder builder = new IngressBuilder()
-            .withNewMetadata()
-               .withName(getRouteName(microcks))
-               .addToLabels("app", microcksName)
-               .addToLabels("group", "microcks")
-               .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/")
-            .endMetadata()
-            .withNewSpec()
-               .addNewTl()
-                  .addToHosts(microcks.getSpec().getMicrocks().getUrl())
-                  .withSecretName(IngressSpecUtil.getSecretName(spec, getIngressSecretName(microcks)))
-               .endTl()
-               .addNewRule()
-                  .withHost(microcks.getSpec().getMicrocks().getUrl())
-                  .withNewHttp()
-                     .addNewPath()
-                        .withPath("/")
-                        .withPathType("Prefix")
-                        .withNewBackend()
-                           .withNewService()
-                              .withName(MicrocksServiceDependentResource.getServiceName(microcks))
-                              .withNewPort()
-                                 .withNumber(8080)
-                              .endPort()
-                           .endService()
-                        .endBackend()
-                     .endPath()
-                  .endHttp()
-               .endRule()
-            .endSpec();
+      IngressBuilder builder = new IngressBuilder().withNewMetadata().withName(getRouteName(microcks))
+            .addToLabels("app", microcksName).addToLabels("group", "microcks")
+            .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/").endMetadata().withNewSpec().addNewTl()
+            .addToHosts(microcks.getSpec().getMicrocks().getUrl())
+            .withSecretName(IngressSpecUtil.getSecretName(spec, getIngressSecretName(microcks))).endTl().addNewRule()
+            .withHost(microcks.getSpec().getMicrocks().getUrl()).withNewHttp().addNewPath().withPath("/")
+            .withPathType("Prefix").withNewBackend().withNewService()
+            .withName(MicrocksServiceDependentResource.getServiceName(microcks)).withNewPort().withNumber(8080)
+            .endPort().endService().endBackend().endPath().endHttp().endRule().endSpec();
 
       // Add ingress classname if specified.
       if (spec.getClassName() != null) {

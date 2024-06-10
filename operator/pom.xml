@@ -9,7 +9,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>microcks-kube-operator</artifactId>
+
   <properties>
+    <multi-project.rootdir>..</multi-project.rootdir>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
     <surefire-plugin.version>3.0.0</surefire-plugin.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
@@ -19,6 +21,7 @@
     <quarkus.container-image.group>lbroudoux</quarkus.container-image.group>
     <quarkus.container-image.name>microcks-operator</quarkus.container-image.name>
   </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.github.microcks</groupId>

@@ -1,20 +1,17 @@
 /*
- * Licensed to Laurent Broudoux (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright The Microcks Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.microcks.operator.base.resources;
 
@@ -36,7 +33,8 @@ import org.jboss.logging.Logger;
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakDatabasePVCDependentResource extends CRUDKubernetesDependentResource<PersistentVolumeClaim, Microcks>
+public class KeycloakDatabasePVCDependentResource
+      extends CRUDKubernetesDependentResource<PersistentVolumeClaim, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
@@ -53,7 +51,7 @@ public class KeycloakDatabasePVCDependentResource extends CRUDKubernetesDependen
     * @return The name of PVC
     */
    public static final String getPVCName(Microcks microcks) {
-      return KeycloakDatabaseDeploymentDependentResource.getDeploymentName(microcks) ;
+      return KeycloakDatabaseDeploymentDependentResource.getDeploymentName(microcks);
    }
 
    @Override
@@ -68,26 +66,16 @@ public class KeycloakDatabasePVCDependentResource extends CRUDKubernetesDependen
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
 
-      PersistentVolumeClaimBuilder builder = new PersistentVolumeClaimBuilder()
-            .withNewMetadata()
-               .withName(getPVCName(microcks))
-               .withNamespace(microcksMetadata.getNamespace())
-               .addToLabels("app", microcksName)
-               .addToLabels("container", "keycloak-postgresql")
-               .addToLabels("group", "microcks")
-            .endMetadata()
-            .withNewSpec()
-               .withAccessModes("ReadWriteOnce")
-               .withNewResources()
-                  .addToRequests("storage", new Quantity(microcks.getSpec().getKeycloak().getVolumeSize()))
-               .endResources()
-            .endSpec();
+      PersistentVolumeClaimBuilder builder = new PersistentVolumeClaimBuilder().withNewMetadata()
+            .withName(getPVCName(microcks)).withNamespace(microcksMetadata.getNamespace())
+            .addToLabels("app", microcksName).addToLabels("container", "keycloak-postgresql")
+            .addToLabels("group", "microcks").endMetadata().withNewSpec().withAccessModes("ReadWriteOnce")
+            .withNewResources().addToRequests("storage", new Quantity(microcks.getSpec().getKeycloak().getVolumeSize()))
+            .endResources().endSpec();
 
       // Add optional storage class name if any.
       if (microcks.getSpec().getKeycloak().getStorageClassName() != null) {
-         builder.editSpec()
-                  .withStorageClassName(microcks.getSpec().getKeycloak().getStorageClassName())
-               .endSpec();
+         builder.editSpec().withStorageClassName(microcks.getSpec().getKeycloak().getStorageClassName()).endSpec();
       }
       return builder.build();
    }

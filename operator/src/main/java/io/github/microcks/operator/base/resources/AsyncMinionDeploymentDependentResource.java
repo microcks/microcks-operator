@@ -1,20 +1,17 @@
 /*
- * Licensed to Laurent Broudoux (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright The Microcks Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.microcks.operator.base.resources;
 
@@ -47,7 +44,7 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String RESOURCE_SUFFIX  = "-async-minion";
+   private static final String RESOURCE_SUFFIX = "-async-minion";
 
    /** Default empty constructor. */
    public AsyncMinionDeploymentDependentResource() {
@@ -77,30 +74,18 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
       final MicrocksSpec spec = microcks.getSpec();
       final AsyncFeatureSpec asyncFeatureSpec = spec.getFeatures().getAsync();
 
-      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/async-minion-deployment.yml");
-      DeploymentBuilder builder = new DeploymentBuilder(deployment)
-            .editMetadata()
-               .withName(getDeploymentName(microcks))
-               .withNamespace(microcksMetadata.getNamespace())
-               .addToLabels("app", microcksName)
-               .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
-               .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
-               .addToLabels("app.kubernetes.io/part-of", microcksName)
-            .endMetadata()
-            .editSpec()
-               .editSelector().addToMatchLabels("app", microcksName).endSelector()
-               .editTemplate()
-                  // make sure label selector matches label (which has to be matched by service selector too)
-                  .editMetadata().addToLabels("app", microcksName).endMetadata()
-                  .editSpec()
-                     .editFirstVolume()
-                        .editConfigMap()
-                           .withName(AsyncMinionConfigMapDependentResource.getConfigMapName(microcks))
-                        .endConfigMap()
-                     .endVolume()
-                  .endSpec()
-               .endTemplate()
-            .endSpec();
+      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(),
+            "/k8s/async-minion-deployment.yml");
+      DeploymentBuilder builder = new DeploymentBuilder(deployment).editMetadata().withName(getDeploymentName(microcks))
+            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
+            .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
+            .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
+            .addToLabels("app.kubernetes.io/part-of", microcksName).endMetadata().editSpec().editSelector()
+            .addToMatchLabels("app", microcksName).endSelector().editTemplate()
+            // make sure label selector matches label (which has to be matched by service selector too)
+            .editMetadata().addToLabels("app", microcksName).endMetadata().editSpec().editFirstVolume().editConfigMap()
+            .withName(AsyncMinionConfigMapDependentResource.getConfigMapName(microcks)).endConfigMap().endVolume()
+            .endSpec().endTemplate().endSpec();
 
       // We may have additional security config if external Kafka.
       if (!spec.getFeatures().getAsync().getKafka().isInstall()) {
@@ -108,96 +93,57 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
 
          // If there's a security mechanism, it has at least a truststore.
          if (authenticationSpec.getType() != KafkaAuthenticationType.NONE) {
-            builder.editSpec()
-                  .editTemplate()
-                     .editSpec()
-                        .editFirstContainer()
-                           .addNewEnv()
-                              .withName("KAFKA_TRUSTSTORE_PASSWORD")
-                              .withNewValueFrom()
-                                 .withNewSecretKeyRef()
-                                    .withName("kafka-truststore")
-                                    .withKey(authenticationSpec.getTruststoreSecretRef().getAdditionalProperties().get("passwordKey").toString())
-                                 .endSecretKeyRef()
-                              .endValueFrom()
-                           .endEnv()
-                           .addNewVolumeMount()
-                              .withName("kafka-truststore")
-                              .withMountPath("/deployments/config/kafka/truststore")
-                           .endVolumeMount()
-                        .endContainer()
-                        .addNewVolume()
-                           .withName("kafka-truststore")
-                           .withNewSecret()
-                              .withSecretName(authenticationSpec.getTruststoreSecretRef().getName())
-                           .endSecret()
-                        .endVolume()
-                     .endSpec()
-                  .endTemplate().endSpec();
+            builder.editSpec().editTemplate().editSpec().editFirstContainer().addNewEnv()
+                  .withName("KAFKA_TRUSTSTORE_PASSWORD").withNewValueFrom().withNewSecretKeyRef()
+                  .withName("kafka-truststore")
+                  .withKey(authenticationSpec.getTruststoreSecretRef().getAdditionalProperties().get("passwordKey")
+                        .toString())
+                  .endSecretKeyRef().endValueFrom().endEnv().addNewVolumeMount().withName("kafka-truststore")
+                  .withMountPath("/deployments/config/kafka/truststore").endVolumeMount().endContainer().addNewVolume()
+                  .withName("kafka-truststore").withNewSecret()
+                  .withSecretName(authenticationSpec.getTruststoreSecretRef().getName()).endSecret().endVolume()
+                  .endSpec().endTemplate().endSpec();
          }
          if (authenticationSpec.getType() == KafkaAuthenticationType.SSL) {
-            builder.editSpec()
-                  .editTemplate()
-                     .editSpec()
-                        .editFirstContainer()
-                           .addNewEnv()
-                              .withName("KAFKA_KEYSTORE_PASSWORD")
-                              .withNewValueFrom()
-                                 .withNewSecretKeyRef()
-                                    .withName("kafka-keystore")
-                                    .withKey(authenticationSpec.getKeystoreSecretRef().getAdditionalProperties().get("passwordKey").toString())
-                                 .endSecretKeyRef()
-                              .endValueFrom()
-                           .endEnv()
-                           .addNewVolumeMount()
-                              .withName("kafka-keystore")
-                              .withMountPath("/deployments/config/kafka/keystore")
-                           .endVolumeMount()
-                        .endContainer()
-                        .addNewVolume()
-                           .withName("kafka-keystore")
-                           .withNewSecret()
-                              .withSecretName(authenticationSpec.getKeystoreSecretRef().getName())
-                           .endSecret()
-                        .endVolume()
-                     .endSpec()
+            builder.editSpec().editTemplate().editSpec().editFirstContainer().addNewEnv()
+                  .withName("KAFKA_KEYSTORE_PASSWORD").withNewValueFrom().withNewSecretKeyRef()
+                  .withName("kafka-keystore")
+                  .withKey(authenticationSpec.getKeystoreSecretRef().getAdditionalProperties().get("passwordKey")
+                        .toString())
+                  .endSecretKeyRef().endValueFrom().endEnv().addNewVolumeMount().withName("kafka-keystore")
+                  .withMountPath("/deployments/config/kafka/keystore").endVolumeMount().endContainer().addNewVolume()
+                  .withName("kafka-keystore").withNewSecret()
+                  .withSecretName(authenticationSpec.getKeystoreSecretRef().getName()).endSecret().endVolume().endSpec()
                   .endTemplate().endSpec();
          }
       }
 
       // If using Google PubSub, mount service account token from secret.
-      if (asyncFeatureSpec.getGooglepubsub() != null && asyncFeatureSpec.getGooglepubsub().getServiceAccountSecretRef() != null) {
-         builder.editSpec()
-               .editTemplate()
-                  .editSpec()
-                     .editFirstContainer()
-                        .addNewVolumeMount()
-                           .withName("googlepubsub-sa")
-                           .withMountPath("/deployments/config/googlepubsub/sa")
-                        .endVolumeMount()
-                     .endContainer()
-                     .addNewVolume()
-                        .withName("googlepubsub-sa")
-                        .withNewSecret()
-                           .withSecretName(asyncFeatureSpec.getGooglepubsub().getServiceAccountSecretRef().getName())
-                        .endSecret()
-                     .endVolume()
-                  .endSpec()
-               .endTemplate().endSpec();
+      if (asyncFeatureSpec.getGooglepubsub() != null
+            && asyncFeatureSpec.getGooglepubsub().getServiceAccountSecretRef() != null) {
+         builder.editSpec().editTemplate().editSpec().editFirstContainer().addNewVolumeMount()
+               .withName("googlepubsub-sa").withMountPath("/deployments/config/googlepubsub/sa").endVolumeMount()
+               .endContainer().addNewVolume().withName("googlepubsub-sa").withNewSecret()
+               .withSecretName(asyncFeatureSpec.getGooglepubsub().getServiceAccountSecretRef().getName()).endSecret()
+               .endVolume().endSpec().endTemplate().endSpec();
       }
 
       // If using Amazon SQS, mount credentials variables from secret if env-variable authentication.
       if (asyncFeatureSpec.getSqs() != null && asyncFeatureSpec.getSqs().getRegion() != null) {
-         if (asyncFeatureSpec.getSqs().getCredentialsType().equals(AmazonServiceConnectionSpec.AmazonCredentialsProviderType.ENV_VARIABLE)
-               && asyncFeatureSpec.getSqs().getCredentialsSecretRef() != null && asyncFeatureSpec.getSqs().getCredentialsSecretRef().getName() != null) {
+         if (asyncFeatureSpec.getSqs().getCredentialsType()
+               .equals(AmazonServiceConnectionSpec.AmazonCredentialsProviderType.ENV_VARIABLE)
+               && asyncFeatureSpec.getSqs().getCredentialsSecretRef() != null
+               && asyncFeatureSpec.getSqs().getCredentialsSecretRef().getName() != null) {
             addAmazonServicesEnvVariables(builder, asyncFeatureSpec.getSqs());
          }
       }
 
       // If using Amazon SNS, mount credentials variables from secret if env-variable authentication.
       if (asyncFeatureSpec.getSns() != null && asyncFeatureSpec.getSns().getRegion() != null) {
-         if (asyncFeatureSpec.getSns().getCredentialsType().equals(AmazonServiceConnectionSpec.AmazonCredentialsProviderType.ENV_VARIABLE)
-               && asyncFeatureSpec.getSns().getCredentialsSecretRef() != null && asyncFeatureSpec.getSns().getCredentialsSecretRef().getName() != null) {
+         if (asyncFeatureSpec.getSns().getCredentialsType()
+               .equals(AmazonServiceConnectionSpec.AmazonCredentialsProviderType.ENV_VARIABLE)
+               && asyncFeatureSpec.getSns().getCredentialsSecretRef() != null
+               && asyncFeatureSpec.getSns().getCredentialsSecretRef().getName() != null) {
             addAmazonServicesEnvVariables(builder, asyncFeatureSpec.getSns());
          }
       }
@@ -206,49 +152,19 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
    }
 
    private void addAmazonServicesEnvVariables(DeploymentBuilder builder, AmazonServiceConnectionSpec awsSpec) {
-      builder.editSpec()
-            .editTemplate()
-               .editSpec()
-                  .editFirstContainer()
-                     .addNewEnv()
-                        .withName("AWS_ACCESS_KEY_ID")
-                        .withNewValueFrom()
-                           .withNewSecretKeyRef()
-                              .withName(awsSpec.getCredentialsSecretRef().getName())
-                              .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("accessKeyIdKey").toString())
-                           .endSecretKeyRef()
-                        .endValueFrom()
-                     .endEnv()
-                     .addNewEnv()
-                        .withName("AWS_SECRET_ACCESS_KEY")
-                        .withNewValueFrom()
-                           .withNewSecretKeyRef()
-                              .withName(awsSpec.getCredentialsSecretRef().getName())
-                              .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("secretAccessKeyKey").toString())
-                           .endSecretKeyRef()
-                        .endValueFrom()
-                     .endEnv()
-                  .endContainer()
-               .endSpec()
-            .endTemplate().endSpec();
+      builder.editSpec().editTemplate().editSpec().editFirstContainer().addNewEnv().withName("AWS_ACCESS_KEY_ID")
+            .withNewValueFrom().withNewSecretKeyRef().withName(awsSpec.getCredentialsSecretRef().getName())
+            .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("accessKeyIdKey").toString())
+            .endSecretKeyRef().endValueFrom().endEnv().addNewEnv().withName("AWS_SECRET_ACCESS_KEY").withNewValueFrom()
+            .withNewSecretKeyRef().withName(awsSpec.getCredentialsSecretRef().getName())
+            .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("secretAccessKeyKey").toString())
+            .endSecretKeyRef().endValueFrom().endEnv().endContainer().endSpec().endTemplate().endSpec();
 
       if (awsSpec.getCredentialsSecretRef().getAdditionalProperties().containsKey("sessionTokenKey")) {
-         builder.editSpec()
-            .editTemplate()
-               .editSpec()
-                  .editFirstContainer()
-                     .addNewEnv()
-                        .withName("AWS_SESSION_TOKEN")
-                        .withNewValueFrom()
-                           .withNewSecretKeyRef()
-                              .withName(awsSpec.getCredentialsSecretRef().getName())
-                              .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("sessionTokenKey").toString())
-                           .endSecretKeyRef()
-                        .endValueFrom()
-                     .endEnv()
-                  .endContainer()
-               .endSpec()
-            .endTemplate().endSpec();
+         builder.editSpec().editTemplate().editSpec().editFirstContainer().addNewEnv().withName("AWS_SESSION_TOKEN")
+               .withNewValueFrom().withNewSecretKeyRef().withName(awsSpec.getCredentialsSecretRef().getName())
+               .withKey(awsSpec.getCredentialsSecretRef().getAdditionalProperties().get("sessionTokenKey").toString())
+               .endSecretKeyRef().endValueFrom().endEnv().endContainer().endSpec().endTemplate().endSpec();
       }
    }
 }

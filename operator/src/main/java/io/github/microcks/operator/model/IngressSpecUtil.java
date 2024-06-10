@@ -1,20 +1,17 @@
 /*
- * Licensed to Laurent Broudoux (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright The Microcks Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.microcks.operator.model;
 
@@ -80,7 +77,7 @@ public class IngressSpecUtil {
 
    /**
     * Get the ingress secret name to use from the spec or default.
-    * @param spec The IngressSpec that may be null
+    * @param spec              The IngressSpec that may be null
     * @param defaultSecretName The default name to apply
     * @return Secret name from the spec of default one
     */
@@ -98,9 +95,9 @@ public class IngressSpecUtil {
 
    /**
     * Generate a Secret holding a self-signed certificate and key for Ingress tests purposes.
-    * @param name The name of secret to generate
+    * @param name   The name of secret to generate
     * @param labels The labels to add to Secret
-    * @param host The host name to generate a cert and key for.
+    * @param host   The host name to generate a cert and key for.
     * @return The created Secret to persist using Kube apis.
     */
    public static Secret generateSelfSignedCertificateSecret(String name, Map<String, String> labels, String host) {
@@ -114,30 +111,26 @@ public class IngressSpecUtil {
       long notBefore = System.currentTimeMillis();
       long notAfter = notBefore + (1000L * 3600L * 24 * 365);
 
-      ASN1Encodable[] encodableAltNames = new ASN1Encodable[]{new GeneralName(GeneralName.dNSName, host)};
-      KeyPurposeId[] purposes = new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth};
+      ASN1Encodable[] encodableAltNames = new ASN1Encodable[] { new GeneralName(GeneralName.dNSName, host) };
+      KeyPurposeId[] purposes = new KeyPurposeId[] { KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth };
 
-      X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(signedByPrincipal,
-            BigInteger.ONE, new Date(notBefore), new Date(notAfter), subject, keyPair.getPublic());
+      X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(signedByPrincipal, BigInteger.ONE,
+            new Date(notBefore), new Date(notAfter), subject, keyPair.getPublic());
 
       try {
          certBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
-         certBuilder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature + KeyUsage.keyEncipherment));
+         certBuilder.addExtension(Extension.keyUsage, true,
+               new KeyUsage(KeyUsage.digitalSignature + KeyUsage.keyEncipherment));
          certBuilder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(purposes));
          certBuilder.addExtension(Extension.subjectAlternativeName, false, new DERSequence(encodableAltNames));
 
-         final ContentSigner signer = new JcaContentSignerBuilder(("SHA256withRSA")).build(signedByKeyPair.getPrivate());
+         final ContentSigner signer = new JcaContentSignerBuilder(("SHA256withRSA"))
+               .build(signedByKeyPair.getPrivate());
          X509CertificateHolder certHolder = certBuilder.build(signer);
 
-         return new SecretBuilder()
-               .withNewMetadata()
-                  .withName(name)
-                  .addToLabels(labels)
-               .endMetadata()
-               .withType("kubernetes.io/tls")
-                  .addToStringData("tls.key", getPrivateKeyPkcs1Pem(keyPair))
-                  .addToStringData("tls.crt", getCertificatePem(certHolder))
-               .build();
+         return new SecretBuilder().withNewMetadata().withName(name).addToLabels(labels).endMetadata()
+               .withType("kubernetes.io/tls").addToStringData("tls.key", getPrivateKeyPkcs1Pem(keyPair))
+               .addToStringData("tls.crt", getCertificatePem(certHolder)).build();
       } catch (Exception e) {
          Logger.getLogger(IngressSpecUtil.class).error(e.getMessage());
          throw new AssertionError(e.getMessage());
