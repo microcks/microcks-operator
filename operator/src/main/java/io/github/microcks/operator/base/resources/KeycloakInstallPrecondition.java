@@ -22,6 +22,7 @@ import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
+import io.javaoperatorsdk.operator.api.reconciler.dependent.DependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 
 /**
@@ -31,7 +32,7 @@ import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 public class KeycloakInstallPrecondition implements Condition<HasMetadata, Microcks> {
 
    @Override
-   public boolean isMet(Microcks primary, HasMetadata secondary, Context<Microcks> context) {
-      return primary.getSpec().getKeycloak().isInstall() && primary.getStatus().getKeycloakUrl() != null;
+   public boolean isMet(DependentResource<HasMetadata, Microcks> dependentResource, Microcks microcks, Context<Microcks> context) {
+      return microcks.getSpec().getKeycloak().isInstall() && microcks.getStatus().getKeycloakUrl() != null;
    }
 }

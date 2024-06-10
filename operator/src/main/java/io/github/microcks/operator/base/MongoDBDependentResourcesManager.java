@@ -83,7 +83,7 @@ public class MongoDBDependentResourcesManager {
       // Configure the dependent resources.
       Arrays.asList(secretDR, dbPersistentVolumeDR, dbDeploymentDR,
             dbServiceDR).forEach( dr -> {
-         dr.setKubernetesClient(client);
+         //dr.setKubernetesClient(client);
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                         p -> new ResourceID(

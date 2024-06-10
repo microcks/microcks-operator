@@ -65,8 +65,8 @@ import io.javaoperatorsdk.operator.processing.dependent.workflow.WorkflowReconci
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 import org.jboss.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -199,31 +199,42 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       final List<OwnerReference> refs = List.of(getOwnerReference(completeCR));
 
       String microcksUrl = null;
-      if (isOpenShift && completeCR.getSpec().getMicrocks().getOpenshift().getRoute().isEnabled()) {
-         // We can create an OpenShift Route here to get the Url.
-         microcksUrl = manageRouteAndGetURL(MicrocksIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
-         logger.infof("Retrieved Microcks URL from Route: %s", microcksUrl);
-      } else if (completeCR.getSpec().getMicrocks() != null && completeCR.getSpec().getMicrocks().getUrl() != null) {
-         // We can create an Ingress here to get the Url.
-         microcksUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getMicrocks().getIngress(),
-               MicrocksIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getMicrocks().getUrl(),
-               MicrocksIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
-         logger.infof("Retrieved Microcks URL from Ingress: %s", microcksUrl);
+      if (completeSpec.getMicrocks().getIngress().isExpose()) {
+         if (isOpenShift && completeCR.getSpec().getMicrocks().getOpenshift().getRoute().isEnabled()) {
+            // We can create an OpenShift Route here to get the Url.
+            microcksUrl = manageRouteAndGetURL(MicrocksIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
+            logger.infof("Retrieved Microcks URL from Route: %s", microcksUrl);
+         } else if (completeCR.getSpec().getMicrocks() != null && completeCR.getSpec().getMicrocks().getUrl() != null) {
+            // We can create an Ingress here to get the Url.
+            microcksUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getMicrocks().getIngress(),
+                  MicrocksIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getMicrocks().getUrl(),
+                  MicrocksIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
+            logger.infof("Retrieved Microcks URL from Ingress: %s", microcksUrl);
+         } else {
+            // Problem.
+            // Either on OpenShift and you should enable route in the CR
+            // Either on vanilla Kubernetes and you should specify URL
+            logger.error("No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url " +
+                  "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
+            microcks.getStatus().setStatus(Status.ERROR);
+            microcks.getStatus().setMessage("\"No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url " +
+                  "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
+            return UpdateControl.updateStatus(microcks);
+         }
       } else {
-         // Problem.
-         // Either on OpenShift and you should enable route in the CR
-         // Either on vanilla Kubernetes and you should specify URL
-         logger.error("No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url " +
-               "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
-         microcks.getStatus().setStatus(Status.ERROR);
-         microcks.getStatus().setMessage("\"No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url "  +
-               "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
-         return UpdateControl.updateStatus(microcks);
+         if (spec.getMicrocks() != null && spec.getMicrocks().getUrl() != null) {
+            microcksUrl = spec.getMicrocks().getUrl();
+         } else {
+            logger.error("No Microcks URL specified and not exposing. You must add spec.microcks.url");
+            microcks.getStatus().setStatus(Status.ERROR);
+            microcks.getStatus().setMessage("Not exposing Microcks and no URL specified. You must add spec.microcks.url");
+            return UpdateControl.updateStatus(microcks);
+         }
       }
       microcks.getStatus().setMicrocksUrl(microcksUrl);
 
       String keycloakUrl = null;
-      if (spec.getKeycloak().isInstall()) {
+      if (spec.getKeycloak().isInstall() && completeSpec.getKeycloak().getIngress().isExpose()) {
          if (isOpenShift && spec.getKeycloak().getOpenshift().getRoute().isEnabled()) {
             // We can create an OpenShift Route here to get the Url.
             keycloakUrl = manageRouteAndGetURL(KeycloakIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
@@ -282,7 +293,6 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       }
       */
 
-
       //
       if (installStrimziKafka(completeCR)) {
          manageStrimziKafkaInstall(completeCR, context);
@@ -290,7 +300,6 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
       logger.infof("Finishing reconcile operation for '%s'", microcks.getMetadata().getName());
       logger.infof("=====================================================");
-
 
       if (updateStatus) {
          return UpdateControl.updateStatus(microcks);

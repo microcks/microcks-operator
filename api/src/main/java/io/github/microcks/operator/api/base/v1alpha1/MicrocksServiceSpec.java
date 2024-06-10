@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "url", "replicas", "ingress", "resources",
+@JsonPropertyOrder({ "url", "replicas", "ingress", "grpcIngress", "resources",
       "mockInvocationStats", "logLevel", "openshift", "env", "extraProperties" })
 @Buildable(
       editableEnabled = false,
@@ -56,6 +56,9 @@ public class MicrocksServiceSpec {
 
    @JsonPropertyDescription("Configuration to apply to Ingress if created")
    private IngressSpec ingress;
+
+   @JsonPropertyDescription("Configuration to apply to Ingress for gRPC if creates")
+   private IngressSpec grpcIngress;
 
    @JsonPropertyDescription("Kubernetes resource requirements for Microcks service")
    private ResourceRequirements resources;
@@ -74,6 +77,9 @@ public class MicrocksServiceSpec {
 
    @JsonPropertyDescription("Extra properties to integration into application-extra configuration")
    private Map<String, AnyType> extraProperties;
+
+   @JsonPropertyDescription("Extra annotations added to Service, Deployment and Pods")
+   private Map<String, String> extraAnnotations;
 
    public int getReplicas() {
       return replicas;
@@ -99,6 +105,14 @@ public class MicrocksServiceSpec {
       this.ingress = ingress;
    }
 
+   public IngressSpec getGrpcIngress() {
+      return grpcIngress;
+   }
+
+   public void setGrpcIngress(IngressSpec grpcIngress) {
+      this.grpcIngress = grpcIngress;
+   }
+
    public ResourceRequirements getResources() {
       return resources;
    }
@@ -107,7 +121,7 @@ public class MicrocksServiceSpec {
       this.resources = resources;
    }
 
-   public Boolean isMockInvocationStats() {
+   public Boolean getMockInvocationStats() {
       return mockInvocationStats;
    }
 
@@ -145,5 +159,13 @@ public class MicrocksServiceSpec {
 
    public void setExtraProperties(Map<String, AnyType> extraProperties) {
       this.extraProperties = extraProperties;
+   }
+
+   public Map<String, String> getExtraAnnotations() {
+      return extraAnnotations;
+   }
+
+   public void setExtraAnnotations(Map<String, String> extraAnnotations) {
+      this.extraAnnotations = extraAnnotations;
    }
 }

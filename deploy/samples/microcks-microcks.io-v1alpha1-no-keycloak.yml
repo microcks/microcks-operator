@@ -3,5 +3,8 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
+  version: 1.9.1
+  microcks:
+    url: microcks.m2.minikube.local
   keycloak:
     install: false

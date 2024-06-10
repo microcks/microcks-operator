@@ -37,6 +37,12 @@ import java.util.Map;
 )
 public class IngressSpec {
 
+   @JsonPropertyDescription("Whether Ingress should be exposed (ie. created)")
+   private boolean expose = true;
+
+   @JsonPropertyDescription("When exposed, sets the ingressClassName property")
+   private String className;
+
    @JsonPropertyDescription("Whether operator should generate self-signed certificate for this ingress")
    private boolean generateCert = true;
 
@@ -48,6 +54,23 @@ public class IngressSpec {
 
    public IngressSpec() {
    }
+
+   public boolean isExpose() {
+      return expose;
+   }
+
+   public void setExpose(boolean expose) {
+      this.expose = expose;
+   }
+
+   public String getClassName() {
+      return className;
+   }
+
+   public void setClassName(String className) {
+      this.className = className;
+   }
+
    public boolean isGenerateCert() {
       return generateCert;
    }

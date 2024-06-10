@@ -164,6 +164,11 @@ public class KeycloakIngressesPreparer {
                .endRule()
             .endSpec();
 
+      // Add ingress classname if specified.
+      if (spec.getClassName() != null) {
+         builder.editSpec().withIngressClassName(spec.getClassName());
+      }
+
       // Add complementary annotations if any.
       Map<String, String> annotations = IngressSpecUtil.getAnnotationsIfAny(spec);
       if (annotations != null) {

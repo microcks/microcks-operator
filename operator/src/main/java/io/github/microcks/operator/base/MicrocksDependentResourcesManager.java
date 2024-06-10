@@ -75,7 +75,7 @@ public class MicrocksDependentResourcesManager {
 
       // Configure the dependent resources.
       Arrays.asList(configMapDR, deploymentDR, serviceDR).forEach(dr -> {
-         dr.setKubernetesClient(client);
+         //dr.setKubernetesClient(client);
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                         p -> new ResourceID(

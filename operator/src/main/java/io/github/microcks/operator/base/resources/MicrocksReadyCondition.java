@@ -22,7 +22,10 @@ import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
+import io.javaoperatorsdk.operator.api.reconciler.dependent.DependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
+
+import java.util.Optional;
 
 /**
  * A reconciliation post-condition that is only met if Microcks module is ready.
@@ -31,7 +34,9 @@ import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 public class MicrocksReadyCondition implements Condition<Deployment, Microcks> {
 
    @Override
-   public boolean isMet(Microcks primary, Deployment secondary, Context<Microcks> context) {
-      return secondary.getStatus().getReadyReplicas() != null && secondary.getStatus().getReadyReplicas().equals(primary.getSpec().getMicrocks().getReplicas());
+   public boolean isMet(DependentResource<Deployment, Microcks> dependentResource, Microcks microcks, Context<Microcks> context) {
+      Optional<Deployment> dep = dependentResource.getSecondaryResource(microcks, context);
+      return dep.isPresent() && dep.get().getStatus().getReadyReplicas() != null
+            && dep.get().getStatus().getReadyReplicas().equals(microcks.getSpec().getMicrocks().getReplicas());
    }
 }
