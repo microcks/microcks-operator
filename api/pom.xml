@@ -11,10 +11,6 @@
   </parent>
   <artifactId>microcks-kube-api</artifactId>
 
-  <properties>
-    <multi-project.rootdir>..</multi-project.rootdir>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>io.fabric8</groupId>
