@@ -139,7 +139,7 @@ public class MongoDBDeploymentDependentResource extends CRUDKubernetesDependentR
                .addNewVolume()
                   .withName("custom-init-scripts")
                   .withNewConfigMap()
-                        .withName(MongoDBConfigMapDependantResource.getConfigMapName(microcks))
+                     .withName(MongoDBConfigMapDependantResource.getConfigMapName(microcks))
                   .endConfigMap()
                .endVolume()
             .endSpec().endTemplate().endSpec();

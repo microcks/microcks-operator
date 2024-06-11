@@ -23,7 +23,7 @@ import io.javaoperatorsdk.operator.api.reconciler.dependent.DependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 
 /**
- * A reconciliation pre-condition that is only met if Keycloak module should be installed.
+ * A reconciliation pre-condition that is only met if Async feature should be installed.
  * @author laurent
  */
 public class AsyncMinionInstallPrecondition implements Condition<HasMetadata, Microcks> {
