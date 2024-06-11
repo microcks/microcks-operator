@@ -46,6 +46,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -101,9 +102,20 @@ public class IngressSpecUtil {
     * @return The created Secret to persist using Kube apis.
     */
    public static Secret generateSelfSignedCertificateSecret(String name, Map<String, String> labels, String host) {
+      return generateSelfSignedCertificateSecret(name, labels, List.of(host));
+   }
+
+   /**
+    * Generate a Secret holding a self-signed certificate and key for Ingress tests purposes.
+    * @param name   The name of secret to generate
+    * @param labels The labels to add to Secret
+    * @param hosts  A list of host names to generate a cert and key for.
+    * @return The created Secret to persist using Kube apis.
+    */
+   public static Secret generateSelfSignedCertificateSecret(String name, Map<String, String> labels, List<String> hosts) {
       Security.addProvider(new BouncyCastleProvider());
 
-      X500Principal subject = new X500Principal("CN=" + host);
+      X500Principal subject = new X500Principal("CN=" + hosts.get(0));
       X500Principal signedByPrincipal = subject;
       KeyPair keyPair = generateKeyPair();
       KeyPair signedByKeyPair = keyPair;
@@ -111,7 +123,10 @@ public class IngressSpecUtil {
       long notBefore = System.currentTimeMillis();
       long notAfter = notBefore + (1000L * 3600L * 24 * 365);
 
-      ASN1Encodable[] encodableAltNames = new ASN1Encodable[] { new GeneralName(GeneralName.dNSName, host) };
+      ASN1Encodable[] encodableAltNames = new ASN1Encodable[hosts.size()];
+      for (int i=0; i<hosts.size(); i++) {
+         encodableAltNames[i] = new GeneralName(GeneralName.dNSName, hosts.get(i));
+      }
       KeyPurposeId[] purposes = new KeyPurposeId[] { KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth };
 
       X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(signedByPrincipal, BigInteger.ONE,
@@ -128,9 +143,15 @@ public class IngressSpecUtil {
                .build(signedByKeyPair.getPrivate());
          X509CertificateHolder certHolder = certBuilder.build(signer);
 
-         return new SecretBuilder().withNewMetadata().withName(name).addToLabels(labels).endMetadata()
-               .withType("kubernetes.io/tls").addToStringData("tls.key", getPrivateKeyPkcs1Pem(keyPair))
-               .addToStringData("tls.crt", getCertificatePem(certHolder)).build();
+         return new SecretBuilder()
+               .withNewMetadata()
+                  .withName(name)
+                  .addToLabels(labels)
+               .endMetadata()
+               .withType("kubernetes.io/tls")
+               .addToStringData("tls.key", getPrivateKeyPkcs1Pem(keyPair))
+               .addToStringData("tls.crt", getCertificatePem(certHolder))
+               .build();
       } catch (Exception e) {
          Logger.getLogger(IngressSpecUtil.class).error(e.getMessage());
          throw new AssertionError(e.getMessage());

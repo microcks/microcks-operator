@@ -202,8 +202,8 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             logger.infof("Retrieved Microcks URL from Ingress: %s", microcksUrl);
          } else {
             // Problem.
-            // Either on OpenShift and you should enable route in the CR
-            // Either on vanilla Kubernetes and you should specify URL
+            // Either on OpenShift and you should enable route in the CR.
+            // Either on vanilla Kubernetes and you should specify URL.
             logger.error(
                   "No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url "
                         + "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");

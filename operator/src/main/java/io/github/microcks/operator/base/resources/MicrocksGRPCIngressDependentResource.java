@@ -20,7 +20,6 @@ import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
@@ -49,6 +48,15 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
       super(Ingress.class);
    }
 
+   /**
+    * Get the
+    * @param primary
+    * @return
+    */
+   public static String getGRPCHost(Microcks primary) {
+      return primary.getStatus().getMicrocksUrl() + RESOURCE_SUFFIX;
+   }
+
    @Override
    public String getSecondaryResourceName(Microcks primary) {
       return primary.getMetadata().getName() + RESOURCE_SUFFIX;
@@ -62,12 +70,38 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
       final String microcksName = microcksMetadata.getName();
       final IngressSpec spec = microcks.getSpec().getMicrocks().getGrpcIngress();
 
-      IngressBuilder builder = new IngressBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .addToLabels("app", microcksName).addToLabels("group", "microcks")
-            .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/")
-            .addToAnnotations(Map.of("nginx.ingress.kubernetes.io/backend-protocol", "GRPC",
+      IngressBuilder builder = new IngressBuilder()
+            .withNewMetadata()
+               .withName(getSecondaryResourceName(microcks))
+               .addToLabels("app", microcksName)
+               .addToLabels("group", "microcks")
+               .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/")
+               .addToAnnotations(Map.of("nginx.ingress.kubernetes.io/backend-protocol", "GRPC",
                   "nginx.ingress.kubernetes.io/ssl-passthrough", "true"))
-            .endMetadata().withNewSpec().endSpec();
+            .endMetadata()
+            .withNewSpec()
+               .addNewTl()
+                  .addToHosts(getGRPCHost(microcks))
+                  .withSecretName(MicrocksGRPCSecretDependentResource.getSecretName(microcks))
+               .endTl()
+               .addNewRule()
+                  .withHost(getGRPCHost(microcks))
+                  .withNewHttp()
+                     .addNewPath()
+                        .withPath("/")
+                        .withPathType("Prefix")
+                        .withNewBackend()
+                           .withNewService()
+                              .withName(MicrocksGRPCServiceDependentResource.getServiceName(microcks))
+                              .withNewPort()
+                                 .withNumber(9090)
+                              .endPort()
+                           .endService()
+                        .endBackend()
+                     .endPath()
+                  .endHttp()
+               .endRule()
+            .endSpec();
 
       return builder.build();
    }

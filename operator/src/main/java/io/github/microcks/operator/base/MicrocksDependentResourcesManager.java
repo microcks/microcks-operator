@@ -17,12 +17,16 @@ package io.github.microcks.operator.base;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.base.resources.MicrocksDeploymentDependentResource;
+import io.github.microcks.operator.base.resources.MicrocksGRPCSecretDependentResource;
+import io.github.microcks.operator.base.resources.MicrocksGRPCSecretInstallPrecondition;
+import io.github.microcks.operator.base.resources.MicrocksGRPCServiceDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksReadyCondition;
 import io.github.microcks.operator.base.resources.MicrocksServiceDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksConfigMapDependentResource;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -46,9 +50,11 @@ public class MicrocksDependentResourcesManager {
 
    private KubernetesClient client;
 
+   private KubernetesDependentResource<Secret, Microcks> grpcSecretDR;
    private KubernetesDependentResource<ConfigMap, Microcks> configMapDR;
    private KubernetesDependentResource<Deployment, Microcks> deploymentDR;
    private KubernetesDependentResource<Service, Microcks> serviceDR;
+   private KubernetesDependentResource<Service, Microcks> grpcServiceDR;
 
    /**
     * Creates a MicrocksDependentResourcesManager.
@@ -63,21 +69,27 @@ public class MicrocksDependentResourcesManager {
     * @return A JOSDK reconciliation workflow.
     */
    public Workflow<Microcks> buildReconcialiationWorkflow() {
+      grpcSecretDR = new MicrocksGRPCSecretDependentResource();
       configMapDR = new MicrocksConfigMapDependentResource();
       deploymentDR = new MicrocksDeploymentDependentResource();
       serviceDR = new MicrocksServiceDependentResource();
+      grpcServiceDR = new MicrocksGRPCServiceDependentResource();
 
       // Build the workflow.
       WorkflowBuilder<Microcks> builder = new WorkflowBuilder<>();
 
       // Configure the dependent resources.
-      Arrays.asList(configMapDR, deploymentDR, serviceDR).forEach(dr -> {
+      Arrays.asList(grpcSecretDR, configMapDR, deploymentDR, serviceDR, grpcServiceDR).forEach(dr -> {
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
                         p.getMetadata().getNamespace())));
          }
          builder.addDependentResource(dr);
+         // Add an installation condition on grpc secret.
+         if (dr == grpcSecretDR) {
+            builder.withReconcilePrecondition(new MicrocksGRPCSecretInstallPrecondition());
+         }
          // Add a ready condition on deployment.
          if (dr == deploymentDR) {
             builder.withReadyPostcondition(new MicrocksReadyCondition());
@@ -94,9 +106,11 @@ public class MicrocksDependentResourcesManager {
     */
    public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
       return new EventSource[] {
+            grpcSecretDR.initEventSource(context),
             configMapDR.initEventSource(context),
             deploymentDR.initEventSource(context),
-            serviceDR.initEventSource(context)
+            serviceDR.initEventSource(context),
+            grpcServiceDR.initEventSource(context)
       };
    }
 }

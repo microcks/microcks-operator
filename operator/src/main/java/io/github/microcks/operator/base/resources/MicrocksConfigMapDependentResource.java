@@ -55,9 +55,18 @@ public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentR
       super(ConfigMap.class);
    }
 
+   /**
+    * Get the name of ConfigMap given the primary Microcks resource.
+    * @param microcks The primary resource
+    * @return The name of ConfigMap
+    */
+   public static final String getConfigMapName(Microcks microcks) {
+      return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
+   }
+
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return primary.getMetadata().getName() + RESOURCE_SUFFIX;
+      return getConfigMapName(primary);
    }
 
    @Override

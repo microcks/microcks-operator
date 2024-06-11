@@ -71,11 +71,23 @@ public class MicrocksIngressesPreparer {
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
 
-      RouteBuilder builder = new RouteBuilder().withNewMetadata().withName(getRouteName(microcks))
-            .addToLabels("app", microcksName).addToLabels("group", "microcks").endMetadata().withNewSpec().withNewTo()
-            .withKind("Service").withName(MicrocksServiceDependentResource.getServiceName(microcks)).endTo()
-            .withNewPort().withNewTargetPort("spring").endPort().withNewTls()
-            .withTermination(microcks.getSpec().getMicrocks().getOpenshift().getRoute().getTlsTermination()).endTls()
+      RouteBuilder builder = new RouteBuilder()
+            .withNewMetadata().
+               withName(getRouteName(microcks))
+               .addToLabels("app", microcksName)
+               .addToLabels("group", "microcks")
+            .endMetadata()
+            .withNewSpec()
+               .withNewTo()
+                  .withKind("Service")
+                  .withName(MicrocksServiceDependentResource.getServiceName(microcks))
+               .endTo()
+               .withNewPort()
+                  .withNewTargetPort("spring")
+               .endPort()
+               .withNewTls()
+                  .withTermination(microcks.getSpec().getMicrocks().getOpenshift().getRoute().getTlsTermination())
+               .endTls()
             .endSpec();
 
       // Add custom url is present in the spec.

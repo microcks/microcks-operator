@@ -30,18 +30,20 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDep
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes Service dependent resource.
+ * A Microcks GRPC Kubernetes Service dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class MicrocksServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
+public class MicrocksGRPCServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   private static final String RESOURCE_SUFFIX = "-grpc";
+
    /** Default empty constructor. */
-   public MicrocksServiceDependentResource() {
+   public MicrocksGRPCServiceDependentResource() {
       super(Service.class);
    }
 
@@ -51,7 +53,7 @@ public class MicrocksServiceDependentResource extends CRUDKubernetesDependentRes
     * @return The name of Service
     */
    public static String getServiceName(Microcks microcks) {
-      return MicrocksDeploymentDependentResource.getDeploymentName(microcks);
+      return MicrocksDeploymentDependentResource.getDeploymentName(microcks) + RESOURCE_SUFFIX;
    }
 
    @Override
@@ -61,7 +63,7 @@ public class MicrocksServiceDependentResource extends CRUDKubernetesDependentRes
 
    @Override
    protected Service desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak Service for '%s'", microcks.getMetadata().getName());
+      logger.infof("Building desired Microcks GRPC Service for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
@@ -80,10 +82,10 @@ public class MicrocksServiceDependentResource extends CRUDKubernetesDependentRes
                .addToSelector("container", "spring")
                .addToSelector("group", "microcks")
                .addNewPort()
-                  .withName("spring")
-                  .withPort(8080)
+                  .withName("spring-grpc")
+                  .withPort(9090)
                   .withProtocol("TCP")
-                  .withTargetPort(new IntOrString(8080))
+                  .withTargetPort(new IntOrString(9090))
                .endPort()
                .withSessionAffinity("None")
                .withType("ClusterIP")

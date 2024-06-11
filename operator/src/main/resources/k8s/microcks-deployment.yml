@@ -73,6 +73,3 @@ spec:
             - name: "microcks-grpc-certs"
               mountPath: "/deployments/config/grpc"
           terminationMessagePath: "/dev/termination-log"
-      volumes:
-        - name: "microcks-config"
-        - name: "microcks-grpc-certs"
