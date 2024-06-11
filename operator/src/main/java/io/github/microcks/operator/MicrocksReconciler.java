@@ -160,11 +160,11 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       logger.infof("Starting reconcile operation for '%s'", microcks.getMetadata().getName());
 
       /*
-       * // Some diagnostic helpers during development. ObjectMapper mapper = new ObjectMapper(new
-       * YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)); logger.info("initSpec: " +
-       * mapper.writerWithDefaultPrettyPrinter().writeValueAsString(spec)); logger.info("ExtraProperties before: " +
-       * spec.getMicrocks().getExtraProperties()); logger.info("mockInvocationStats before: " +
-       * spec.getMicrocks().isMockInvocationStats());
+       * // Some diagnostic helpers during development.
+       * ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+       * logger.info("initSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(spec));
+       * logger.info("ExtraProperties before: " + spec.getMicrocks().getExtraProperties());
+       * logger.info("mockInvocationStats before: " + spec.getMicrocks().isMockInvocationStats());
        */
 
       // Load default values for CR and build a complete representation.
@@ -178,11 +178,11 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       completeCR.setStatus(microcks.getStatus());
 
       /*
-       * // Some diagnostic helpers during development. logger.info("defaultCR: " +
-       * mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultCR.getSpec())); logger.info("CompleteCR: " +
-       * mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR)); logger.info("ExtraProperties after: "
-       * + completeCR.getSpec().getMicrocks().getExtraProperties()); logger.info("mockInvocationStats after: " +
-       * completeCR.getSpec().getMicrocks().isMockInvocationStats());
+       * // Some diagnostic helpers during development.
+       * logger.info("defaultCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultCR.getSpec()));
+       * logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
+       * logger.info("ExtraProperties after: " + completeCR.getSpec().getMicrocks().getExtraProperties());
+       * logger.info("mockInvocationStats after: " + completeCR.getSpec().getMicrocks().isMockInvocationStats());
        */
 
       boolean isOpenShift = client.adapt(OpenShiftClient.class).isSupported();
@@ -283,12 +283,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       updateStatus = handleWorkflowReconcileResult(asyncFeatureResult, microcks.getStatus(), "Async") || updateStatus;
 
       /*
-       * // Some diagnostic helpers during development. Optional<WorkflowReconcileResult> workflowReconcileResult =
-       * context.managedDependentResourceContext().getWorkflowReconcileResult(); logger.info("workflowReconcileResult: "
-       * + workflowReconcileResult);
+       * // Some diagnostic helpers during development.
+       * Optional<WorkflowReconcileResult> workflowReconcileResult = context.managedDependentResourceContext().getWorkflowReconcileResult();
+       * logger.info("workflowReconcileResult: " + workflowReconcileResult);
        * 
-       * for (Deployment deployment : secondaryDeployments) { logger.infof("Deployment %s, ready replicas: %d",
-       * deployment.getMetadata().getName(), deployment.getStatus().getReadyReplicas()); }
+       * for (Deployment deployment : secondaryDeployments) {
+       *   logger.infof("Deployment %s, ready replicas: %d", deployment.getMetadata().getName(), deployment.getStatus().getReadyReplicas());
+       * }
        */
 
       //
@@ -414,12 +415,15 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       logger.debugf("Reconciled %s dependents: %s", module, result.getReconciledDependents());
       boolean updateStatus = false;
 
-      if (result.getReconciledDependents() != null && result.getReconciledDependents().size() > 0) {
+      if (result.getReconciledDependents() != null && !result.getReconciledDependents().isEmpty()) {
          logger.debugf("We've reconciled %d dependent resources for module '%s'",
                result.getReconciledDependents().size(), module);
 
-         if (result.getNotReadyDependents().size() > 0) {
+         if (!result.getNotReadyDependents().isEmpty()) {
             logger.info("  Got not ready dependents: " + result.getNotReadyDependents().size());
+            for (DependentResource dependentResource : result.getNotReadyDependents()) {
+               logger.info("    dependentResource: " + dependentResource);
+            }
             Condition condition = getOrCreateCondition(status, module + "Deploying");
             condition.setStatus(Status.DEPLOYING);
             condition.setLastTransitionTime(getCurrentTransitionTime());

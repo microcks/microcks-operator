@@ -68,32 +68,65 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
       final String microcksName = microcksMetadata.getName();
 
       Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-deployment.yml");
-      DeploymentBuilder builder = new DeploymentBuilder(deployment).editMetadata().withName(getDeploymentName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
-            .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
-            .addToLabels("app.kubernetes.io/part-of", microcksName).endMetadata().editSpec().editSelector()
-            .addToMatchLabels("app", microcksName).endSelector().editTemplate()
-            // make sure label selector matches label (which has to be matched by service selector too)
-            .editMetadata().addToLabels("app", microcksName).endMetadata().editSpec().editFirstContainer()
-            .withImage("quay.io/keycloak/keycloak:20.0.2").addNewEnv().withName("KEYCLOAK_ADMIN").withNewValueFrom()
-            .withNewSecretKeyRef().withName(KeycloakSecretDependentResource.getSecretName(microcks))
-            .withKey(KeycloakSecretDependentResource.KEYCLOAK_ADMIN_KEY).endSecretKeyRef().endValueFrom().endEnv()
-            .addNewEnv().withName("KEYCLOAK_ADMIN_PASSWORD").withNewValueFrom().withNewSecretKeyRef()
-            .withName(KeycloakSecretDependentResource.getSecretName(microcks))
-            .withKey(KeycloakSecretDependentResource.KEYCLOAK_ADMIN_PASSWORD_KEY).endSecretKeyRef().endValueFrom()
-            .endEnv().endContainer().addNewVolume().withName("keycloak-config").withNewConfigMap()
-            .withName(KeycloakConfigMapDependentResource.getConfigMapName(microcks)).endConfigMap().endVolume()
-            .endSpec().endTemplate().endSpec();
-
-      // Add the Keycloak URL as hostname arg.
-      builder.editSpec().editTemplate().editSpec().editFirstContainer()
-            .addToArgs("--hostname=" + microcks.getStatus().getKeycloakUrl()).endContainer().endSpec().endTemplate()
+      DeploymentBuilder builder = new DeploymentBuilder(deployment)
+            .editMetadata()
+               .withName(getDeploymentName(microcks))
+               .withNamespace(microcksMetadata.getNamespace())
+               .addToLabels("app", microcksName)
+               .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
+               .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
+               .addToLabels("app.kubernetes.io/part-of", microcksName)
+            .endMetadata()
+            .editSpec()
+               .editSelector().addToMatchLabels("app", microcksName).endSelector()
+               .editTemplate()
+                  // make sure label selector matches label (which has to be matched by service selector too)
+                  .editMetadata().addToLabels("app", microcksName).endMetadata()
+                  .editSpec()
+                     .editFirstContainer()
+                        .withImage("quay.io/keycloak/keycloak:24.0.4")
+                        .addNewEnv()
+                           .withName("KEYCLOAK_ADMIN")
+                           .withNewValueFrom()
+                              .withNewSecretKeyRef()
+                                 .withName(KeycloakSecretDependentResource.getSecretName(microcks))
+                                 .withKey(KeycloakSecretDependentResource.KEYCLOAK_ADMIN_KEY)
+                              .endSecretKeyRef()
+                           .endValueFrom()
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("KEYCLOAK_ADMIN_PASSWORD")
+                           .withNewValueFrom()
+                              .withNewSecretKeyRef()
+                                 .withName(KeycloakSecretDependentResource.getSecretName(microcks))
+                                 .withKey(KeycloakSecretDependentResource.KEYCLOAK_ADMIN_PASSWORD_KEY)
+                              .endSecretKeyRef()
+                           .endValueFrom()
+                        .endEnv()
+                     .endContainer()
+                     .addNewVolume()
+                        .withName("keycloak-config")
+                        .withNewConfigMap()
+                           .withName(KeycloakConfigMapDependentResource.getConfigMapName(microcks))
+                        .endConfigMap()
+                     .endVolume()
+                  .endSpec()
+               .endTemplate()
             .endSpec();
 
+      // Add the Keycloak URL as hostname arg.
+      builder.editSpec().editTemplate().editSpec()
+            .editFirstContainer()
+               .addToArgs("--hostname=" + microcks.getStatus().getKeycloakUrl())
+            .endContainer()
+            .endSpec().endTemplate().endSpec();
+
       if (microcks.getSpec().getKeycloak().getPrivateUrl() != null) {
-         builder.editSpec().editTemplate().editSpec().editFirstContainer()
-               .addToArgs("--hostname-strict-backchannel=false").endContainer().endSpec().endTemplate().endSpec();
+         builder.editSpec().editTemplate().editSpec()
+               .editFirstContainer()
+                  .addToArgs("--hostname-strict-backchannel=false")
+               .endContainer()
+               .endSpec().endTemplate().endSpec();
       }
 
       return builder.build();

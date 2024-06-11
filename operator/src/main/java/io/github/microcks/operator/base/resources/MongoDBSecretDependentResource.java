@@ -46,6 +46,8 @@ public class MongoDBSecretDependentResource extends KubernetesDependentResource<
    public static final String MONGODB_USER_KEY = "username";
    /** The secret key used to store password. */
    public static final String MONGODB_PASSWORD_KEY = "password";
+   /** The secret key used to store admin username. */
+   public static final String MONGODB_ADMIN_USER_KEY = "adminUsername";
    /** The secret key used to store admin password. */
    public static final String MONGODB_ADMIN_PASSWORD_KEY = "adminPassword";
 
@@ -78,12 +80,17 @@ public class MongoDBSecretDependentResource extends KubernetesDependentResource<
       final String microcksName = microcksMetadata.getName();
       final MicrocksSpec spec = microcks.getSpec();
 
-      SecretBuilder builder = new SecretBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("container", "mongodb").addToLabels("group", "microcks").endMetadata()
+      SecretBuilder builder = new SecretBuilder()
+            .withNewMetadata()
+               .withName(getSecondaryResourceName(microcks))
+               .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
+               .addToLabels("container", "mongodb")
+               .addToLabels("group", "microcks")
+            .endMetadata()
             .withType("kubernetes.io/basic-auth")
             .addToStringData(MONGODB_USER_KEY, "user" + RandomStringUtils.randomAlphanumeric(6))
             .addToStringData(MONGODB_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32))
+            .addToStringData(MONGODB_ADMIN_USER_KEY, RandomStringUtils.randomAlphanumeric(16))
             .addToStringData(MONGODB_ADMIN_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32));
 
       return builder.build();

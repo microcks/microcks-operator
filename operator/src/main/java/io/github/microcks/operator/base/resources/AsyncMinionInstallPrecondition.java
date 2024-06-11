@@ -30,7 +30,8 @@ public class AsyncMinionInstallPrecondition implements Condition<HasMetadata, Mi
 
    @Override
    public boolean isMet(DependentResource<HasMetadata, Microcks> dependentResource, Microcks microcks,
-         Context<Microcks> context) {
+                        Context<Microcks> context) {
+
       return microcks.getSpec().getFeatures().getAsync() != null
             && microcks.getSpec().getFeatures().getAsync().isEnabled();
    }

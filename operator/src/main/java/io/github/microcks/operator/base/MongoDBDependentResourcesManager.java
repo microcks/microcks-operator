@@ -16,6 +16,7 @@
 package io.github.microcks.operator.base;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.base.resources.MongoDBConfigMapDependantResource;
 import io.github.microcks.operator.base.resources.MongoDBReadyCondition;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.github.microcks.operator.base.resources.MongoDBDeploymentDependentResource;
@@ -24,6 +25,7 @@ import io.github.microcks.operator.base.resources.MongoDBPVCDependentResource;
 import io.github.microcks.operator.base.resources.MongoDBSecretDependentResource;
 import io.github.microcks.operator.base.resources.MongoDBServiceDependentResource;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
@@ -51,6 +53,7 @@ public class MongoDBDependentResourcesManager {
    private KubernetesClient client;
 
    private KubernetesDependentResource<Secret, Microcks> secretDR;
+   private KubernetesDependentResource<ConfigMap, Microcks> configMapDR;
    private KubernetesDependentResource<PersistentVolumeClaim, Microcks> dbPersistentVolumeDR;
    private KubernetesDependentResource<Deployment, Microcks> dbDeploymentDR;
    private KubernetesDependentResource<Service, Microcks> dbServiceDR;
@@ -69,6 +72,7 @@ public class MongoDBDependentResourcesManager {
     */
    public Workflow<Microcks> buildReconciliationWorkflow() {
       secretDR = new MongoDBSecretDependentResource();
+      configMapDR = new MongoDBConfigMapDependantResource();
       dbPersistentVolumeDR = new MongoDBPVCDependentResource();
       dbDeploymentDR = new MongoDBDeploymentDependentResource();
       dbServiceDR = new MongoDBServiceDependentResource();
@@ -78,17 +82,18 @@ public class MongoDBDependentResourcesManager {
       Condition installedCondition = new MongoDBInstallPrecondition();
 
       // Configure the dependent resources.
-      Arrays.asList(secretDR, dbPersistentVolumeDR, dbDeploymentDR, dbServiceDR).forEach(dr -> {
-         //dr.setKubernetesClient(client);
+      Arrays.asList(secretDR, configMapDR, dbPersistentVolumeDR, dbDeploymentDR, dbServiceDR).forEach(dr -> {
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
                         p.getMetadata().getNamespace())));
          }
          builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
+         // Add a ready condition on deployment.
+         if (dr == dbDeploymentDR) {
+            builder.withReadyPostcondition(new MongoDBReadyCondition());
+         }
       });
-
-      builder.addDependentResource(dbDeploymentDR).withReadyPostcondition(new MongoDBReadyCondition());
 
       return builder.build();
    }
@@ -99,7 +104,11 @@ public class MongoDBDependentResourcesManager {
     * @return An array of configured EventSources.
     */
    public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      return new EventSource[] { secretDR.initEventSource(context), dbPersistentVolumeDR.initEventSource(context),
-            dbDeploymentDR.initEventSource(context), dbServiceDR.initEventSource(context) };
+      return new EventSource[] {
+            secretDR.initEventSource(context),
+            configMapDR.initEventSource(context),
+            dbPersistentVolumeDR.initEventSource(context),
+            dbDeploymentDR.initEventSource(context),
+            dbServiceDR.initEventSource(context) };
    }
 }

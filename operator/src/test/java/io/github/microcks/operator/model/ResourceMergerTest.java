@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * This is a unit test for the {@link ResourceMerger} util class.
  * @author Laurent
  */
-public class ResourceMergerTest {
+class ResourceMergerTest {
 
    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
@@ -51,14 +51,13 @@ public class ResourceMergerTest {
    }
 
    @Test
-   public void testMergeEmptyMicrocksSpec() {
+   void testMergeEmptyMicrocksSpec() {
       Microcks simplestCR = new Microcks();
 
       MicrocksSpec result = null;
       try {
          result = new ResourceMerger().mergeResources(defaultCR.getSpec(), simplestCR.getSpec());
       } catch (Throwable t) {
-         t.printStackTrace();
          fail("Merging Microcks CR should not fail");
       }
 
@@ -72,14 +71,14 @@ public class ResourceMergerTest {
    }
 
    @Test
-   public void testMergePartialMicrocksSpec() {
+   void testMergePartialMicrocksSpec() {
       Microcks partialCR = new Microcks();
       MicrocksSpec spec = new MicrocksSpec();
       KeycloakSpec keycloak = new KeycloakSpec();
       spec.setKeycloak(keycloak);
       partialCR.setSpec(spec);
 
-      spec.setVersion("1.7.0");
+      spec.setVersion("1.9.1");
       keycloak.setInstall(false);
       keycloak.setRealm("custom-realm");
       keycloak.setUrl("keycloak.acme.com");
@@ -88,12 +87,11 @@ public class ResourceMergerTest {
       try {
          result = new ResourceMerger().mergeResources(defaultCR.getSpec(), partialCR.getSpec());
       } catch (Throwable t) {
-         t.printStackTrace();
          fail("Merging Microcks CR should not fail");
       }
 
       assertNotNull(result);
-      assertEquals("1.7.0", result.getVersion());
+      assertEquals("1.9.1", result.getVersion());
       assertEquals(1, result.getMicrocks().getReplicas());
       assertEquals(1, result.getPostman().getReplicas());
       assertFalse(result.getKeycloak().isInstall());

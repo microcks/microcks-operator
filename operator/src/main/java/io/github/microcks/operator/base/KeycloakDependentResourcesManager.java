@@ -88,18 +88,18 @@ public class KeycloakDependentResourcesManager {
       Condition installedCondition = new KeycloakInstallPrecondition();
 
       // Configure the dependent resources.
-      Arrays.asList(secretDR, dbPersistentVolumeDR, dbDeploymentDR, dbServiceDR, deploymentDR, serviceDR, configMapDR)
-            .forEach(dr -> {
-               //dr.setKubernetesClient(client);
-               if (dr instanceof NamedSecondaryResourceProvider<?>) {
-                  dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
-                        p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
-                              p.getMetadata().getNamespace())));
-               }
-               builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
-            });
-
-      builder.addDependentResource(deploymentDR).withReadyPostcondition(new KeycloackReadyCondition());
+      Arrays.asList(secretDR, dbPersistentVolumeDR, dbDeploymentDR, dbServiceDR, deploymentDR, serviceDR, configMapDR).forEach(dr -> {
+         if (dr instanceof NamedSecondaryResourceProvider<?>) {
+            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
+                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
+                        p.getMetadata().getNamespace())));
+         }
+         builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
+         // Add a ready condition on deployment.
+         if (dr == deploymentDR) {
+            builder.withReadyPostcondition(new KeycloackReadyCondition());
+         }
+      });
 
       return builder.build();
    }

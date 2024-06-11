@@ -29,6 +29,7 @@ spec:
       containers:
         - name: keycloak-postgresql
           image: "{{keycloak.postgres_image}}"
+          args: ["-c", "max_connections=100", "-c", "shared_buffers=12MB"]
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
@@ -41,20 +42,15 @@ spec:
                 - "/bin/sh"
                 - "-i"
                 - "-c"
-                - psql 127.0.0.1 -U ${POSTGRESQL_USER} -q -d ${POSTGRESQL_DATABASE}
-                  -c 'SELECT 1'
+                - psql 127.0.0.1 -U ${POSTGRES_USER} -q -d ${POSTGRES_DB} -c 'SELECT 1'
           livenessProbe:
             timeoutSeconds: 1
             initialDelaySeconds: 30
             tcpSocket:
               port: 5432
           env:
-            - name: POSTGRESQL_DATABASE
+            - name: POSTGRES_DB
               value: root
-            - name: POSTGRESQL_MAX_CONNECTIONS
-              value: '100'
-            - name: POSTGRESQL_SHARED_BUFFERS
-              value: 12MB
           volumeMounts:
             - name: "keycloak-postgresql-data"
               mountPath: "/var/lib/pgsql/data"

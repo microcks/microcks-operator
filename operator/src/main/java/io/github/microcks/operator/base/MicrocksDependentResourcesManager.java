@@ -19,8 +19,8 @@ import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.base.resources.MicrocksDeploymentDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksReadyCondition;
 import io.github.microcks.operator.base.resources.MicrocksServiceDependentResource;
-import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.github.microcks.operator.base.resources.MicrocksConfigMapDependentResource;
+import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Service;
@@ -72,16 +72,17 @@ public class MicrocksDependentResourcesManager {
 
       // Configure the dependent resources.
       Arrays.asList(configMapDR, deploymentDR, serviceDR).forEach(dr -> {
-         //dr.setKubernetesClient(client);
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
                         p.getMetadata().getNamespace())));
          }
          builder.addDependentResource(dr);
+         // Add a ready condition on deployment.
+         if (dr == deploymentDR) {
+            builder.withReadyPostcondition(new MicrocksReadyCondition());
+         }
       });
-
-      builder.addDependentResource(deploymentDR).withReadyPostcondition(new MicrocksReadyCondition());
 
       return builder.build();
    }
@@ -92,7 +93,10 @@ public class MicrocksDependentResourcesManager {
     * @return An array of configured EventSources.
     */
    public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      return new EventSource[] { configMapDR.initEventSource(context), deploymentDR.initEventSource(context),
-            serviceDR.initEventSource(context) };
+      return new EventSource[] {
+            configMapDR.initEventSource(context),
+            deploymentDR.initEventSource(context),
+            serviceDR.initEventSource(context)
+      };
    }
 }

@@ -75,16 +75,17 @@ public class AsyncFeatureDependentResourcesManager {
 
       // Configure the dependent resources.
       Arrays.asList(configMapDR, deploymentDR, serviceDR).forEach(dr -> {
-         //dr.setKubernetesClient(client);
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
                         p.getMetadata().getNamespace())));
          }
          builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
+         // Add a ready condition on deployment.
+         if (dr == deploymentDR) {
+            builder.withReadyPostcondition(new AsyncMinionReadyCondition());
+         }
       });
-
-      builder.addDependentResource(deploymentDR).withReadyPostcondition(new AsyncMinionReadyCondition());
 
       return builder.build();
    }
@@ -95,7 +96,9 @@ public class AsyncFeatureDependentResourcesManager {
     * @return An array of configured EventSources.
     */
    public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      return new EventSource[] { configMapDR.initEventSource(context), deploymentDR.initEventSource(context),
+      return new EventSource[] {
+            configMapDR.initEventSource(context),
+            deploymentDR.initEventSource(context),
             serviceDR.initEventSource(context) };
    }
 }

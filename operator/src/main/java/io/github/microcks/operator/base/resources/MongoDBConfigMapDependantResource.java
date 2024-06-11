@@ -17,77 +17,63 @@ package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
-import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
-import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.javaoperatorsdk.operator.ReconcilerUtils;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.logging.Logger;
 
 /**
- * A Keycloak Kubernetes Service dependent resource.
+ * A MongoDB Kubernetes ConfigMap dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakServiceDependentResource extends CRUDKubernetesDependentResource<Service, Microcks>
+public class MongoDBConfigMapDependantResource extends CRUDKubernetesDependentResource<ConfigMap, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   private static final String RESOURCE_SUFFIX = "-mongodb-init";
+
    /** Default empty constructor. */
-   public KeycloakServiceDependentResource() {
-      super(Service.class);
+   public MongoDBConfigMapDependantResource() {
+      super(ConfigMap.class);
    }
 
    /**
-    * Get the name of Service given the primary Microcks resource.
+    * Get the name of ConfigMap given the primary Microcks resource.
     * @param microcks The primary resource
-    * @return The name of Service
+    * @return The name of ConfigMap
     */
-   public static String getServiceName(Microcks microcks) {
-      return KeycloakDeploymentDependentResource.getDeploymentName(microcks);
+   public static final String getConfigMapName(Microcks microcks) {
+      return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }
 
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return getServiceName(primary);
+      return getConfigMapName(primary);
    }
 
    @Override
-   protected Service desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak Service for '%s'", microcks.getMetadata().getName());
+   protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
+      logger.infof("Building desired MongoDB ConfigMap for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
-      final MicrocksSpec spec = microcks.getSpec();
 
-      ServiceBuilder builder = new ServiceBuilder()
-            .withNewMetadata()
-               .withName(getSecondaryResourceName(microcks))
+      ConfigMap configMap = ReconcilerUtils.loadYaml(ConfigMap.class, getClass(), "/k8s/mongodb-configmap.yml");
+      ConfigMapBuilder builder = new ConfigMapBuilder(configMap)
+            .editMetadata()
+               .withName(getConfigMapName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
-               .addToLabels("container", "keycloak")
-               .addToLabels("group", "microcks")
-            .endMetadata()
-            .withNewSpec()
-               .addToSelector("app", microcksName)
-               .addToSelector("container", "keycloak")
-               .addToSelector("group", "microcks")
-               .addNewPort()
-               .withName("keycloak")
-               .withPort(8080)
-                  .withProtocol("TCP")
-                  .withTargetPort(new IntOrString(8080))
-               .endPort()
-               .withSessionAffinity("None")
-               .withType("ClusterIP")
-            .endSpec();
+            .endMetadata();
 
       return builder.build();
    }

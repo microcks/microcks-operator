@@ -29,6 +29,7 @@ spec:
       containers:
         - name: mongodb
           image: "{{mongodb.image}}"
+          args: ["--dbpath","/var/lib/mongodb/data"]
           ports:
             - containerPort: 27017
               protocol: TCP
@@ -40,7 +41,7 @@ spec:
                 - "/bin/sh"
                 - "-i"
                 - "-c"
-                - mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
+                - mongo 127.0.0.1:27017/$MONGO_INITDB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
                   --eval="quit()"
           livenessProbe:
             timeoutSeconds: 1
@@ -48,7 +49,9 @@ spec:
             tcpSocket:
               port: 27017
           volumeMounts:
-            - name: "mongodb-data"
+            - name: custom-init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+            - name: mongodb-data
               mountPath: "/var/lib/mongodb/data"
           terminationMessagePath: "/dev/termination-log"
           imagePullPolicy: IfNotPresent
@@ -57,5 +60,3 @@ spec:
             privileged: false
       restartPolicy: Always
       dnsPolicy: ClusterFirst
-      volumes:
-        - name: "mongodb-data"

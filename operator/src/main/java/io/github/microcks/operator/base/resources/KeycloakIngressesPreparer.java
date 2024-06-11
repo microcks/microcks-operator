@@ -120,15 +120,36 @@ public class KeycloakIngressesPreparer {
       final String microcksName = microcksMetadata.getName();
       final IngressSpec spec = microcks.getSpec().getKeycloak().getIngress();
 
-      IngressBuilder builder = new IngressBuilder().withNewMetadata().withName(getRouteName(microcks))
-            .addToLabels("app", microcksName).addToLabels("group", "microcks")
-            .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/").endMetadata().withNewSpec().addNewTl()
-            .addToHosts(microcks.getSpec().getKeycloak().getUrl())
-            .withSecretName(IngressSpecUtil.getSecretName(spec, getIngressSecretName(microcks))).endTl().addNewRule()
-            .withHost(microcks.getSpec().getKeycloak().getUrl()).withNewHttp().addNewPath().withPath("/")
-            .withPathType("Prefix").withNewBackend().withNewService()
-            .withName(MicrocksServiceDependentResource.getServiceName(microcks)).withNewPort().withNumber(8080)
-            .endPort().endService().endBackend().endPath().endHttp().endRule().endSpec();
+      IngressBuilder builder = new IngressBuilder()
+            .withNewMetadata()
+               .withName(getRouteName(microcks))
+               .addToLabels("app", microcksName)
+               .addToLabels("group", "microcks")
+               .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/")
+            .endMetadata()
+            .withNewSpec()
+               .addNewTl()
+                  .addToHosts(microcks.getSpec().getKeycloak().getUrl())
+                  .withSecretName(IngressSpecUtil.getSecretName(spec, getIngressSecretName(microcks)))
+               .endTl()
+               .addNewRule()
+                  .withHost(microcks.getSpec().getKeycloak().getUrl())
+                  .withNewHttp()
+                     .addNewPath()
+                        .withPath("/")
+                        .withPathType("Prefix")
+                        .withNewBackend()
+                           .withNewService()
+                              .withName(KeycloakServiceDependentResource.getServiceName(microcks))
+                              .withNewPort()
+                                 .withNumber(8080)
+                              .endPort()
+                           .endService()
+                        .endBackend()
+                     .endPath()
+                  .endHttp()
+               .endRule()
+            .endSpec();
 
       // Add ingress classname if specified.
       if (spec.getClassName() != null) {

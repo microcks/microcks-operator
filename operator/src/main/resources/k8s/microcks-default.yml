@@ -9,52 +9,47 @@ spec:
     replicas: 1
     ingress:
       generateCert: true
-
-    mockInvocationStats: true
-    logLevel: INFO
-
     resources:
       requests:
         cpu: 200m
-        memory: 400Mi
+        memory: 512Mi
+      limits:
+        memory: 512Mi
     env:
       - name: SERVICES_UPDATE_INTERVAL
         value: 0 0 0/2 * * *
-
     openshift:
       route:
         enabled: true
         tlsTermination: edge
+    logLevel: INFO
+    mockInvocationStats: true
 
   postman:
     replicas: 1
 
   keycloak:
     install: true
-    realm: microcks
     ingress:
       generateCert: true
-
     volumeSize: 1Gi
-
-    serviceAccount: microcks-serviceaccount
-    serviceAccountCredentials: ab54d329-e435-41ae-a900-ec6b3fe15c54
-
     resources:
       requests:
         cpu: 400m
         memory: 400Mi
-
     openshift:
       route:
         enabled: true
         type: edge
 
+    realm: microcks
+    serviceAccount: microcks-serviceaccount
+    serviceAccountCredentials: ab54d329-e435-41ae-a900-ec6b3fe15c54
+
   mongodb:
     install: true
     persistent: true
     volumeSize: 2Gi
-
     resources:
       requests:
         cpu: 250m

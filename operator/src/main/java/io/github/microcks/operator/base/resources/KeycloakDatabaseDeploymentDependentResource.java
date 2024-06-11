@@ -69,31 +69,68 @@ public class KeycloakDatabaseDeploymentDependentResource extends CRUDKubernetesD
       final String microcksName = microcksMetadata.getName();
       final MicrocksSpec spec = microcks.getSpec();
 
-      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(),
-            "/k8s/keycloak-postgresql-deployment.yml");
-      DeploymentBuilder builder = new DeploymentBuilder(deployment).editMetadata().withName(getDeploymentName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
-            .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
-            .addToLabels("app.kubernetes.io/part-of", microcksName).endMetadata().editSpec().editSelector()
-            .addToMatchLabels("app", microcksName).endSelector().editTemplate()
-            // make sure label selector matches label (which has to be matched by service selector too)
-            .editMetadata().addToLabels("app", microcksName).endMetadata().editSpec().editFirstContainer()
-            .withImage("centos/postgresql-10-centos7").addNewEnv().withName("POSTGRESQL_USER").withNewValueFrom()
-            .withNewSecretKeyRef().withName(KeycloakSecretDependentResource.getSecretName(microcks))
-            .withKey(KeycloakSecretDependentResource.DATABASE_USER_KEY).endSecretKeyRef().endValueFrom().endEnv()
-            .addNewEnv().withName("POSTGRESQL_PASSWORD").withNewValueFrom().withNewSecretKeyRef()
-            .withName(KeycloakSecretDependentResource.getSecretName(microcks))
-            .withKey(KeycloakSecretDependentResource.DATABASE_USER_PASSWORD_KEY).endSecretKeyRef().endValueFrom()
-            .endEnv().endContainer().endSpec().endTemplate().endSpec();
+      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-postgresql-deployment.yml");
+      DeploymentBuilder builder = new DeploymentBuilder(deployment)
+            .editMetadata()
+               .withName(getDeploymentName(microcks))
+               .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
+               .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
+               .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
+               .addToLabels("app.kubernetes.io/part-of", microcksName)
+            .endMetadata()
+            .editSpec()
+               .editSelector().addToMatchLabels("app", microcksName).endSelector()
+               .editTemplate()
+                  // make sure label selector matches label (which has to be matched by service selector too)
+                  .editMetadata()
+                     .addToLabels("app", microcksName)
+                  .endMetadata()
+                  .editSpec()
+                     .editFirstContainer()
+                        .withImage("library/postgres:16.3-alpine")
+                        .addNewEnv()
+                           .withName("POSTGRES_USER")
+                           .withNewValueFrom()
+                              .withNewSecretKeyRef()
+                                 .withName(KeycloakSecretDependentResource.getSecretName(microcks))
+                                 .withKey(KeycloakSecretDependentResource.DATABASE_USER_KEY)
+                              .endSecretKeyRef()
+                           .endValueFrom()
+                        .endEnv()
+                        .addNewEnv()
+                           .withName("POSTGRES_PASSWORD")
+                           .withNewValueFrom()
+                              .withNewSecretKeyRef()
+                                 .withName(KeycloakSecretDependentResource.getSecretName(microcks))
+                                 .withKey(KeycloakSecretDependentResource.DATABASE_USER_PASSWORD_KEY)
+                              .endSecretKeyRef()
+                           .endValueFrom()
+                        .endEnv()
+                     .endContainer()
+                  .endSpec()
+               .endTemplate()
+            .endSpec();
 
       if (spec.getKeycloak().isPersistent()) {
-         builder.editSpec().editTemplate().editSpec().editFirstVolume().editOrNewPersistentVolumeClaim()
-               .withClaimName(KeycloakDatabasePVCDependentResource.getPVCName(microcks)).endPersistentVolumeClaim()
-               .endVolume().endSpec().endTemplate().endSpec();
+         builder.editSpec()
+               .editTemplate()
+                  .editSpec()
+                     .editFirstVolume()
+                        .editOrNewPersistentVolumeClaim()
+                           .withClaimName(KeycloakDatabasePVCDependentResource.getPVCName(microcks))
+                        .endPersistentVolumeClaim()
+                     .endVolume()
+                  .endSpec()
+               .endTemplate().endSpec();
       } else {
-         builder.editSpec().editTemplate().editSpec().editFirstVolume().editOrNewEmptyDir().withMedium("").endEmptyDir()
-               .endVolume().endSpec().endTemplate().endSpec();
+         builder.editSpec()
+               .editTemplate()
+                  .editSpec()
+                     .editFirstVolume()
+                        .editOrNewEmptyDir().withMedium("").endEmptyDir()
+                     .endVolume()
+                  .endSpec()
+               .endTemplate().endSpec();
       }
 
       return builder.build();
