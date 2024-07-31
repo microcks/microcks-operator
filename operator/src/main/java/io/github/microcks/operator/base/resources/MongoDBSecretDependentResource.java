@@ -74,7 +74,7 @@ public class MongoDBSecretDependentResource extends KubernetesDependentResource<
 
    @Override
    protected Secret desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired MongoDB Secret for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired MongoDB Secret for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

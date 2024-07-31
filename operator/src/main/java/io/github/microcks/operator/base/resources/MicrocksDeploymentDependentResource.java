@@ -64,7 +64,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
 
    @Override
    protected Deployment desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Microcks Deployment for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Microcks Deployment for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
@@ -124,10 +124,6 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                            .withName("KEYCLOAK_URL")
                            .withValue(getKeycloakUrl(microcks))
                         .endEnv()
-                        .addNewEnv()
-                           .withName("KAFKA_BOOTSTRAP_SERVER")
-                           .withValue(getKafkaUrl(microcks))
-                        .endEnv()
                      .endContainer()
                   .endSpec()
                .endTemplate()
@@ -165,45 +161,58 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
             .endSpec().endTemplate().endSpec();
 
       // Complete configuration with optional stuffs.
-      if (microcks.getSpec().getFeatures().getAsync().isEnabled()
-            && !microcks.getSpec().getFeatures().getAsync().getKafka().isInstall()) {
+      if (microcks.getSpec().getFeatures().getAsync().isEnabled()) {
+         builder.editSpec()
+               .editTemplate()
+                  .editSpec()
+                     .editFirstContainer()
+                        .addNewEnv()
+                           .withName("KAFKA_BOOTSTRAP_SERVER")
+                           .withValue(getKafkaUrl(microcks))
+                        .endEnv()
+                     .endContainer()
+                  .endSpec()
+               .endTemplate().endSpec();
 
-         KafkaSpec kafkaSpec = microcks.getSpec().getFeatures().getAsync().getKafka();
-         if (!KafkaAuthenticationType.NONE.equals(kafkaSpec.getAuthentication().getType())) {
-            builder.editSpec()
-                  .editTemplate()
-                     .editSpec()
-                        .editFirstContainer()
-                           .addNewEnv()
-                              .withName("KAFKA_TRUSTSTORE_PASSWORD")
+         if (!microcks.getSpec().getFeatures().getAsync().getKafka().isInstall()) {
+
+            KafkaSpec kafkaSpec = microcks.getSpec().getFeatures().getAsync().getKafka();
+            if (!KafkaAuthenticationType.NONE.equals(kafkaSpec.getAuthentication().getType())) {
+               builder.editSpec()
+                     .editTemplate()
+                        .editSpec()
+                           .editFirstContainer()
+                              .addNewEnv()
+                                 .withName("KAFKA_TRUSTSTORE_PASSWORD")
                                  .withNewValueFrom()
                                     .withNewSecretKeyRef()
                                        .withName(kafkaSpec.getAuthentication().getTruststoreSecretRef().getName())
                                        .withKey(kafkaSpec.getAuthentication().getTruststoreSecretRef().getAdditionalProperties().get("passwordKey").toString())
                                     .endSecretKeyRef()
-                              .endValueFrom()
-                           .endEnv()
-                        .endContainer()
-                     .endSpec()
-                  .endTemplate().endSpec();
-         }
-         if (KafkaAuthenticationType.SSL.equals(kafkaSpec.getAuthentication().getType())) {
-            builder.editSpec()
-                  .editTemplate()
-                     .editSpec()
-                        .editFirstContainer()
-                           .addNewEnv()
-                              .withName("KAFKA_KEYSTORE_PASSWORD")
+                                 .endValueFrom()
+                              .endEnv()
+                           .endContainer()
+                        .endSpec()
+                     .endTemplate().endSpec();
+            }
+            if (KafkaAuthenticationType.SSL.equals(kafkaSpec.getAuthentication().getType())) {
+               builder.editSpec()
+                     .editTemplate()
+                        .editSpec()
+                           .editFirstContainer()
+                              .addNewEnv()
+                                 .withName("KAFKA_KEYSTORE_PASSWORD")
                                  .withNewValueFrom()
                                     .withNewSecretKeyRef()
                                        .withName(kafkaSpec.getAuthentication().getKeystoreSecretRef().getName())
                                        .withKey(kafkaSpec.getAuthentication().getKeystoreSecretRef().getAdditionalProperties().get("passwordKey").toString())
                                     .endSecretKeyRef()
-                              .endValueFrom()
-                           .endEnv()
-                        .endContainer()
-                     .endSpec()
-                  .endTemplate().endSpec();
+                                 .endValueFrom()
+                              .endEnv()
+                           .endContainer()
+                        .endSpec()
+                     .endTemplate().endSpec();
+            }
          }
       }
 

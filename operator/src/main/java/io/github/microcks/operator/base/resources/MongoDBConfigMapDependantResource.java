@@ -62,7 +62,7 @@ public class MongoDBConfigMapDependantResource extends CRUDKubernetesDependentRe
 
    @Override
    protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired MongoDB ConfigMap for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired MongoDB ConfigMap for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

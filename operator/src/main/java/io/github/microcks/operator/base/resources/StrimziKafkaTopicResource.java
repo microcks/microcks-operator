@@ -60,7 +60,7 @@ public class StrimziKafkaTopicResource {
     * @return A GenericKubernetesResource holding a KafkaTopic resource from Strimzi
     */
    public GenericKubernetesResource desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Strimzi Kafka Topic for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Strimzi Kafka Topic for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
@@ -76,13 +76,11 @@ public class StrimziKafkaTopicResource {
          return null;
       }
 
-      GenericKubernetesResource genericTopic = new GenericKubernetesResourceBuilder()
+      return new GenericKubernetesResourceBuilder()
             .withApiVersion(topicMap.get("apiVersion").toString()).withKind(topicMap.get("kind").toString())
             .withNewMetadata().withName(microcksName + RESOURCE_SUFFIX)
             .addToLabels("strimzi.io/cluster", StrimziKafkaResource.getKafkaName(microcks)).endMetadata()
             .addToAdditionalProperties("spec", topicMap.get("spec")).build();
-
-      return genericTopic;
    }
 
    /** A Qute templates accessor. */

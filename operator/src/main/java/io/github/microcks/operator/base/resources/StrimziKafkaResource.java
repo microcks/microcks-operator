@@ -70,7 +70,7 @@ public class StrimziKafkaResource {
     * @return A GenericKubernetesResource holding a Kafka resource from Strimzi
     */
    public GenericKubernetesResource desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Strimzi Kafka for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Strimzi Kafka for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

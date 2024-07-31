@@ -66,7 +66,7 @@ public class MicrocksGRPCSecretDependentResource extends KubernetesDependentReso
 
    @Override
    protected Secret desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Microcks GRPC Secret for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Microcks GRPC Secret for '%s'", microcks.getMetadata().getName());
 
       // Prepare labels and hosts.
       Map<String, String> labels = Map.of("app", microcks.getMetadata().getName(),

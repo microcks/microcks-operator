@@ -66,7 +66,7 @@ public class KeycloakIngressesPreparer {
     * @return An OpenShift Route resource
     */
    public static final Route prepareRoute(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Preparing desired Keycloak Route for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Preparing desired Keycloak Route for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
@@ -113,8 +113,7 @@ public class KeycloakIngressesPreparer {
     * @return A vanilla Kubernetes Ingress resource
     */
    public static Ingress prepareIngress(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Preparing desired Keycloak Ingress for '%s'", microcks.getMetadata().getName());
-
+      logger.debugf("Preparing desired Keycloak Ingress for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

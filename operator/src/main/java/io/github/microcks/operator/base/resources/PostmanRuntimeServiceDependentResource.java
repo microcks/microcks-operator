@@ -52,19 +52,32 @@ public class PostmanRuntimeServiceDependentResource extends CRUDKubernetesDepend
 
    @Override
    protected Service desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Postman runtime Service for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Postman runtime Service for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
-      final MicrocksSpec spec = microcks.getSpec();
 
-      ServiceBuilder builder = new ServiceBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("container", "postman-runtime").addToLabels("group", "microcks").endMetadata().withNewSpec()
-            .addToSelector("app", microcksName).addToSelector("container", "postman-runtime")
-            .addToSelector("group", "microcks").addNewPort().withName("postman-runtime").withPort(8080)
-            .withProtocol("TCP").withTargetPort(new IntOrString(3000)).endPort().withSessionAffinity("None")
-            .withType("ClusterIP").endSpec();
+      ServiceBuilder builder = new ServiceBuilder()
+            .withNewMetadata()
+               .withName(getSecondaryResourceName(microcks))
+               .withNamespace(microcksMetadata.getNamespace())
+               .addToLabels("app", microcksName)
+               .addToLabels("container", "postman-runtime")
+               .addToLabels("group", "microcks")
+            .endMetadata()
+            .withNewSpec()
+               .addToSelector("app", microcksName)
+               .addToSelector("container", "postman-runtime")
+               .addToSelector("group", "microcks")
+               .addNewPort()
+                  .withName("postman-runtime")
+                  .withPort(8080)
+                  .withProtocol("TCP")
+                  .withTargetPort(new IntOrString(3000))
+               .endPort()
+               .withSessionAffinity("None")
+               .withType("ClusterIP")
+            .endSpec();
 
       return builder.build();
    }

@@ -62,7 +62,7 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
 
    @Override
    protected Deployment desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak Deployment for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Keycloak Deployment for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

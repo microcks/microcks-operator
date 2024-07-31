@@ -61,7 +61,7 @@ public class KeycloakDatabasePVCDependentResource
 
    @Override
    protected PersistentVolumeClaim desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak DB PersistentVolumeClaim for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Keycloak DB PersistentVolumeClaim for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

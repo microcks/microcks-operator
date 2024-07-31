@@ -64,7 +64,7 @@ public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentR
 
    @Override
    protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
 
       // Compute realm-config with Qute template.
       String realmConfig = Templates.microcksRealm(microcks.getSpec()).render();

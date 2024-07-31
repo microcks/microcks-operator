@@ -66,7 +66,7 @@ public class MicrocksIngressesPreparer {
     * @return An OpenShift Route resource
     */
    public static Route prepareRoute(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Preparing desired Microcks Route for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Preparing desired Microcks Route for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
@@ -125,7 +125,7 @@ public class MicrocksIngressesPreparer {
     * @return A vanilla Kubernetes Ingress resource
     */
    public static Ingress prepareIngress(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Preparing desired Microcks Ingress for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Preparing desired Microcks Ingress for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

@@ -250,7 +250,6 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
                         + "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
             return UpdateControl.updateStatus(microcks);
          }
-
       } else {
          if (spec.getKeycloak() != null && spec.getKeycloak().getUrl() != null) {
             keycloakUrl = spec.getKeycloak().getUrl();
@@ -269,18 +268,23 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       // Reconcile all our different workflows and handle the results.
       WorkflowReconcileResult keycloakResult = keycloakModuleWF.reconcile(completeCR, context);
       updateStatus = handleWorkflowReconcileResult(keycloakResult, microcks.getStatus(), "Keycloak") || updateStatus;
+      logger.infof("Keycloak reconciliation triggered an update? %s", updateStatus);
 
       WorkflowReconcileResult mongoDBResult = mongoDBModuleWF.reconcile(completeCR, context);
       updateStatus = handleWorkflowReconcileResult(mongoDBResult, microcks.getStatus(), "Mongo") || updateStatus;
+      logger.infof("Mongo reconciliation triggered an update?: %s", updateStatus);
 
       WorkflowReconcileResult microcksResult = microcksModuleWF.reconcile(completeCR, context);
       updateStatus = handleWorkflowReconcileResult(microcksResult, microcks.getStatus(), "Microcks") || updateStatus;
+      logger.infof("Microcks reconciliation triggered an update?: %s", updateStatus);
 
       WorkflowReconcileResult postmanResult = postmanRuntimeModuleWF.reconcile(completeCR, context);
       updateStatus = handleWorkflowReconcileResult(postmanResult, microcks.getStatus(), "Postman") || updateStatus;
+      logger.infof("Postman reconciliation triggered an update?: %s", updateStatus);
 
       WorkflowReconcileResult asyncFeatureResult = asyncFeatureModuleWF.reconcile(completeCR, context);
       updateStatus = handleWorkflowReconcileResult(asyncFeatureResult, microcks.getStatus(), "Async") || updateStatus;
+      logger.infof("Async reconciliation triggered an update?: %s", updateStatus);
 
       /*
        * // Some diagnostic helpers during development.
@@ -298,12 +302,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       }
 
       logger.infof("Finishing reconcile operation for '%s'", microcks.getMetadata().getName());
-      logger.infof("=====================================================");
 
       if (updateStatus) {
+         logger.info("Returning an updateStatus control. ========================");
          return UpdateControl.updateStatus(microcks);
       }
 
+      logger.info("Returning a noUpdate control. =============================");
       return UpdateControl.noUpdate();
    }
 
@@ -364,8 +369,8 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
     * @param microcks    The primary resource this Ingress comes from
     * @param ingressSpec The specification of Ingress to create
     * @param secretName  The name of secret where TLS properties are stored
-    * @param host        The host choosen for exposing the ingress
-    * @param ingress     The INgress resource to create or replace
+    * @param host        The host chosen for exposing the ingress
+    * @param ingress     The Ingress resource to create or replace
     * @param ns          The namespace where to create it
     * @param refs        The controller owner references
     * @return The host to which the ingress is attached (read from ingress spec).
@@ -384,7 +389,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
     * @param microcks   The primary resource this Ingress comes from
     * @param spec       The specification of Ingress to create a secret for
     * @param secretName The name of secret where TLS properties are stored
-    * @param host       The host choosen for exposing the ingress
+    * @param host       The host chosen for exposing the ingress
     */
    protected void createIngressSecretIfNeeded(Microcks microcks, IngressSpec spec, String secretName, String host) {
       if (IngressSpecUtil.generateCertificateSecret(spec)) {
@@ -410,8 +415,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
     * @param module THe module to handle the status for
     * @return Whether the status has been updated.
     */
-   protected boolean handleWorkflowReconcileResult(WorkflowReconcileResult result, MicrocksStatus status,
-         String module) {
+   protected boolean handleWorkflowReconcileResult(WorkflowReconcileResult result, MicrocksStatus status, String module) {
       logger.debugf("Reconciled %s dependents: %s", module, result.getReconciledDependents());
       boolean updateStatus = false;
 
@@ -420,20 +424,23 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
                result.getReconciledDependents().size(), module);
 
          if (!result.getNotReadyDependents().isEmpty()) {
-            logger.info("  Got not ready dependents: " + result.getNotReadyDependents().size());
+            logger.debugf("  Got not ready dependents: " + result.getNotReadyDependents().size());
             for (DependentResource dependentResource : result.getNotReadyDependents()) {
-               logger.info("    dependentResource: " + dependentResource);
+               logger.debugf("    dependentResource: " + dependentResource);
             }
             Condition condition = getOrCreateCondition(status, module + "Deploying");
             condition.setStatus(Status.DEPLOYING);
             condition.setLastTransitionTime(getCurrentTransitionTime());
             updateStatus = true;
          } else if (result.allDependentResourcesReady()) {
-            logger.info("  All dependents are ready!");
+            logger.debugf("  All dependents are ready!");
             Condition condition = getOrCreateCondition(status, module + "Ready");
-            condition.setStatus(Status.READY);
-            condition.setLastTransitionTime(getCurrentTransitionTime());
-            updateStatus = true;
+            // It may already have been set to ready by previous reconciliation.
+            if (Status.READY != condition.getStatus()) {
+               condition.setStatus(Status.READY);
+               condition.setLastTransitionTime(getCurrentTransitionTime());
+               updateStatus = true;
+            }
          }
 
          if (result.erroredDependentsExist()) {

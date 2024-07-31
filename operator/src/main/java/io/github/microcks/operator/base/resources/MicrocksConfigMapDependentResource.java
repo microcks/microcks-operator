@@ -71,7 +71,7 @@ public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentR
 
    @Override
    protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Microcks ConfigMap for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Microcks ConfigMap for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

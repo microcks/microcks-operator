@@ -61,7 +61,7 @@ public class MicrocksServiceDependentResource extends CRUDKubernetesDependentRes
 
    @Override
    protected Service desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak Service for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Keycloak Service for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

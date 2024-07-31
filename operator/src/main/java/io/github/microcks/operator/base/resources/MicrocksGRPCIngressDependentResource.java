@@ -17,7 +17,6 @@ package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
-import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -49,9 +48,9 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
    }
 
    /**
-    * Get the
-    * @param primary
-    * @return
+    * Get the GRPC host for thie ingress.
+    * @param primary The primary Microcks resource
+    * @return The host for GRPC traffic
     */
    public static String getGRPCHost(Microcks primary) {
       return primary.getStatus().getMicrocksUrl() + RESOURCE_SUFFIX;
@@ -64,11 +63,10 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
 
    @Override
    protected Ingress desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
-      final IngressSpec spec = microcks.getSpec().getMicrocks().getGrpcIngress();
 
       IngressBuilder builder = new IngressBuilder()
             .withNewMetadata()

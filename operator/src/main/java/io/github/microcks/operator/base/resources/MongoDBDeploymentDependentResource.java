@@ -63,7 +63,7 @@ public class MongoDBDeploymentDependentResource extends CRUDKubernetesDependentR
 
    @Override
    protected Deployment desired(Microcks microcks, Context<Microcks> context) {
-      logger.infof("Building desired MongoDB Deployment for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired MongoDB Deployment for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();

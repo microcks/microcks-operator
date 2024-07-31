@@ -49,6 +49,7 @@ spec:
             - name: INTERNAL_POD_IP
               valueFrom:
                 fieldRef:
+                  apiVersion: v1
                   fieldPath: status.podIP
             - name: OPERATING_MODE
               value: clustered
@@ -73,6 +74,7 @@ spec:
             - name: OPENSHIFT_KUBE_PING_NAMESPACE
               valueFrom:
                 fieldRef:
+                  apiVersion: v1
                   fieldPath: metadata.namespace
             - name: KC_PROXY
               value: "edge"
