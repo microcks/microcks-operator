@@ -60,5 +60,14 @@ kubectl apply -f samples/microcks-microcks.io-v1alpha1.yml
 You shall see the operator starting the reconciliation with a log like:
 
 ```
-2023-03-24 15:43:34,969 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-113) Starting reconcile operation for 'microcks' 
+2024-07-31 14:12:18,732 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-391) Starting reconcile operation for 'microcks'
+[...]
+2024-07-31 14:12:48,615 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Keycloak reconciliation triggered an update? false
+2024-07-31 14:12:48,618 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Mongo reconciliation triggered an update?: false
+2024-07-31 14:12:48,621 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Microcks reconciliation triggered an update?: false
+2024-07-31 14:12:48,623 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Postman reconciliation triggered an update?: false
+2024-07-31 14:12:48,627 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Async reconciliation triggered an update?: false
+2024-07-31 14:12:48,627 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Finishing reconcile operation for 'microcks'
+2024-07-31 14:12:48,628 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Returning a noUpdate control. =============================
+ 
 ```
