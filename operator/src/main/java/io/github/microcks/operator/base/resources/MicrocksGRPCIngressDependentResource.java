@@ -17,6 +17,8 @@ package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.model.IngressSpec;
+import io.github.microcks.operator.model.IngressSpecUtil;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -48,12 +50,15 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
    }
 
    /**
-    * Get the GRPC host for thie ingress.
+    * Get the GRPC host for the ingress.
     * @param primary The primary Microcks resource
     * @return The host for GRPC traffic
     */
    public static String getGRPCHost(Microcks primary) {
-      return primary.getStatus().getMicrocksUrl() + RESOURCE_SUFFIX;
+      String microcksUrl = primary.getStatus().getMicrocksUrl();
+      String hostname = microcksUrl.substring(0, microcksUrl.indexOf('.'));
+      String domain = microcksUrl.substring(microcksUrl.indexOf('.'));
+      return hostname + RESOURCE_SUFFIX + domain;
    }
 
    @Override
@@ -63,14 +68,16 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
 
    @Override
    protected Ingress desired(Microcks microcks, Context<Microcks> context) {
-      logger.debugf("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Microcks GRPC Ingress for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
+      final IngressSpec spec = microcks.getSpec().getMicrocks().getGrpcIngress();
 
       IngressBuilder builder = new IngressBuilder()
             .withNewMetadata()
                .withName(getSecondaryResourceName(microcks))
+            .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
                .addToLabels("group", "microcks")
                .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/")
@@ -100,6 +107,17 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
                   .endHttp()
                .endRule()
             .endSpec();
+
+      // Add ingress classname if specified.
+      if (spec != null && spec.getClassName() != null) {
+         builder.editSpec().withIngressClassName(spec.getClassName());
+      }
+
+      // Add complementary annotations if any.
+      Map<String, String> annotations = IngressSpecUtil.getAnnotationsIfAny(spec);
+      if (annotations != null) {
+         builder.editMetadata().addToAnnotations(annotations);
+      }
 
       return builder.build();
    }

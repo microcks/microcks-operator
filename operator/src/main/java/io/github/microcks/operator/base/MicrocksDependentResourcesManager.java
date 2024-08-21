@@ -17,6 +17,7 @@ package io.github.microcks.operator.base;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.base.resources.MicrocksDeploymentDependentResource;
+import io.github.microcks.operator.base.resources.MicrocksGRPCIngressDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksGRPCSecretDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksGRPCSecretInstallPrecondition;
 import io.github.microcks.operator.base.resources.MicrocksGRPCServiceDependentResource;
@@ -29,6 +30,7 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
 import io.javaoperatorsdk.operator.api.reconciler.ResourceIDMatcherDiscriminator;
@@ -55,6 +57,7 @@ public class MicrocksDependentResourcesManager {
    private KubernetesDependentResource<Deployment, Microcks> deploymentDR;
    private KubernetesDependentResource<Service, Microcks> serviceDR;
    private KubernetesDependentResource<Service, Microcks> grpcServiceDR;
+   private KubernetesDependentResource<Ingress, Microcks> grpcIngressDR;
 
    /**
     * Creates a MicrocksDependentResourcesManager.
@@ -74,12 +77,13 @@ public class MicrocksDependentResourcesManager {
       deploymentDR = new MicrocksDeploymentDependentResource();
       serviceDR = new MicrocksServiceDependentResource();
       grpcServiceDR = new MicrocksGRPCServiceDependentResource();
+      grpcIngressDR = new MicrocksGRPCIngressDependentResource();
 
       // Build the workflow.
       WorkflowBuilder<Microcks> builder = new WorkflowBuilder<>();
 
       // Configure the dependent resources.
-      Arrays.asList(grpcSecretDR, configMapDR, deploymentDR, serviceDR, grpcServiceDR).forEach(dr -> {
+      Arrays.asList(grpcSecretDR, configMapDR, deploymentDR, serviceDR, grpcServiceDR, grpcIngressDR).forEach(dr -> {
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
@@ -110,7 +114,8 @@ public class MicrocksDependentResourcesManager {
             configMapDR.initEventSource(context),
             deploymentDR.initEventSource(context),
             serviceDR.initEventSource(context),
-            grpcServiceDR.initEventSource(context)
+            grpcServiceDR.initEventSource(context),
+            grpcIngressDR.initEventSource(context)
       };
    }
 }
