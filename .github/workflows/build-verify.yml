@@ -43,6 +43,40 @@ jobs:
       #- name: Verify Javadoc completion
       #  run: mvn -B javadoc:javadoc
 
+      - name: Package container image for operator e2e tests
+        run: |
+          docker build -f src/main/docker/Dockerfile.jvm -t quay.io/microcks/microcks-operator:e2e-tests .
+          echo ${{ secrets.QUAY_PASSWORD }} | docker login -u ${{ secrets.QUAY_USERNAME }} --password-stdin quay.io
+          docker push quay.io/microcks/microcks-operator:e2e-tests
+
+      - name: Install kubectl and Kind Cluster
+        run: |
+          set -x
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
+            && sudo mv ./kubectl /usr/local/bin/kubectl \
+            && sudo chmod +x /usr/local/bin/kubectl
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64 \
+            && sudo mv ./kind /usr/local/bin/kind \
+            && sudo chmod +x /usr/local/bin/kind
+
+      - name: Install kubectl and Kind Cluster
+        run: |
+          set -x
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
+            && sudo mv ./kubectl /usr/local/bin/kubectl \
+            && sudo chmod +x /usr/local/bin/kubectl
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.21.0/kind-linux-amd64 \
+            && sudo mv ./kind /usr/local/bin/kind \
+            && sudo chmod +x /usr/local/bin/kind
+
+      - name: Run e2e tests on operator using Kuttl.dev
+        run: |
+          set -x
+          curl -Lo ./kuttl https://github.com/kudobuilder/kuttl/releases/download/v0.18.8/kubectl-kuttl_0.18.0_linux_x86_64 \
+            && sudo cp kuttl /usr/local/bin/kubectl-kuttl \
+            && sudo chmod +x /usr/local/bin/kubectl-kuttl
+          kubectl kuttl test --config=./tests/kuttl-test.yaml
+
       - name: Set environment for branch
         run: |
           set -x
@@ -71,15 +105,28 @@ jobs:
           BUILDER=buildx-multi-arch
           docker buildx inspect $BUILDER || docker buildx create --name=$BUILDER --driver=docker-container --driver-opt=network=host
 
-      - name: Build and push container image for operator
+      - name: Build and push JVM container image for operator
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
         run: |
           cd ${{github.workspace}}/operator
-          mvn -B package -Pnative -Dquarkus.native.container-build=true
+          mvn -B package
           docker buildx build --push \
             --platform=linux/amd64,linux/arm64 \
             --builder=buildx-multi-arch \
             --provenance=false \
             --build-arg TAG=$IMAGE_TAG \
-            --file src/main/docker/Dockerfile.native \
+            --file src/main/docker/Dockerfile.jvm \
             --tag=quay.io/microcks/microcks-operator:$IMAGE_TAG .
+
+#      - name: Build and push native container image for operator
+#        if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
+#        run: |
+#          cd ${{github.workspace}}/operator
+#          mvn -B package -Pnative -Dquarkus.native.container-build=true
+#          docker buildx build --push \
+#            --platform=linux/amd64,linux/arm64 \
+#            --builder=buildx-multi-arch \
+#            --provenance=false \
+#            --build-arg TAG=$IMAGE_TAG-native \
+#            --file src/main/docker/Dockerfile.native \
+#            --tag=quay.io/microcks/microcks-operator:$IMAGE_TAG-native .

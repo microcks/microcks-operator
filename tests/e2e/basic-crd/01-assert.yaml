@@ -1,0 +1,27 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 10
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: microcks-ingress
+  namespace: microcks
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: microcks-grpc
+  namespace: microcks
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: microcks
+  namespace: microcks
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: microcks-grpc
+  namespace: microcks

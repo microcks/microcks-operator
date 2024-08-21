@@ -1,0 +1,12 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+  namespace: microcks
+spec:
+  version: 1.10.0
+  microcks:
+    url: microcks.m.minikube.local
+  keycloak:
+    url: keycloak.m.minikube.local
+    privateUrl: http://microcks-keycloak.microcks.svc.cluster.local:8080

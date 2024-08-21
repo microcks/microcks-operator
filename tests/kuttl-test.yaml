@@ -1,0 +1,12 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+startKIND: true
+#skipDelete: true
+#skipClusterDelete: true
+kindContainers:
+- quay.io/microcks/microcks-operator:e2e-tests
+#- quay.io/lbroudoux/microcks-operator:jvm-latest
+manifestDirs:
+- tests/manifests
+testDirs:
+- tests/e2e/

@@ -1,0 +1,11 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 20
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: microcks-operator
+  namespace: microcks
+status:
+  readyReplicas: 1
