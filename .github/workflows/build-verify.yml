@@ -45,6 +45,7 @@ jobs:
 
       - name: Package container image for operator e2e tests
         run: |
+          cd ${{github.workspace}}/operator
           docker build -f src/main/docker/Dockerfile.jvm -t quay.io/microcks/microcks-operator:e2e-tests .
           echo ${{ secrets.QUAY_PASSWORD }} | docker login -u ${{ secrets.QUAY_USERNAME }} --password-stdin quay.io
           docker push quay.io/microcks/microcks-operator:e2e-tests
