@@ -17,6 +17,7 @@ package io.github.microcks.operator;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.model.IngressSpec;
+import io.github.microcks.operator.api.source.v1alpha1.APISource;
 
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
@@ -56,6 +57,10 @@ public class RuntimeReflectionRegistrationFeature implements Feature {
       // Gathering all the classes from API packages in same Jar locations.
       Set<Class> apiClasses = findAllClassesInSamePackageAndSameLocation(loader, IngressSpec.class);
       apiClasses.addAll(findAllClassesInSamePackageAndSameLocation(loader, Microcks.class));
+      apiClasses.addAll(findAllClassesInSamePackageAndSameLocation(loader, APISource.class));
+
+      // TODO: move this elsewhere later on.
+      apiClasses.addAll(findAllClassesInSamePackageAndSameLocation(loader, io.github.microcks.client.model.KeycloakConfig.class));
 
       for (Class clazz : apiClasses) {
          registerClassForReflection(clazz);

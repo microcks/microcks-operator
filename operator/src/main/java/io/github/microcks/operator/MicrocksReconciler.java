@@ -30,6 +30,7 @@ import io.github.microcks.operator.base.resources.KeycloakIngressesPreparer;
 import io.github.microcks.operator.base.resources.MicrocksIngressesPreparer;
 import io.github.microcks.operator.base.resources.StrimziKafkaResource;
 import io.github.microcks.operator.base.resources.StrimziKafkaTopicResource;
+import io.github.microcks.operator.model.ConditionUtil;
 import io.github.microcks.operator.model.IngressSpecUtil;
 import io.github.microcks.operator.model.ResourceMerger;
 
@@ -63,11 +64,8 @@ import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 import org.jboss.logging.Logger;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -86,24 +84,27 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   @Inject
-   KubernetesClient client;
+   final KubernetesClient client;
 
-   private ResourceMerger merger = new ResourceMerger();
+   private final ResourceMerger merger = new ResourceMerger();
 
-   private SimpleDateFormat transitionFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+   private static final String KEYCLOAK_MODULE = "Keycloak";
+   private static final String MONGODB_MODULE = "Mongo";
+   private static final String MICROCKS_MODULE = "Microcks";
+   private static final String POSTMAN_MODULE = "Postman";
+   private static final String ASYNC_MODULE = "Async";
 
-   private Workflow<Microcks> keycloakModuleWF;
-   private Workflow<Microcks> mongoDBModuleWF;
-   private Workflow<Microcks> microcksModuleWF;
-   private Workflow<Microcks> postmanRuntimeModuleWF;
-   private Workflow<Microcks> asyncFeatureModuleWF;
+   private final Workflow<Microcks> keycloakModuleWF;
+   private final Workflow<Microcks> mongoDBModuleWF;
+   private final Workflow<Microcks> microcksModuleWF;
+   private final Workflow<Microcks> postmanRuntimeModuleWF;
+   private final Workflow<Microcks> asyncFeatureModuleWF;
 
-   private KeycloakDependentResourcesManager keycloakReconciler;
-   private MongoDBDependentResourcesManager mongoDBReconciler;
-   private MicrocksDependentResourcesManager microcksReconciler;
-   private PostmanRuntimeDependentResourcesManager postmanRuntimeReconciler;
-   private AsyncFeatureDependentResourcesManager asyncFeatureReconciler;
+   private final KeycloakDependentResourcesManager keycloakReconciler;
+   private final MongoDBDependentResourcesManager mongoDBReconciler;
+   private final MicrocksDependentResourcesManager microcksReconciler;
+   private final PostmanRuntimeDependentResourcesManager postmanRuntimeReconciler;
+   private final AsyncFeatureDependentResourcesManager asyncFeatureReconciler;
 
    /**
     *
@@ -267,23 +268,23 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
       // Reconcile all our different workflows and handle the results.
       WorkflowReconcileResult keycloakResult = keycloakModuleWF.reconcile(completeCR, context);
-      updateStatus = handleWorkflowReconcileResult(keycloakResult, microcks.getStatus(), "Keycloak") || updateStatus;
+      updateStatus = handleWorkflowReconcileResult(keycloakResult, microcks.getStatus(), KEYCLOAK_MODULE) || updateStatus;
       logger.infof("Keycloak reconciliation triggered an update? %s", updateStatus);
 
       WorkflowReconcileResult mongoDBResult = mongoDBModuleWF.reconcile(completeCR, context);
-      updateStatus = handleWorkflowReconcileResult(mongoDBResult, microcks.getStatus(), "Mongo") || updateStatus;
+      updateStatus = handleWorkflowReconcileResult(mongoDBResult, microcks.getStatus(), MONGODB_MODULE) || updateStatus;
       logger.infof("Mongo reconciliation triggered an update?: %s", updateStatus);
 
       WorkflowReconcileResult microcksResult = microcksModuleWF.reconcile(completeCR, context);
-      updateStatus = handleWorkflowReconcileResult(microcksResult, microcks.getStatus(), "Microcks") || updateStatus;
+      updateStatus = handleWorkflowReconcileResult(microcksResult, microcks.getStatus(), MICROCKS_MODULE) || updateStatus;
       logger.infof("Microcks reconciliation triggered an update?: %s", updateStatus);
 
       WorkflowReconcileResult postmanResult = postmanRuntimeModuleWF.reconcile(completeCR, context);
-      updateStatus = handleWorkflowReconcileResult(postmanResult, microcks.getStatus(), "Postman") || updateStatus;
+      updateStatus = handleWorkflowReconcileResult(postmanResult, microcks.getStatus(), POSTMAN_MODULE) || updateStatus;
       logger.infof("Postman reconciliation triggered an update?: %s", updateStatus);
 
       WorkflowReconcileResult asyncFeatureResult = asyncFeatureModuleWF.reconcile(completeCR, context);
-      updateStatus = handleWorkflowReconcileResult(asyncFeatureResult, microcks.getStatus(), "Async") || updateStatus;
+      updateStatus = handleWorkflowReconcileResult(asyncFeatureResult, microcks.getStatus(), ASYNC_MODULE) || updateStatus;
       logger.infof("Async reconciliation triggered an update?: %s", updateStatus);
 
       /*
@@ -305,6 +306,9 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
       if (updateStatus) {
          logger.info("Returning an updateStatus control. ========================");
+         logger.info("Global status before check is: " + microcks.getStatus().getStatus());
+         checkIfGloballyReady(completeCR, microcks.getStatus());
+         logger.info("Global status after check is: " + microcks.getStatus().getStatus());
          return UpdateControl.updateStatus(microcks);
       }
 
@@ -426,19 +430,19 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
          if (!result.getNotReadyDependents().isEmpty()) {
             logger.debugf("  Got not ready dependents: " + result.getNotReadyDependents().size());
             for (DependentResource dependentResource : result.getNotReadyDependents()) {
-               logger.debugf("    dependentResource: " + dependentResource);
+               logger.debugf("    dependentResource: %s", dependentResource);
             }
-            Condition condition = getOrCreateCondition(status, module + "Deploying");
+            Condition condition = ConditionUtil.getOrCreateCondition(status, module + "Deploying");
             condition.setStatus(Status.DEPLOYING);
-            condition.setLastTransitionTime(getCurrentTransitionTime());
+            ConditionUtil.touchConditionTime(condition);
             updateStatus = true;
          } else if (result.allDependentResourcesReady()) {
             logger.debugf("  All dependents are ready!");
-            Condition condition = getOrCreateCondition(status, module + "Ready");
+            Condition condition = ConditionUtil.getOrCreateCondition(status, module + "Ready");
             // It may already have been set to ready by previous reconciliation.
             if (Status.READY != condition.getStatus()) {
                condition.setStatus(Status.READY);
-               condition.setLastTransitionTime(getCurrentTransitionTime());
+               ConditionUtil.touchConditionTime(condition);
                updateStatus = true;
             }
          }
@@ -507,27 +511,40 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    }
 
    /** */
-   protected Condition getOrCreateCondition(MicrocksStatus status, String type) {
-      Condition result = null;
-      if (status.getConditions() != null) {
-         for (Condition condition : status.getConditions()) {
-            if (condition.getType().equals(type)) {
-               result = condition;
-               break;
-            }
+   protected void checkIfGloballyReady(Microcks completeCR, MicrocksStatus status) {
+      MicrocksSpec spec = completeCR.getSpec();
+
+      Condition microcksCondition = ConditionUtil.getCondition(status, MICROCKS_MODULE + "Ready");
+      if (microcksCondition == null || microcksCondition.getStatus() != Status.READY) {
+         return;
+      }
+      Condition postmanCondition = ConditionUtil.getCondition(status, POSTMAN_MODULE + "Ready");
+      if (postmanCondition == null || postmanCondition.getStatus() != Status.READY) {
+         return;
+      }
+
+      // Evaluate MongoDB condition if you must install it.
+      if (spec.getMongoDB().isInstall()) {
+         Condition mongoCondition = ConditionUtil.getCondition(status, MONGODB_MODULE + "Ready");
+         if (mongoCondition == null || mongoCondition.getStatus() != Status.READY) {
+            return;
          }
       }
-      if (result == null) {
-         result = new Condition();
-         result.setType(type);
-         status.addCondition(result);
+      // Evaluate Keycloak condition if you must install it.
+      if (spec.getKeycloak().isInstall()) {
+         Condition keycloakCondition = ConditionUtil.getCondition(status, KEYCLOAK_MODULE + "Ready");
+         if (keycloakCondition == null || keycloakCondition.getStatus() != Status.READY) {
+            return;
+         }
       }
-      return result;
-   }
-
-   /** */
-   protected String getCurrentTransitionTime() {
-      return transitionFormat.format(Calendar.getInstance().getTime());
+      // Evaluate Async condition if you must install it.
+      if (spec.getFeatures().getAsync().isEnabled()) {
+         Condition asyncCondition = ConditionUtil.getCondition(status, ASYNC_MODULE + "Ready");
+         if (asyncCondition == null || asyncCondition.getStatus() != Status.READY) {
+            return;
+         }
+      }
+      status.setStatus(Status.READY);
    }
 
    /** */

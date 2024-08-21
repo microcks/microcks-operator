@@ -19,6 +19,8 @@
     <quarkus.native.native-image-xmx>8G</quarkus.native.native-image-xmx>
     <quarkus.container-image.group>lbroudoux</quarkus.container-image.group>
     <quarkus.container-image.name>microcks-operator</quarkus.container-image.name>
+    <microcks-client.version>0.0.1</microcks-client.version>
+    <bouncycastle.version>1.78</bouncycastle.version>
   </properties>
 
   <dependencies>
@@ -26,6 +28,11 @@
       <groupId>io.github.microcks</groupId>
       <artifactId>microcks-kube-api</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.microcks</groupId>
+      <artifactId>microcks-java-client</artifactId>
+      <version>${microcks-client.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkiverse.operatorsdk</groupId>
@@ -43,9 +50,10 @@
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk15on</artifactId>
-      <version>1.70</version>
+      <artifactId>bcpkix-jdk15to18</artifactId>
+      <version>${bouncycastle.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.graalvm.sdk</groupId>
       <artifactId>graal-sdk</artifactId>
