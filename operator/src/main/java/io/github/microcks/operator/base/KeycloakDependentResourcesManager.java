@@ -18,7 +18,7 @@ package io.github.microcks.operator.base;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.base.resources.KeycloackReadyCondition;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
-import io.github.microcks.operator.base.resources.KeycloakConfigMapDependentResource;
+import io.github.microcks.operator.base.resources.KeycloakConfigSecretDependentResource;
 import io.github.microcks.operator.base.resources.KeycloakDatabaseDeploymentDependentResource;
 import io.github.microcks.operator.base.resources.KeycloakDatabasePVCDependentResource;
 import io.github.microcks.operator.base.resources.KeycloakDatabaseServiceDependentResource;
@@ -27,7 +27,6 @@ import io.github.microcks.operator.base.resources.KeycloakInstallPrecondition;
 import io.github.microcks.operator.base.resources.KeycloakSecretDependentResource;
 import io.github.microcks.operator.base.resources.KeycloakServiceDependentResource;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
@@ -60,7 +59,7 @@ public class KeycloakDependentResourcesManager {
    private KubernetesDependentResource<Service, Microcks> dbServiceDR;
    private KubernetesDependentResource<Deployment, Microcks> deploymentDR;
    private KubernetesDependentResource<Service, Microcks> serviceDR;
-   private KubernetesDependentResource<ConfigMap, Microcks> configMapDR;
+   private KubernetesDependentResource<Secret, Microcks> configSecretDR;
 
    /**
     * Creates a KeycloakDependentResourcesManager.
@@ -81,14 +80,14 @@ public class KeycloakDependentResourcesManager {
       dbServiceDR = new KeycloakDatabaseServiceDependentResource();
       deploymentDR = new KeycloakDeploymentDependentResource();
       serviceDR = new KeycloakServiceDependentResource();
-      configMapDR = new KeycloakConfigMapDependentResource();
+      configSecretDR = new KeycloakConfigSecretDependentResource();
 
       // Build the workflow.
       WorkflowBuilder<Microcks> builder = new WorkflowBuilder<>();
       Condition installedCondition = new KeycloakInstallPrecondition();
 
       // Configure the dependent resources.
-      Arrays.asList(secretDR, dbPersistentVolumeDR, dbDeploymentDR, dbServiceDR, deploymentDR, serviceDR, configMapDR).forEach(dr -> {
+      Arrays.asList(secretDR, dbPersistentVolumeDR, dbDeploymentDR, dbServiceDR, deploymentDR, serviceDR, configSecretDR).forEach(dr -> {
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
@@ -113,6 +112,6 @@ public class KeycloakDependentResourcesManager {
       return new EventSource[] { secretDR.initEventSource(context), dbPersistentVolumeDR.initEventSource(context),
             dbDeploymentDR.initEventSource(context), dbServiceDR.initEventSource(context),
             deploymentDR.initEventSource(context), serviceDR.initEventSource(context),
-            configMapDR.initEventSource(context) };
+            configSecretDR.initEventSource(context) };
    }
 }

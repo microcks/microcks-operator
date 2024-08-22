@@ -20,7 +20,7 @@ metadata:
   name: microcks-keycloak-admin
   namespace: microcks
 ---
-kind: ConfigMap
+kind: Secret
 apiVersion: v1
 metadata:
   name: microcks-keycloak-config

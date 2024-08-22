@@ -23,6 +23,8 @@ import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
@@ -35,7 +37,7 @@ import org.jboss.logging.Logger;
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentResource<ConfigMap, Microcks>
+public class KeycloakConfigSecretDependentResource extends CRUDKubernetesDependentResource<Secret, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
@@ -44,26 +46,26 @@ public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentR
    private static final String RESOURCE_SUFFIX = "-keycloak-config";
 
    /** Default empty constructor. */
-   public KeycloakConfigMapDependentResource() {
-      super(ConfigMap.class);
+   public KeycloakConfigSecretDependentResource() {
+      super(Secret.class);
    }
 
    /**
-    * Get the name of ConfigMap given the primary Microcks resource.
+    * Get the name of Secret given the primary Microcks resource.
     * @param microcks The primary resource
-    * @return The name of ConfigMap
+    * @return The name of Secret
     */
-   public static final String getConfigMapName(Microcks microcks) {
+   public static final String getSecretName(Microcks microcks) {
       return microcks.getMetadata().getName() + RESOURCE_SUFFIX;
    }
 
    @Override
    public String getSecondaryResourceName(Microcks primary) {
-      return getConfigMapName(primary);
+      return getSecretName(primary);
    }
 
    @Override
-   protected ConfigMap desired(Microcks microcks, Context<Microcks> context) {
+   protected Secret desired(Microcks microcks, Context<Microcks> context) {
       logger.debugf("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
 
       // Compute realm-config with Qute template.
@@ -72,10 +74,10 @@ public class KeycloakConfigMapDependentResource extends CRUDKubernetesDependentR
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
 
-      ConfigMapBuilder builder = new ConfigMapBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
+      SecretBuilder builder = new SecretBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
             .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
             .addToLabels("container", "keycloak").addToLabels("group", "microcks").endMetadata()
-            .addToData("microcks-realm.json", realmConfig);
+            .addToStringData("microcks-realm.json", realmConfig);
 
       return builder.build();
    }
