@@ -29,4 +29,9 @@ public class MicrocksOperatorConfig {
 
    /** Label value for the 'group' value. */
    public static final String GROUP_LABEL_VALUE = "microcks";
+
+   /** Annotation for specifying a Microcks instance the current resource relates to. */
+   public static final String INSTANCE_SELECTOR = "microcks.io/instance";
+   /** Annotation for specifying a Service Account secret for accessing a relative Microcks instance. */
+   public static final String SERVICE_ACCOUNT_SECRET_SELECTOR = "microcks.io/service-account-secret";
 }

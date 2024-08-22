@@ -24,7 +24,9 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
-import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
+import io.javaoperatorsdk.operator.api.reconciler.dependent.Deleter;
+import io.javaoperatorsdk.operator.processing.dependent.Creator;
+import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
@@ -37,11 +39,16 @@ import java.util.UUID;
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class KeycloakConfigSecretDependentResource extends CRUDKubernetesDependentResource<Secret, Microcks>
-      implements NamedSecondaryResourceProvider<Microcks> {
+public class KeycloakConfigSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
+      implements Creator<Secret, Microcks>, Deleter<Microcks>, NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
+
+   /** The key used in secret to store the realm configuration. */
+   public static final String REALM_CONFIG_KEY = "microcks-realm.json";
+   /** The name of operator specific service account if any. */
+   public static final String OPERATOR_SERVICE_ACCOUNT = "microcks-operator-serviceaccount";
 
    private static final String RESOURCE_SUFFIX = "-keycloak-config";
 
@@ -78,7 +85,7 @@ public class KeycloakConfigSecretDependentResource extends CRUDKubernetesDepende
       SecretBuilder builder = new SecretBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
             .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
             .addToLabels("container", "keycloak").addToLabels("group", "microcks").endMetadata()
-            .addToStringData("microcks-realm.json", realmConfig);
+            .addToStringData(REALM_CONFIG_KEY, realmConfig);
 
       return builder.build();
    }

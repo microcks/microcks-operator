@@ -15,11 +15,10 @@
  */
 package io.github.microcks.operator;
 
+import io.github.microcks.client.ApiClient;
 import io.github.microcks.client.ApiException;
-import io.github.microcks.client.api.ConfigApi;
 import io.github.microcks.client.api.JobApi;
 import io.github.microcks.client.model.ImportJob;
-import io.github.microcks.client.model.KeycloakConfig;
 import io.github.microcks.client.model.Metadata;
 import io.github.microcks.client.model.SecretRef;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
@@ -31,8 +30,6 @@ import io.github.microcks.operator.api.source.v1alpha1.APISourceSpec;
 import io.github.microcks.operator.api.source.v1alpha1.APISourceStatus;
 import io.github.microcks.operator.api.source.v1alpha1.ArtifactSpec;
 import io.github.microcks.operator.api.source.v1alpha1.ImporterSpec;
-import io.github.microcks.client.ApiClient;
-import io.github.microcks.client.KeycloakClient;
 import io.github.microcks.operator.model.ConditionUtil;
 import io.github.microcks.operator.model.ResourceMerger;
 
@@ -67,12 +64,20 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
+   private static final String API_EXCEPTION_ERROR_LOG = "Message '%s' and response body '%s'";
+
    final KubernetesClient client;
 
    private final ResourceMerger merger = new ResourceMerger();
+   private final KeycloakHelper keycloakHelper;
 
+   /**
+    * Default constructor with injected Kubernetes client.
+    * @param client A Kubernetes client for interacting with the cluster
+    */
    public APISourceReconciler(KubernetesClient client) {
       this.client = client;
+      this.keycloakHelper = new KeycloakHelper(client);
    }
 
    @Override
@@ -91,7 +96,7 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
 
       // Check that microcks instance specification is there.
       Map<String, String> annotations = apisource.getMetadata().getAnnotations();
-      String microcksName = annotations.get("microcks.io/instance");
+      String microcksName = annotations.get(MicrocksOperatorConfig.INSTANCE_SELECTOR);
       if (microcksName == null) {
          logger.errorf("No Microcks instance specified for APISource '%s'", apisource.getMetadata().getName());
          apisource.getStatus().setStatus(Status.ERROR);
@@ -128,21 +133,16 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
       completeCR.setSpec(completeSpec);
       completeCR.setStatus(microcks.getStatus());
 
-      // Retrieve an authentication token from associated Keycloak configuration.
-      KeycloakConfig config = getKeycloakConfig(completeCR);
-
+      // Retrieve an authentication token from associated Keycloak.
       String oauthToken;
-      if (Boolean.TRUE.equals(config.getEnabled())) {
-         String keycloakEndpoint = getKeycloakEndpoint(completeCR, config);
-         logger.infof("Using keycloakEndpoints: %s", keycloakEndpoint);
-         oauthToken = KeycloakClient.connectAndGetOAuthToken(
-               completeCR.getSpec().getKeycloak().getServiceAccount(),
-               completeCR.getSpec().getKeycloak().getServiceAccountCredentials(),
-               keycloakEndpoint);
-         logger.info("Authentication to Keycloak server succeed!");
-      } else {
-         oauthToken = "<anonymous-admin-token>";
-         logger.info("Keycloak protection is not enabled, using a fake token");
+      try {
+         oauthToken = keycloakHelper.getOAuthToken(apisource.getMetadata(), completeCR);
+      } catch (UnsatisfiedRequirementException ure) {
+         logger.errorf("Unsatisfied requirement for connecting to Keycloak: %s", ure.getMessage());
+         return UpdateControl.updateStatus(apisource).rescheduleAfter(Duration.ofSeconds(120));
+      } catch (Exception e) {
+         logger.errorf("Error while getting OAuth token for Keycloak server: %s", e.getMessage());
+         return UpdateControl.updateStatus(apisource).rescheduleAfter(Duration.ofSeconds(10));
       }
 
       // Build a needed ApiCLient to interact with Microcks API.
@@ -150,6 +150,7 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
       apiClient.updateBaseUri("http://" + microcks.getMetadata().getName() + "." + microcks.getMetadata().getNamespace() + ".svc.cluster.local:8080/api");
       apiClient.setRequestInterceptor(request -> request.header("Authorization", "Bearer " + oauthToken));
 
+      // Deal with artifact specifications.
       for (ArtifactSpec artifactSpec : spec.getArtifacts()) {
          Condition condition = ConditionUtil.getOrCreateCondition(apisource.getStatus(), artifactSpec.getUrl());
 
@@ -158,7 +159,7 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
             condition.setStatus(Status.READY);
          } catch (ApiException e) {
             logger.errorf("Error while loading artifact '%s' for APISource '%s'", artifactSpec.getUrl(), apisource.getMetadata().getName());
-            logger.errorf("Message '%s' and response body '%s'", e.getMessage(), e.getResponseBody());
+            logger.errorf(API_EXCEPTION_ERROR_LOG, e.getMessage(), e.getResponseBody());
             apisource.getStatus().setStatus(Status.ERROR);
             condition.setStatus(Status.ERROR);
          }
@@ -167,7 +168,7 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
          updateStatus = true;
       }
 
-
+      // Deal with importer specifications.
       for (ImporterSpec importerSpec : spec.getImporters()) {
          Condition condition = ConditionUtil.getOrCreateCondition(apisource.getStatus(), importerSpec.getRepository().getUrl());
 
@@ -181,7 +182,7 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
             condition.setMessage(importerId);
          } catch (ApiException e) {
             logger.errorf("Error while creating importer '%s' for APISource '%s'", importerSpec.getName(), apisource.getMetadata().getName());
-            logger.errorf("Message '%s' and response body '%s'", e.getMessage(), e.getResponseBody());
+            logger.errorf(API_EXCEPTION_ERROR_LOG, e.getMessage(), e.getResponseBody());
             apisource.getStatus().setStatus(Status.ERROR);
             condition.setStatus(Status.ERROR);
          }
@@ -210,7 +211,7 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
 
       // Check that microcks instance specification is there.
       Map<String, String> annotations = apisource.getMetadata().getAnnotations();
-      String microcksName = annotations.get("microcks.io/instance");
+      String microcksName = annotations.get(MicrocksOperatorConfig.INSTANCE_SELECTOR);
       if (microcksName == null) {
          logger.errorf("No Microcks instance specified for APISource '%s'", apisource.getMetadata().getName());
          return DeleteControl.defaultDelete();
@@ -223,9 +224,19 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
       if (microcks != null && microcks.getStatus().getStatus() == Status.READY && apisource.getStatus() != null) {
 
          // Retrieve an authentication token from associated Keycloak configuration.
-         String oauthToken = null;
+         String oauthToken;
          try {
-            oauthToken = getOAuthToken(microcks);
+            // Load default values for CR and build a complete representation.
+            Microcks defaultCR = loadDefaultMicrocksCR();
+
+            MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
+            Microcks completeCR = new Microcks();
+            completeCR.setKind(microcks.getKind());
+            completeCR.setMetadata(microcks.getMetadata());
+            completeCR.setSpec(completeSpec);
+            completeCR.setStatus(microcks.getStatus());
+
+            oauthToken = keycloakHelper.getOAuthToken(apisource.getMetadata(), completeCR);
          } catch (Exception e) {
             logger.errorf("Error while getting OAuth token for Keycloak server");
             return DeleteControl.noFinalizerRemoval().rescheduleAfter(Duration.ofSeconds(10));
@@ -234,8 +245,7 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
          // Build a needed ApiCLient to interact with Microcks API.
          ApiClient apiClient = new ApiClient();
          apiClient.updateBaseUri("http://" + microcks.getMetadata().getName() + "." + microcks.getMetadata().getNamespace() + ".svc.cluster.local:8080/api");
-         String finalOauthToken = oauthToken;
-         apiClient.setRequestInterceptor(request -> request.header("Authorization", "Bearer " + finalOauthToken));
+         apiClient.setRequestInterceptor(request -> request.header("Authorization", "Bearer " + oauthToken));
          JobApi jobApi = new JobApi(apiClient);
 
          // Remove importJobs from Microcks instance.
@@ -248,62 +258,12 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
                   jobApi.deleteImportJob(importerId);
                } catch (ApiException e) {
                   logger.errorf("Error while deleting importer '%s' for APISource '%s'", importerSpec.getName(), apisource.getMetadata().getName());
-                  logger.errorf("Message '%s' and response body '%s'", e.getMessage(), e.getResponseBody());
+                  logger.errorf(API_EXCEPTION_ERROR_LOG, e.getMessage(), e.getResponseBody());
                }
             }
          }
       }
       return DeleteControl.defaultDelete();
-   }
-
-   protected String getOAuthToken(Microcks microcks) throws Exception {
-      // Load default values for CR and build a complete representation.
-      Microcks defaultCR = loadDefaultMicrocksCR();
-
-      MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
-      Microcks completeCR = new Microcks();
-      completeCR.setKind(microcks.getKind());
-      completeCR.setMetadata(microcks.getMetadata());
-      completeCR.setSpec(completeSpec);
-      completeCR.setStatus(microcks.getStatus());
-
-      // Retrieve an authentication token from associated Keycloak configuration.
-      KeycloakConfig config = getKeycloakConfig(completeCR);
-
-      String oauthToken;
-      if (Boolean.TRUE.equals(config.getEnabled())) {
-         String keycloakEndpoint = getKeycloakEndpoint(completeCR, config);
-         logger.infof("Using keycloakEndpoints: %s", keycloakEndpoint);
-         oauthToken = KeycloakClient.connectAndGetOAuthToken(
-               completeCR.getSpec().getKeycloak().getServiceAccount(),
-               completeCR.getSpec().getKeycloak().getServiceAccountCredentials(),
-               keycloakEndpoint);
-         logger.info("Authentication to Keycloak server succeed!");
-      } else {
-         oauthToken = "<anonymous-admin-token>";
-         logger.info("Keycloak protection is not enabled, using a fake token");
-      }
-
-      return oauthToken;
-   }
-
-   protected KeycloakConfig getKeycloakConfig(Microcks microcks) throws ApiException {
-      ApiClient apiClient = new ApiClient();
-      apiClient.updateBaseUri("http://" + microcks.getMetadata().getName() + "." + microcks.getMetadata().getNamespace() + ".svc.cluster.local:8080/api");
-
-      ConfigApi configApi = new ConfigApi(apiClient);
-      return configApi.getKeycloakConfig();
-   }
-
-   protected String getKeycloakEndpoint(Microcks completeCR, KeycloakConfig config) {
-      if (completeCR.getSpec().getKeycloak().isInstall()) {
-         return "http://" + completeCR.getMetadata().getName() + "-keycloak." + completeCR.getMetadata().getNamespace()
-               + ".svc.cluster.local:8080/realms/" + config.getRealm() + "/protocol/openid-connect/token";
-      } else if (completeCR.getSpec().getKeycloak().getPrivateUrl() != null) {
-         return completeCR.getSpec().getKeycloak().getPrivateUrl() + "/realms/"
-               + config.getRealm() + "/protocol/openid-connect/token";
-      }
-      return config.getAuthServerUrl() + "/realms/" + config.getRealm() + "/protocol/openid-connect/token";
    }
 
    protected String getImporterIdOrNull(Condition condition) {
@@ -359,7 +319,7 @@ public class APISourceReconciler implements Reconciler<APISource>, Cleaner<APISo
    }
 
    /** Load from YAML resource. */
-   private Microcks loadDefaultMicrocksCR() throws Exception {
+   private Microcks loadDefaultMicrocksCR() {
       return ReconcilerUtils.loadYaml(Microcks.class, getClass(), "/k8s/microcks-default.yml");
    }
 
