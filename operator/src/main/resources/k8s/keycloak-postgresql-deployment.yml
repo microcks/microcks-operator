@@ -51,9 +51,12 @@ spec:
           env:
             - name: POSTGRES_DB
               value: root
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: "keycloak-postgresql-data"
               mountPath: "/var/lib/pgsql/data"
+              subPath: pgdata
       terminationGracePeriodSeconds: 60
       volumes:
         - name: "keycloak-postgresql-data"
