@@ -425,6 +425,10 @@ spec:
                             type: string
                         type: object
                     type: object
+                  operatorServiceAccountEnabled:
+                    description: Flag to enable/disable the Service Account dedicated
+                      to the operator for connecting to Keycloak. Default to true.
+                    type: boolean
                   persistent:
                     description: Use persistent storage or ephemeral one? Default
                       to true.
@@ -774,7 +778,7 @@ spec:
                 description: The URL to access Microcks once installation completed
                 type: string
               observedGeneration:
-                description: Reconcilied generation
+                description: Reconciled generation
                 type: integer
               status:
                 description: Global status of the reconciliation

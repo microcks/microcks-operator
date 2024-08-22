@@ -72,6 +72,28 @@
         "microcks-app": [ "user", "manager", "admin" ]
       }
     }
+{#if spec.keycloak.operatorServiceAccountEnabled}
+    , {
+      "username": "service-account-microcks-operator-serviceaccount",
+      "emailVerified": false,
+      "enabled": true,
+      "totp": false,
+      "serviceAccountClientId": "microcks-operator-serviceaccount",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-microcks"
+      ],
+      "clientRoles": {
+        "microcks-app": [
+          "manager",
+          "admin"
+        ]
+      },
+      "notBefore": 0,
+      "groups": []
+    }
+{/if}
   ],
   "roles": {
     "realm": [],
@@ -190,6 +212,19 @@
       "serviceAccountsEnabled": true,
       "clientAuthenticatorType": "client-secret"
     }
+{#if spec.keycloak.operatorServiceAccountEnabled}
+    , {
+      "name": "microcks-operator-serviceaccount",
+      "secret": "{operatorServiceAccountCredentials}",
+      "enabled": true,
+      "bearerOnly": false,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "clientAuthenticatorType": "client-secret"
+    }
+{/if}
   ],
   "identityProviders": [
   ],

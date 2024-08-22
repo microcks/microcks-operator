@@ -68,6 +68,9 @@ public class KeycloakSpec {
    @JsonPropertyDescription("Service Account credentials for external services")
    private String serviceAccountCredentials;
 
+   @JsonPropertyDescription("Flag to enable/disable the Service Account dedicated to the operator for connecting to Keycloak. Default to true.")
+   private boolean operatorServiceAccountEnabled = true;
+
    @JsonPropertyDescription("Configuration of OpenShift specific settings")
    private OpenShiftSpec openshift;
 
@@ -152,6 +155,14 @@ public class KeycloakSpec {
 
    public void setServiceAccountCredentials(String serviceAccountCredentials) {
       this.serviceAccountCredentials = serviceAccountCredentials;
+   }
+
+   public boolean isOperatorServiceAccountEnabled() {
+      return operatorServiceAccountEnabled;
+   }
+
+   public void setOperatorServiceAccountEnabled(boolean operatorServiceAccountEnabled) {
+      this.operatorServiceAccountEnabled = operatorServiceAccountEnabled;
    }
 
    public OpenShiftSpec getOpenshift() {

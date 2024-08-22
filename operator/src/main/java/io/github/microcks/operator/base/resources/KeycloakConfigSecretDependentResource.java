@@ -20,8 +20,6 @@ import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -32,8 +30,10 @@ import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
 import org.jboss.logging.Logger;
 
+import java.util.UUID;
+
 /**
- * A Keycloak Kubernetes ConfigMap dependent resource.
+ * A Keycloak Kubernetes Secret dependent resource holding realm configuration.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
@@ -69,7 +69,8 @@ public class KeycloakConfigSecretDependentResource extends CRUDKubernetesDepende
       logger.debugf("Building desired Keycloak ConfigMap for '%s'", microcks.getMetadata().getName());
 
       // Compute realm-config with Qute template.
-      String realmConfig = Templates.microcksRealm(microcks.getSpec()).render();
+      String operatorServiceAccountCredentials = UUID.randomUUID().toString();
+      String realmConfig = Templates.microcksRealm(microcks.getSpec(), operatorServiceAccountCredentials).render();
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
@@ -86,6 +87,6 @@ public class KeycloakConfigSecretDependentResource extends CRUDKubernetesDepende
    @CheckedTemplate
    public static class Templates {
       /** Qute template for microcks-realm.json. */
-      public static native TemplateInstance microcksRealm(MicrocksSpec spec);
+      public static native TemplateInstance microcksRealm(MicrocksSpec spec, String operatorServiceAccountCredentials);
    }
 }
