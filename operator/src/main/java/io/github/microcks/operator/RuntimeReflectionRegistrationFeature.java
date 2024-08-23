@@ -17,7 +17,7 @@ package io.github.microcks.operator;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.model.IngressSpec;
-import io.github.microcks.operator.api.source.v1alpha1.APISource;
+import io.github.microcks.operator.api.artifact.v1alpha1.APISource;
 
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;

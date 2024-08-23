@@ -22,15 +22,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.sundr.builder.annotations.Buildable;
 
+/**
+ * Representation of the Kafka async features config of an operator-managed Microcks installation.
+ * @author laurent
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "install", "url", "ingressClassName", "persistent", "volumeSize", "schemaRegistry",
       "authentication", "resources", "zkResources" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
-/**
- * Representation of the Kafka async features config of an operator-managed Microcks installation.
- * @author laurent
- */
 public class KafkaSpec {
 
    @JsonPropertyDescription("Install Kafka broker or reuse an existing instance? Default to true")

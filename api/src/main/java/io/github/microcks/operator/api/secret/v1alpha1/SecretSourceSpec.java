@@ -13,45 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.microcks.operator.api.source.v1alpha1;
+package io.github.microcks.operator.api.secret.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
 import java.util.List;
 
 /**
- * This the {@code specification} of a {@link APISource} custom resource.
+ * This the {@code specification} of a {@link SecretSource} custom resource.
  * @author laurent
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "artifacts", "importers" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
-public class APISourceSpec {
+public class SecretSourceSpec {
 
-   @JsonPropertyDescription("A list of Artifacts to import into Microcks instance")
-   private List<ArtifactSpec> artifacts;
+   @JsonPropertyDescription("A list of Secrets to import into Microcks instance")
+   private List<SecretSpec> secrets;
 
-   @JsonPropertyDescription("A list of Importers to create in Microcks instance")
-   private List<ImporterSpec> importers;
-
-   public List<ArtifactSpec> getArtifacts() {
-      return artifacts;
+   public List<SecretSpec> getSecrets() {
+      return secrets;
    }
 
-   public void setArtifacts(List<ArtifactSpec> artifacts) {
-      this.artifacts = artifacts;
-   }
-
-   public List<ImporterSpec> getImporters() {
-      return importers;
-   }
-
-   public void setImporters(List<ImporterSpec> importers) {
-      this.importers = importers;
+   public void setSecrets(List<SecretSpec> secrets) {
+      this.secrets = secrets;
    }
 }

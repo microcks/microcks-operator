@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.microcks.operator.api.source.v1alpha1;
+package io.github.microcks.operator.api.artifact.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,46 +21,37 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
+import java.util.List;
+
 /**
- * Representation of an ArtifactSpec part of an operator-managed APISource definition.
+ * This the {@code specification} of a {@link APISource} custom resource.
  * @author laurent
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "url", "mainArtifact", "secretRef" })
+@JsonPropertyOrder({ "artifacts", "importers" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
-public class ArtifactSpec {
+public class APISourceSpec {
 
-   @JsonPropertyDescription("The URL to access this remote artifact definition")
-   private String url;
+   @JsonPropertyDescription("A list of Artifacts to import into Microcks instance")
+   private List<ArtifactSpec> artifacts;
 
-   @JsonPropertyDescription("Define this artifact as main/primary one. Defaults to true")
-   private boolean mainArtifact = true;
+   @JsonPropertyDescription("A list of Importers to create in Microcks instance")
+   private List<ImporterSpec> importers;
 
-   @JsonPropertyDescription("Reference to a Secret for accessing the artifact url")
-   private String secretRef;
-
-   public String getUrl() {
-      return url;
+   public List<ArtifactSpec> getArtifacts() {
+      return artifacts;
    }
 
-   public void setUrl(String url) {
-      this.url = url;
+   public void setArtifacts(List<ArtifactSpec> artifacts) {
+      this.artifacts = artifacts;
    }
 
-   public boolean getMainArtifact() {
-      return mainArtifact;
+   public List<ImporterSpec> getImporters() {
+      return importers;
    }
 
-   public void setMainArtifact(boolean mainArtifact) {
-      this.mainArtifact = mainArtifact;
-   }
-
-   public String getSecretRef() {
-      return secretRef;
-   }
-
-   public void setSecretRef(String secretRef) {
-      this.secretRef = secretRef;
+   public void setImporters(List<ImporterSpec> importers) {
+      this.importers = importers;
    }
 }

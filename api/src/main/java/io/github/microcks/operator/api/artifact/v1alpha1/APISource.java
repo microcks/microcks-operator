@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.microcks.operator.api.source.v1alpha1;
+package io.github.microcks.operator.api.artifact.v1alpha1;
 
 import io.fabric8.kubernetes.api.model.Namespaced;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -35,5 +35,5 @@ import io.sundr.builder.annotations.BuildableReference;
 @Plural("apisources")
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder", refs = {
       @BuildableReference(ObjectMeta.class) })
-public class APISource extends CustomResource<APISourceSpec, APISourceStatus> implements Namespaced  {
+public class APISource extends CustomResource<APISourceSpec, APISourceStatus> implements Namespaced {
 }

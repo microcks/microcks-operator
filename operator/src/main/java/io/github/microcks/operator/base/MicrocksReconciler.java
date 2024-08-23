@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.microcks.operator;
+package io.github.microcks.operator.base;
 
+import io.github.microcks.operator.WatcherKey;
+import io.github.microcks.operator.WatcherManager;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksStatus;

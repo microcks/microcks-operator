@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.microcks.operator.api.source.v1alpha1;
+package io.github.microcks.operator.api.secret.v1alpha1;
 
 import io.github.microcks.operator.api.model.AdditionalPropertyPreserving;
 import io.github.microcks.operator.api.model.MultiConditionsStatus;
 import io.github.microcks.operator.api.model.Status;
+import io.github.microcks.operator.api.model.StatusPreserving;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
@@ -25,10 +26,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This the {@code status} of a {@link APISource} custom resource.
+ * This the {@code status} of a {@link SecretSource} custom resource.
  * @author laurent
  */
-public class APISourceStatus extends MultiConditionsStatus implements AdditionalPropertyPreserving {
+public class SecretSourceStatus extends MultiConditionsStatus implements StatusPreserving, AdditionalPropertyPreserving {
 
    @JsonPropertyDescription("Global status of the reconciliation")
    private Status status = Status.UNKNOWN;
@@ -39,18 +40,22 @@ public class APISourceStatus extends MultiConditionsStatus implements Additional
    private long observedGeneration;
 
 
+   @Override
    public Status getStatus() {
       return status;
    }
 
+   @Override
    public void setStatus(Status status) {
       this.status = status;
    }
 
+   @Override
    public String getMessage() {
       return message;
    }
 
+   @Override
    public void setMessage(String message) {
       this.message = message;
    }
