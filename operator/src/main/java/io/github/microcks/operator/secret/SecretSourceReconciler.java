@@ -28,6 +28,7 @@ import io.github.microcks.operator.api.secret.v1alpha1.SecretSource;
 import io.github.microcks.operator.api.secret.v1alpha1.SecretSourceSpec;
 import io.github.microcks.operator.api.secret.v1alpha1.SecretSourceStatus;
 import io.github.microcks.operator.api.secret.v1alpha1.SecretSpec;
+import io.github.microcks.operator.api.secret.v1alpha1.SecretValuesFromSpec;
 import io.github.microcks.operator.model.ConditionUtil;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -41,6 +42,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 import java.time.Duration;
+import java.util.Base64;
 
 import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
 
@@ -102,10 +104,30 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
       for (SecretSpec secretSpec : spec.getSecrets()) {
          Condition condition = ConditionUtil.getOrCreateCondition(secretSource.getStatus(), secretSpec.getName());
 
+         // Check if we have to load values from a Kubernetes secret.
+         io.fabric8.kubernetes.api.model.Secret kubeSecret = null;
+         if (secretSpec.getValuesFrom() != null) {
+            SecretValuesFromSpec valuesFromSpec = secretSpec.getValuesFrom();
+            kubeSecret = client.secrets().inNamespace(ns).withName(valuesFromSpec.getSecretRef()).get();
+
+            if (kubeSecret == null) {
+               logger.errorf("Kubernetes secret '%s' not found for '%s' in SecretSource '%s'",
+                     valuesFromSpec.getSecretRef(), secretSpec.getName(), secretSource.getMetadata().getName());
+               condition.setStatus(Status.ERROR);
+               condition.setMessage("Kubernetes secret '" + valuesFromSpec.getSecretRef() + "' not found");
+               secretSource.getStatus().setStatus(Status.ERROR);
+
+               // Don't forget to touch condition time before jumping to next iteration.
+               ConditionUtil.touchConditionTime(condition);
+               updateStatus = true;
+               continue;
+            }
+         }
+
          try {
             // Previously created secret id may be stored within condition message.
             String previousId = getSecretIdOrNull(condition);
-            String secretId = ensureSecretIsPresent(apiClient, secretSpec, previousId);
+            String secretId = ensureSecretIsPresent(apiClient, secretSpec, kubeSecret, previousId);
             condition.setStatus(Status.READY);
             // TODO: Store secretId in condition additional property instead.
             condition.setMessage(secretId);
@@ -192,38 +214,61 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
    }
 
    /** Ensure a secret exists by checking by id, updating if found or cre-creating if not found. */
-   protected String ensureSecretIsPresent(ApiClient apiClient, SecretSpec secretSpec, String previousId) throws ApiException {
+   protected String ensureSecretIsPresent(ApiClient apiClient, SecretSpec secretSpec,
+                                          io.fabric8.kubernetes.api.model.Secret kubeSecret, String previousId) throws ApiException {
       if (previousId != null) {
          // We have a previous secret id, we should check if it's still there.
          ConfigApi configApi = new ConfigApi(apiClient);
          Secret secret = configApi.getSecret(previousId);
          if (secret != null) {
-            updateWithSecretSpec(secret, secretSpec);
+            updateWithSecretSpec(secret, secretSpec, kubeSecret);
             configApi.updateSecret(previousId, secret);
             return previousId;
          }
       }
-      return createSecret(apiClient, secretSpec);
+      return createSecret(apiClient, secretSpec, kubeSecret);
    }
 
-   protected String createSecret(ApiClient apiClient, SecretSpec secretSpec) throws ApiException {
+   protected String createSecret(ApiClient apiClient, SecretSpec secretSpec, io.fabric8.kubernetes.api.model.Secret kubeSecret) throws ApiException {
       // Move SecretSpec into Microcks API model.
       Secret secret = new Secret();
-      updateWithSecretSpec(secret, secretSpec);
+      updateWithSecretSpec(secret, secretSpec, kubeSecret);
       // Use the apiClient to create the secret.
       ConfigApi configApi = new ConfigApi(apiClient);
       secret = configApi.createSecret(secret);
       return secret.getId();
    }
 
-   protected void updateWithSecretSpec(Secret secret, SecretSpec secretSpec) {
+   protected void updateWithSecretSpec(Secret secret, SecretSpec secretSpec, io.fabric8.kubernetes.api.model.Secret kubeSecret) {
       secret.setName(secretSpec.getName());
       secret.setDescription(secretSpec.getDescription());
-      secret.setUsername(secretSpec.getUsername());
-      secret.setPassword(secretSpec.getPassword());
-      secret.setToken(secretSpec.getToken());
-      secret.setTokenHeader(secretSpec.getTokenHeader());
-      secret.setCaCertPem(secretSpec.getCaCertPem());
+      if (secretSpec.getValuesFrom() != null) {
+         SecretValuesFromSpec valuesFromSpec = secretSpec.getValuesFrom();
+
+         // Copy from Kubernetes secret if key is present. Don't forget to decode it.
+         if (shouldCopyFromSecret(valuesFromSpec.getUsernameKey(), kubeSecret)) {
+            secret.setUsername(decodeSecretValue(kubeSecret.getData().get(valuesFromSpec.getUsernameKey())));
+         }
+         if (shouldCopyFromSecret(valuesFromSpec.getPasswordKey(), kubeSecret)) {
+            secret.setPassword(decodeSecretValue(kubeSecret.getData().get(valuesFromSpec.getPasswordKey())));
+         }
+         if (shouldCopyFromSecret(valuesFromSpec.getTokenKey(), kubeSecret)) {
+            secret.setToken(decodeSecretValue(kubeSecret.getData().get(valuesFromSpec.getTokenKey())));
+         }
+         if (shouldCopyFromSecret(valuesFromSpec.getTokenHeaderKey(), kubeSecret)) {
+            secret.setTokenHeader(decodeSecretValue(kubeSecret.getData().get(valuesFromSpec.getTokenHeaderKey())));
+         }
+         if (shouldCopyFromSecret(valuesFromSpec.getCaCertPermKey(), kubeSecret)) {
+            secret.setCaCertPem(decodeSecretValue(kubeSecret.getData().get(valuesFromSpec.getCaCertPermKey())));
+         }
+      } else {
+         // Simply copy values from specification.
+         secret.setUsername(secretSpec.getUsername());
+         secret.setPassword(secretSpec.getPassword());
+         secret.setToken(secretSpec.getToken());
+         secret.setTokenHeader(secretSpec.getTokenHeader());
+         secret.setCaCertPem(secretSpec.getCaCertPem());
+      }
    }
 
    protected void checkIfGloballyReady(SecretSource secretSource) {
@@ -237,5 +282,13 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
       if (allReady) {
          secretSource.getStatus().setStatus(Status.READY);
       }
+   }
+
+   private static boolean shouldCopyFromSecret(String key, io.fabric8.kubernetes.api.model.Secret kubeSecret) {
+      return key != null && kubeSecret.getData().containsKey(key);
+   }
+
+   private static String decodeSecretValue(String encodedValue) {
+      return new String(Base64.getDecoder().decode(encodedValue));
    }
 }
