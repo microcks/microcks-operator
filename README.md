@@ -25,17 +25,125 @@ The current development version is `0.0.1-SNAPSHOT`.
 
 ## Installation
 
-> To Do once finalized
+Assuming you're connected to a Kubernetes cluster as an administrator, you must start installing the CRD in your cluster:
+
+```sh
+kubectl apply -f deploy/crd/microckses.microcks.io-v1.yml
+kubectl apply -f deploy/crd/apisources.microcks.io-v1.yml
+kubectl apply -f deploy/crd/secretsources.microcks.io-v1.yml
+```
+
+Then you can install the operator itself in a dedicated namespace -let's say `microcks`- using: 
+
+```sh
+kubectl create namespace microcks
+kubectl apply -f deploy/operator-jvm.yml -n microcks
+```
 
 ## Usage
 
-> To Do once finalized
+Once operator is installed, you can create a new `Microcks` Custom Resource (CR) to get a working instance of Microcks.
+
+In below example, we're creating a new `Microcks` CR named `microcks` that will install Microcks `1.10.0`.
+You need to customize the two `url` fields to match your environment with DNS names that will be mapped to the Microcks and Keycloak ingresses. 
+
+```sh
+cat <<EOF | kubectl apply -f -
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  version: 1.10.0
+  microcks:
+    url: microcks.m.minikube.local
+  keycloak:
+    url: keycloak.m.minikube.local
+    privateUrl: http://microcks-keycloak.microcks.svc.cluster.local:8080
+EOF
+```
+
+> For comprehensive documentation and examples of `Microcks` CR, please refer to the [Microcks CR documentation](./documentation/microcks-cr.md).
+
+Microcks Operator also provide the `APISource` and `SecretSource` CRs to manage the content of a Microcks instance. Thanks to those CR, 
+you can easily define load pre-existing API definitions and connection secrets into an operator-managed Microcks instance.
+
+For example, you can create a new `APISource` CR named `tests-artifacts` that will load 4 artifacts into the `microcks` instance
+and create an addition `Hello Soep Service` importer:
+
+```sh
+cat <<EOF | kubectl apply -f -
+apiVersion: microcks.io/v1alpha1
+kind: APISource
+metadata:
+  name: tests-artifacts
+  annotations:
+    microcks.io/instance: microcks
+spec:
+  artifacts:
+    - url: https://raw.githubusercontent.com/microcks/microcks/master/samples/APIPastry-openapi.yaml
+      mainArtifact: true
+    - url: https://raw.githubusercontent.com/microcks/microcks/master/samples/hello-v1.proto
+      mainArtifact: true
+    - url: https://raw.githubusercontent.com/microcks/microcks/master/samples/HelloService.metadata.yml
+      mainArtifact: false
+    - url: https://raw.githubusercontent.com/microcks/microcks/master/samples/HelloService.postman.json
+      mainArtifact: false
+  importers:
+    - name: Hello Soap Service
+      mainArtifact: true
+      active: false
+      repository:
+        url: https://raw.githubusercontent.com/microcks/microcks/master/samples/HelloService-soapui-project.xml
+      labels:
+        domain: authentication
+        status: GA
+        team: Team A
+EOF
+```
+
+> For comprehensive documentation and examples of `APISource` CR, please refer to the [APISource CR documentation](./documentation/apisource-cr.md).
+
+A Microcks instance may also need some secrets to be able to connect or to authenticate to external services like repostiories or messaging brokers.
+The `SecretSource` CR is here to help you define those secrets and have them loaded into the Microcks instance.
+
+For example, you can create a new `SecretSource` CR named `tests-secrets` that will load 2 secrets into the `microcks` instance.
+The first one is a simple secret with username, password, token and CA certificate. The second one is a secret that will be loaded 
+from a Kubernetes secret named `microcks-keycloak-admin` and will use the `username` and `password` keys from this secret:
+
+```sh
+apiVersion: microcks.io/v1alpha1
+kind: SecretSource
+metadata:
+  name: tests-secrets
+  annotations:
+    microcks.io/instance: microcks
+spec:
+  secrets:
+    - name: my-secret
+      description: My secret description
+      username: my-username
+      password: my-password
+      token: my-token
+      tokenHeader: my-token-header
+      caCertPem: |
+        ----BEGIN CERTIFICATE-----
+        SGVsbG8gZXZlcnlvbmUgYW5kIHdlbGNvbWUgdG8gTWljcm9ja3Mh
+        ----END CERTIFICATE-----
+    - name: my-secret-2
+      description: My secret description 2
+      valuesFrom:
+        secretRef: microcks-keycloak-admin
+        usernameKey: username
+        passwordKey: password
+```
+
+> For comprehensive documentation and examples of `SecretSource` CR, please refer to the [SecretSource CR documentation](./documentation/secretsource-cr.md).
 
 ## How to build it?
 
 The operator is made of 2 modules:
 * `api` contains the model for manipulating Custom Resources elements using Java,
-* `deploy` contains the Kubernetes resources for deploying the operator,
 * `operator` contains the Kubernetes controller implementing the remediation logic. It is implemented in [Quarkus](https://www.quarkus.io).
 
 ### Api module
@@ -57,7 +165,10 @@ mvn package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-i
 ## Local development
 
 Be sure to be connected to a Kubernetes cluster first with a context set to a default namespace. 
-From the `operator/` folder, launch:
+
+### For Microcks CR
+
+In this situation, you'll be able to use Quarkus iterative development loop. From the `operator/` folder, launch:
 
 ```sh
 mvn quarkus:dev
@@ -84,4 +195,33 @@ You shall see the operator starting the reconciliation with a log like:
 2024-07-31 14:12:48,627 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Finishing reconcile operation for 'microcks'
 2024-07-31 14:12:48,628 INFO  [io.git.mic.ope.MicrocksReconciler] (ReconcilerExecutor-microcksreconciler-716) Returning a noUpdate control. =============================
  
+```
+
+### For APISource & SecretSource CR
+
+In this situation, you won't be able to run the operator in local Quarkus process as the controllers for these CRs
+use internal Kubernetes network names to interact with Microcks instance.
+
+The Operator must then be deployed in your local Kubernetes cluster. You can use the `deploy/operator-dev-jvm.yaml` file to do so.
+
+Then you can create the needed sample CRs using:
+
+```sh
+kubectl apply -f samples/apisource-microcks.io-v1alpha1-tests.yml
+kubectl apply -f samples/secretsource-microcks.io-v1alpha1-tests.yml
+```
+
+You can check the reconciliation status of those CRs using:
+
+```sh
+kc get apisources/tests-artifacts -o yaml
+kc get secretsources/tests-secrets -o yaml
+```
+
+When iterating on the operator code, you can rebuild the operator container image and then apply the new version using:
+
+```sh
+kc scale --replicas=0 deployment/microcks-operator
+mvn clean package && docker build -f src/main/docker/Dockerfile.jvm -t quay.io/lbroudoux/microcks-operator:jvm-latest . && docker push quay.io/lbroudoux/microcks-operator:jvm-latest
+kc scale --replicas=1 deployment/microcks-operator
 ```
