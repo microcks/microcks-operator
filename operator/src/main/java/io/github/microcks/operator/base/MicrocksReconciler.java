@@ -23,11 +23,6 @@ import io.github.microcks.operator.api.base.v1alpha1.MicrocksStatus;
 import io.github.microcks.operator.api.model.Condition;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.model.Status;
-import io.github.microcks.operator.base.AsyncFeatureDependentResourcesManager;
-import io.github.microcks.operator.base.KeycloakDependentResourcesManager;
-import io.github.microcks.operator.base.MicrocksDependentResourcesManager;
-import io.github.microcks.operator.base.MongoDBDependentResourcesManager;
-import io.github.microcks.operator.base.PostmanRuntimeDependentResourcesManager;
 import io.github.microcks.operator.base.resources.KeycloakIngressesPreparer;
 import io.github.microcks.operator.base.resources.MicrocksIngressesPreparer;
 import io.github.microcks.operator.base.resources.StrimziKafkaResource;
@@ -109,8 +104,8 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    private final AsyncFeatureDependentResourcesManager asyncFeatureReconciler;
 
    /**
-    *
-    * @param client
+    * Default constructor with injected Kubernetes client.
+    * @param client A Kubernetes client for interacting with the cluster
     */
    public MicrocksReconciler(KubernetesClient client) {
       this.client = client;

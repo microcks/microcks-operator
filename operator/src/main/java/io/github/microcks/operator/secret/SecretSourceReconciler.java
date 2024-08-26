@@ -32,17 +32,26 @@ import io.github.microcks.operator.api.secret.v1alpha1.SecretValuesFromSpec;
 import io.github.microcks.operator.model.ConditionUtil;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.javaoperatorsdk.operator.api.config.informer.InformerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.DeleteControl;
+import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
+import io.javaoperatorsdk.operator.api.reconciler.EventSourceInitializer;
 import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
+import io.javaoperatorsdk.operator.processing.event.ResourceID;
+import io.javaoperatorsdk.operator.processing.event.source.EventSource;
+import io.javaoperatorsdk.operator.processing.event.source.SecondaryToPrimaryMapper;
+import io.javaoperatorsdk.operator.processing.event.source.informer.InformerEventSource;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
 
@@ -54,7 +63,7 @@ import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT
 @SuppressWarnings("unused")
 @ApplicationScoped
 public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<SecretSource, SecretSourceSpec, SecretSourceStatus>
-      implements Reconciler<SecretSource>, Cleaner<SecretSource> {
+      implements Reconciler<SecretSource>, Cleaner<SecretSource>, EventSourceInitializer<SecretSource> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
@@ -66,6 +75,38 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
    public SecretSourceReconciler(KubernetesClient client) {
       this.client = client;
       this.keycloakHelper = new KeycloakHelper(client);
+   }
+
+   @Override
+   public Map<String, EventSource> prepareEventSources(EventSourceContext<SecretSource> context) {
+      /*
+       * To create an event to a related SecretSource resource and trigger the reconciliation we need to
+       * find which SecretSource this Secret custom resource is related to. To find the related customResourceId
+       * of the SecretSource resource we traverse the cache and identify it based on naming convention.
+       */
+      final SecondaryToPrimaryMapper<io.fabric8.kubernetes.api.model.Secret> secretSourcesMatchingSecretName =
+            (io.fabric8.kubernetes.api.model.Secret kubeSecret) -> context.getPrimaryCache()
+                  .list(secretSource -> secretSource.getSpec().getSecrets().stream()
+                        .filter(secretSpec -> secretSpec.getValuesFrom() != null)
+                        .map(secretSpec -> secretSpec.getValuesFrom().getSecretRef())
+                        .toList()
+                        .contains(kubeSecret.getMetadata().getName()))
+                  .map(ResourceID::fromResource)
+                  .collect(Collectors.toSet());
+
+      InformerConfiguration<io.fabric8.kubernetes.api.model.Secret> configuration =
+            InformerConfiguration.from(io.fabric8.kubernetes.api.model.Secret.class, context)
+                  .withSecondaryToPrimaryMapper(secretSourcesMatchingSecretName)
+                  .withPrimaryToSecondaryMapper(
+                        (SecretSource primary) -> primary.getSpec().getSecrets().stream()
+                              .filter(secretSpec -> secretSpec.getValuesFrom() != null)
+                              .map(secretSpec -> new ResourceID(secretSpec.getValuesFrom().getSecretRef(), primary.getMetadata().getNamespace()))
+                              .collect(Collectors.toSet())
+                  )
+                  .build();
+
+      return EventSourceInitializer
+            .nameEventSources(new InformerEventSource<>(configuration, context));
    }
 
    @Override
