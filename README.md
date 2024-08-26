@@ -112,6 +112,7 @@ The first one is a simple secret with username, password, token and CA certifica
 from a Kubernetes secret named `microcks-keycloak-admin` and will use the `username` and `password` keys from this secret:
 
 ```sh
+cat <<EOF | kubectl apply -f -
 apiVersion: microcks.io/v1alpha1
 kind: SecretSource
 metadata:
@@ -136,6 +137,7 @@ spec:
         secretRef: microcks-keycloak-admin
         usernameKey: username
         passwordKey: password
+EOF
 ```
 
 > For comprehensive documentation and examples of `SecretSource` CR, please refer to the [SecretSource CR documentation](./documentation/secretsource-cr.md).
