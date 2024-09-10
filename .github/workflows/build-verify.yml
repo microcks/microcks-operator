@@ -6,22 +6,14 @@ on:
       - '.gitignore'
       - 'ADOPTERS*'
       - 'LICENSE'
-      - 'README*'
-      - 'CHANGELOG*'
-      - 'ROADMAP*'
-      - 'GOVERNANCE*'
-      - 'CODE_OF_CONDUCT*'
+      - '*.md'
   pull_request:
     paths-ignore:
       - '.github/**'
       - '.gitignore'
       - 'ADOPTERS*'
       - 'LICENSE'
-      - 'README*'
-      - 'CHANGELOG*'
-      - 'ROADMAP*'
-      - 'GOVERNANCE*'
-      - 'CODE_OF_CONDUCT*'
+      - '*.md'
 permissions: read-all
 jobs:
   build-verify-package:
