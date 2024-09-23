@@ -67,9 +67,14 @@ public class KeycloakDatabasePVCDependentResource
       final String microcksName = microcksMetadata.getName();
 
       PersistentVolumeClaimBuilder builder = new PersistentVolumeClaimBuilder().withNewMetadata()
-            .withName(getPVCName(microcks)).withNamespace(microcksMetadata.getNamespace())
-            .addToLabels("app", microcksName).addToLabels("container", "keycloak-postgresql")
-            .addToLabels("group", "microcks").endMetadata().withNewSpec().withAccessModes("ReadWriteOnce")
+               .withName(getPVCName(microcks)).withNamespace(microcksMetadata.getNamespace())
+               .addToLabels("app", microcksName)
+               .addToLabels("container", "keycloak-postgresql")
+               .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
+            .withNewSpec().withAccessModes("ReadWriteOnce")
             .withNewResources().addToRequests("storage", new Quantity(microcks.getSpec().getKeycloak().getVolumeSize()))
             .endResources().endSpec();
 

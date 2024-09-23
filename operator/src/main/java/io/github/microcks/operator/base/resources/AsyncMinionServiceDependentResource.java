@@ -59,8 +59,13 @@ public class AsyncMinionServiceDependentResource extends CRUDKubernetesDependent
       final MicrocksSpec spec = microcks.getSpec();
 
       ServiceBuilder builder = new ServiceBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("container", "async-minion").addToLabels("group", "microcks").endMetadata().withNewSpec()
+               .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
+               .addToLabels("container", "async-minion")
+               .addToLabels("group", "microcks")
+               .addToLabels(spec.getCommonLabels())
+               .addToAnnotations(spec.getCommonAnnotations())
+            .endMetadata()
+            .withNewSpec()
             .addToSelector("app", microcksName).addToSelector("container", "async-minion")
             .addToSelector("group", "microcks").addNewPort().withName("async-minion").withPort(8080).withProtocol("TCP")
             .withTargetPort(new IntOrString(8080)).endPort().withSessionAffinity("None").withType("ClusterIP")

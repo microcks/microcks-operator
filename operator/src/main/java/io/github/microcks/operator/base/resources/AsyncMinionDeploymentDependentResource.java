@@ -78,14 +78,26 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
             "/k8s/async-minion-deployment.yml");
       DeploymentBuilder builder = new DeploymentBuilder(deployment).editMetadata().withName(getDeploymentName(microcks))
             .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
-            .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
-            .addToLabels("app.kubernetes.io/part-of", microcksName).endMetadata().editSpec().editSelector()
-            .addToMatchLabels("app", microcksName).endSelector().editTemplate()
-            // make sure label selector matches label (which has to be matched by service selector too)
-            .editMetadata().addToLabels("app", microcksName).endMetadata().editSpec().editFirstVolume().editConfigMap()
-            .withName(AsyncMinionConfigMapDependentResource.getConfigMapName(microcks)).endConfigMap().endVolume()
-            .endSpec().endTemplate().endSpec();
+               .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
+               .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
+               .addToLabels("app.kubernetes.io/part-of", microcksName)
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
+            .editSpec()
+               .editSelector().addToMatchLabels("app", microcksName).endSelector()
+               .editTemplate()
+                  // make sure label selector matches label (which has to be matched by service selector too)
+                  .editMetadata()
+                     .addToLabels("app", microcksName)
+                     .addToLabels(microcks.getSpec().getCommonLabels())
+                     .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+                  .endMetadata()
+                  .editSpec().editFirstVolume().editConfigMap()
+                     .withName(AsyncMinionConfigMapDependentResource.getConfigMapName(microcks)).endConfigMap().endVolume()
+                  .endSpec()
+               .endTemplate()
+            .endSpec();
 
       // We may have additional security config if external Kafka.
       if (!spec.getFeatures().getAsync().getKafka().isInstall()) {

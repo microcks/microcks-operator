@@ -27,6 +27,16 @@ spec:
           properties:
             spec:
               properties:
+                commonAnnotations:
+                  additionalProperties:
+                    type: string
+                  description: Common annotations added to all managed resources
+                  type: object
+                commonLabels:
+                  additionalProperties:
+                    type: string
+                  description: Common labels to add to all managed resources
+                  type: object
                 features:
                   description: Configuration of optional features in Microcks
                   properties:
@@ -521,12 +531,6 @@ spec:
                             type: object
                         type: object
                       type: array
-                    extraAnnotations:
-                      additionalProperties:
-                        type: string
-                      description: "Extra annotations added to Service, Deployment and\
-                      \ Pods"
-                      type: object
                     extraProperties:
                       additionalProperties:
                         x-kubernetes-preserve-unknown-fields: true

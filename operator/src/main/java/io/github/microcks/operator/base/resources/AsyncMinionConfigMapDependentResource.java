@@ -73,8 +73,13 @@ public class AsyncMinionConfigMapDependentResource extends CRUDKubernetesDepende
       String applicationProperties = Templates.application(microcksName, microcks.getSpec()).render();
 
       ConfigMapBuilder builder = new ConfigMapBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("container", "async-minion").addToLabels("group", "microcks").endMetadata()
+               .withNamespace(microcksMetadata.getNamespace())
+               .addToLabels("app", microcksName)
+               .addToLabels("container", "async-minion")
+               .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
             .addToData("application.properties", applicationProperties);
 
       return builder.build();

@@ -80,8 +80,13 @@ public class KeycloakSecretDependentResource extends KubernetesDependentResource
       final String microcksName = microcksMetadata.getName();
 
       SecretBuilder builder = new SecretBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("container", "keycloak").addToLabels("group", "microcks").endMetadata()
+            .withNamespace(microcksMetadata.getNamespace())
+               .addToLabels("app", microcksName)
+               .addToLabels("container", "keycloak")
+               .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
             .withType("kubernetes.io/basic-auth")
             .addToStringData(KEYCLOAK_ADMIN_KEY, "admin" + RandomStringUtils.randomAlphanumeric(6))
             .addToStringData(KEYCLOAK_ADMIN_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32))

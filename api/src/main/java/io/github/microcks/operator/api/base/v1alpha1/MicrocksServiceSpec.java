@@ -72,9 +72,6 @@ public class MicrocksServiceSpec {
    @JsonPropertyDescription("Extra properties to integration into application-extra configuration")
    private Map<String, AnyType> extraProperties;
 
-   @JsonPropertyDescription("Extra annotations added to Service, Deployment and Pods")
-   private Map<String, String> extraAnnotations;
-
    public int getReplicas() {
       return replicas;
    }
@@ -153,13 +150,5 @@ public class MicrocksServiceSpec {
 
    public void setExtraProperties(Map<String, AnyType> extraProperties) {
       this.extraProperties = extraProperties;
-   }
-
-   public Map<String, String> getExtraAnnotations() {
-      return extraAnnotations;
-   }
-
-   public void setExtraAnnotations(Map<String, String> extraAnnotations) {
-      this.extraAnnotations = extraAnnotations;
    }
 }

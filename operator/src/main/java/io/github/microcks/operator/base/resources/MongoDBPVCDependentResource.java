@@ -66,8 +66,13 @@ public class MongoDBPVCDependentResource extends CRUDKubernetesDependentResource
       final String microcksName = microcksMetadata.getName();
 
       PersistentVolumeClaimBuilder builder = new PersistentVolumeClaimBuilder().withNewMetadata()
-            .withName(getPVCName(microcks)).withNamespace(microcksMetadata.getNamespace())
-            .addToLabels("app", microcksName).addToLabels("container", "mongodb").addToLabels("group", "microcks")
+               .withName(getPVCName(microcks))
+               .withNamespace(microcksMetadata.getNamespace())
+               .addToLabels("app", microcksName)
+               .addToLabels("container", "mongodb")
+               .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata().withNewSpec().withAccessModes("ReadWriteOnce").withNewResources()
             .addToRequests("storage", new Quantity(microcks.getSpec().getKeycloak().getVolumeSize())).endResources()
             .endSpec();

@@ -41,7 +41,7 @@ public class MongoDBServiceDependentResource extends CRUDKubernetesDependentReso
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   /** The port used for expositation of the service. */
+   /** The port used for exposition of the service. */
    public static final int MONGODB_SERVICE_PORT = 27017;
 
    /** Default empty constructor. */
@@ -72,8 +72,13 @@ public class MongoDBServiceDependentResource extends CRUDKubernetesDependentReso
       final MicrocksSpec spec = microcks.getSpec();
 
       ServiceBuilder builder = new ServiceBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("container", "mongodb").addToLabels("group", "microcks").endMetadata().withNewSpec()
+               .withNamespace(microcksMetadata.getNamespace())
+               .addToLabels("app", microcksName)
+               .addToLabels("container", "mongodb")
+               .addToLabels("group", "microcks")
+               .addToLabels(spec.getCommonLabels())
+               .addToAnnotations(spec.getCommonAnnotations())
+            .endMetadata().withNewSpec()
             .addToSelector("app", microcksName).addToSelector("container", "mongodb").addToSelector("group", "microcks")
             .addNewPort().withName("mongodb").withPort(MONGODB_SERVICE_PORT).withProtocol("TCP")
             .withTargetPort(new IntOrString(MONGODB_SERVICE_PORT)).endPort().withSessionAffinity("None")

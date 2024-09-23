@@ -86,6 +86,8 @@ public class MongoDBSecretDependentResource extends KubernetesDependentResource<
                .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
                .addToLabels("container", "mongodb")
                .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata()
             .withType("kubernetes.io/basic-auth")
             .addToStringData(MONGODB_USER_KEY, "user" + RandomStringUtils.randomAlphanumeric(6))

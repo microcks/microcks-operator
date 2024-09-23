@@ -64,6 +64,8 @@ public class PostmanRuntimeServiceDependentResource extends CRUDKubernetesDepend
                .addToLabels("app", microcksName)
                .addToLabels("container", "postman-runtime")
                .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata()
             .withNewSpec()
                .addToSelector("app", microcksName)

@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
+import java.util.Map;
+
 /**
  * This the {@code specification} of a {@link Microcks} custom resource.
  * @author laurent
@@ -50,6 +52,12 @@ public class MicrocksSpec {
 
    @JsonPropertyDescription("Configuration of optional features in Microcks")
    private FeaturesSpec features;
+
+   @JsonPropertyDescription("Common labels to add to all managed resources")
+   private Map<String, String> commonLabels;
+
+   @JsonPropertyDescription("Common annotations added to all managed resources")
+   private Map<String, String> commonAnnotations;
 
    public String getVersion() {
       return version;
@@ -97,5 +105,21 @@ public class MicrocksSpec {
 
    public void setFeatures(FeaturesSpec features) {
       this.features = features;
+   }
+
+   public Map<String, String> getCommonLabels() {
+      return commonLabels;
+   }
+
+   public void setCommonLabels(Map<String, String> commonLabels) {
+      this.commonLabels = commonLabels;
+   }
+
+   public Map<String, String> getCommonAnnotations() {
+      return commonAnnotations;
+   }
+
+   public void setCommonAnnotations(Map<String, String> commonAnnotations) {
+      this.commonAnnotations = commonAnnotations;
    }
 }

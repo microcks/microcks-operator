@@ -44,7 +44,7 @@ public class StrimziKafkaResource {
    private static final String RESOURCE_SUFFIX = "-kafka";
    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
-   private KubernetesClient client;
+   private final KubernetesClient client;
 
    /**
     * Create a new StrimziKafkaResource with a client.
@@ -90,7 +90,11 @@ public class StrimziKafkaResource {
       // Build the generic Kubernetes resource from map content.
       GenericKubernetesResource genericKafka = new GenericKubernetesResourceBuilder()
             .withApiVersion(kafkaMap.get("apiVersion").toString()).withKind(kafkaMap.get("kind").toString())
-            .withNewMetadata().withName(microcksName + RESOURCE_SUFFIX).endMetadata()
+            .withNewMetadata()
+               .withName(microcksName + RESOURCE_SUFFIX)
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
             .addToAdditionalProperties("spec", kafkaMap.get("spec")).build();
 
       return genericKafka;

@@ -73,6 +73,8 @@ public class MongoDBConfigMapDependantResource extends CRUDKubernetesDependentRe
                .withName(getConfigMapName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata();
 
       return builder.build();

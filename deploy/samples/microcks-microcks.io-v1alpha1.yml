@@ -9,3 +9,9 @@ spec:
   keycloak:
     url: keycloak.m2.minikube.local
     privateUrl: http://microcks-keycloak.microcks2.svc.cluster.local:8080
+#  commonLabels:
+#    custom-label-1: custom-value
+#    custom-label-2: custom-value
+#  commonAnnotations:
+#    microcks.io/foo: foo-value
+#    microcks.io/bar: bar-value

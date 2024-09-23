@@ -27,6 +27,12 @@ apiVersion: apps/v1
 metadata:
   name: microcks
   namespace: microcks
+  labels:
+    custom-label-1: custom-value
+    custom-label-2: custom-value
+  annotations:
+    microcks.io/foo: foo-value
+    microcks.io/bar: bar-value
 status:
   readyReplicas: 1
 ---
@@ -35,6 +41,12 @@ apiVersion: v1
 metadata:
   name: microcks
   namespace: microcks
+  labels:
+    custom-label-1: custom-value
+    custom-label-2: custom-value
+  annotations:
+    microcks.io/foo: foo-value
+    microcks.io/bar: bar-value
 ---
 kind: Service
 apiVersion: v1

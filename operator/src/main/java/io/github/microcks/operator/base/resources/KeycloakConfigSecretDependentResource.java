@@ -83,8 +83,12 @@ public class KeycloakConfigSecretDependentResource extends KubernetesDependentRe
       final String microcksName = microcksMetadata.getName();
 
       SecretBuilder builder = new SecretBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("container", "keycloak").addToLabels("group", "microcks").endMetadata()
+               .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
+               .addToLabels("container", "keycloak")
+               .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
             .addToStringData(REALM_CONFIG_KEY, realmConfig);
 
       return builder.build();

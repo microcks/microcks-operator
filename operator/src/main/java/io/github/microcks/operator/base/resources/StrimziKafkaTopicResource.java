@@ -43,7 +43,7 @@ public class StrimziKafkaTopicResource {
 
    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
-   private KubernetesClient client;
+   private final KubernetesClient client;
 
    /**
     * Create a new StrimziKafkaTopicResource with a client.
@@ -78,8 +78,12 @@ public class StrimziKafkaTopicResource {
 
       return new GenericKubernetesResourceBuilder()
             .withApiVersion(topicMap.get("apiVersion").toString()).withKind(topicMap.get("kind").toString())
-            .withNewMetadata().withName(microcksName + RESOURCE_SUFFIX)
-            .addToLabels("strimzi.io/cluster", StrimziKafkaResource.getKafkaName(microcks)).endMetadata()
+            .withNewMetadata()
+               .withName(microcksName + RESOURCE_SUFFIX)
+               .addToLabels("strimzi.io/cluster", StrimziKafkaResource.getKafkaName(microcks))
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
             .addToAdditionalProperties("spec", topicMap.get("spec")).build();
    }
 

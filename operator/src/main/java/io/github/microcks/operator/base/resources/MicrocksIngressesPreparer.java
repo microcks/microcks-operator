@@ -76,6 +76,8 @@ public class MicrocksIngressesPreparer {
                withName(getRouteName(microcks))
                .addToLabels("app", microcksName)
                .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata()
             .withNewSpec()
                .withNewTo()

@@ -82,8 +82,13 @@ public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentR
       String logbackXml = Templates.logback(microcks.getSpec()).render();
 
       ConfigMapBuilder builder = new ConfigMapBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
-            .withNamespace(microcksMetadata.getNamespace()).addToLabels("app", microcksName)
-            .addToLabels("container", "microcks").addToLabels("group", "microcks").endMetadata()
+               .withNamespace(microcksMetadata.getNamespace())
+               .addToLabels("app", microcksName)
+               .addToLabels("container", "microcks")
+               .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
             .addToData("application.properties", applicationProperties)
             .addToData("features.properties", featuresProperties).addToData("logback.xml", logbackXml);
 

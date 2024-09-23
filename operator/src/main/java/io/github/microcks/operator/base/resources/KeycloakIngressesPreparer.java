@@ -72,10 +72,19 @@ public class KeycloakIngressesPreparer {
       final String microcksName = microcksMetadata.getName();
 
       RouteBuilder builder = new RouteBuilder().withNewMetadata().withName(getRouteName(microcks))
-            .addToLabels("app", microcksName).addToLabels("group", "microcks").endMetadata().withNewSpec().withNewTo()
-            .withKind("Service").withName(KeycloakServiceDependentResource.getServiceName(microcks)).endTo()
-            .withNewPort().withNewTargetPort("keycloak").endPort().withNewTls()
-            .withTermination(microcks.getSpec().getKeycloak().getOpenshift().getRoute().getTlsTermination()).endTls()
+               .addToLabels("app", microcksName)
+               .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+            .endMetadata()
+            .withNewSpec()
+               .withNewTo()
+                  .withKind("Service").withName(KeycloakServiceDependentResource.getServiceName(microcks))
+               .endTo()
+               .withNewPort().withNewTargetPort("keycloak").endPort()
+               .withNewTls()
+                  .withTermination(microcks.getSpec().getKeycloak().getOpenshift().getRoute().getTlsTermination())
+               .endTls()
             .endSpec();
 
       // Add custom url is present in the spec.

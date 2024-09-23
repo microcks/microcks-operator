@@ -74,6 +74,8 @@ public class KeycloakServiceDependentResource extends CRUDKubernetesDependentRes
                .addToLabels("app", microcksName)
                .addToLabels("container", "keycloak")
                .addToLabels("group", "microcks")
+               .addToLabels(spec.getCommonLabels())
+               .addToAnnotations(spec.getCommonAnnotations())
             .endMetadata()
             .withNewSpec()
                .addToSelector("app", microcksName)

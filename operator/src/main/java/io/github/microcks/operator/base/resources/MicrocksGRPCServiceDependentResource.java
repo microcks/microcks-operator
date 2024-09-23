@@ -76,6 +76,8 @@ public class MicrocksGRPCServiceDependentResource extends CRUDKubernetesDependen
                .addToLabels("app", microcksName)
                .addToLabels("container", "spring")
                .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata()
             .withNewSpec()
                .addToSelector("app", microcksName)

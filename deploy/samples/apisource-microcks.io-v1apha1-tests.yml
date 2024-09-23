@@ -14,6 +14,12 @@ spec:
       mainArtifact: false
     - url: https://raw.githubusercontent.com/microcks/microcks/master/samples/HelloService.postman.json
       mainArtifact: false
+    - url: https://raw.githubusercontent.com/microcks/microcks/master/samples/films.graphql
+      mainArtifact: true
+    - url: https://raw.githubusercontent.com/microcks/microcks/master/samples/films-metadata.yml
+      mainArtifact: false
+    - url: https://raw.githubusercontent.com/microcks/microcks/master/samples/films-postman.json
+      mainArtifact: false
   importers:
     - name: Hello Soap Service
       mainArtifact: true
