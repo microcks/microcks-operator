@@ -23,6 +23,19 @@ The current development version is `0.0.1-SNAPSHOT`.
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-operator.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-operator?ref=badge_shield&issueType=security)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-operator.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-operator?ref=badge_small)
 
+#### OpenSSF best practices on Microcks core
+
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/7513/badge)](https://bestpractices.coreinfrastructure.org/projects/7513)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/microcks/microcks/badge)](https://securityscorecards.dev/viewer/?uri=github.com/microcks/microcks)
+
+## Community
+
+* [Documentation](https://microcks.io/documentation/tutorials/getting-started/)
+* [Microcks Community](https://github.com/microcks/community) and community meeting
+* Join us on [Discord](https://microcks.io/discord-invite/), on [GitHub Discussions](https://github.com/orgs/microcks/discussions) or [CNCF Slack #microcks channel](https://cloud-native.slack.com/archives/C05BYHW1TNJ)
+
+To get involved with our community, please make sure you are familiar with the project's [Code of Conduct](./CODE_OF_CONDUCT.md).
+
 ## Installation
 
 Assuming you're connected to a Kubernetes cluster as an administrator, you must start installing the CRD in your cluster:
@@ -104,7 +117,7 @@ EOF
 
 > For comprehensive documentation and examples of `APISource` CR, please refer to the [APISource CR documentation](./documentation/apisource-cr.md).
 
-A Microcks instance may also need some secrets to be able to connect or to authenticate to external services like repostiories or messaging brokers.
+A Microcks instance may also need some secrets to be able to connect or to authenticate to external services like repositories or messaging brokers.
 The `SecretSource` CR is here to help you define those secrets and have them loaded into the Microcks instance.
 
 For example, you can create a new `SecretSource` CR named `tests-secrets` that will load 2 secrets into the `microcks` instance.
@@ -227,3 +240,6 @@ kc scale --replicas=0 deployment/microcks-operator
 mvn clean package && docker build -f src/main/docker/Dockerfile.jvm -t quay.io/lbroudoux/microcks-operator:jvm-latest . && docker push quay.io/lbroudoux/microcks-operator:jvm-latest
 kc scale --replicas=1 deployment/microcks-operator
 ```
+
+## Local tests
+
