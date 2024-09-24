@@ -50,7 +50,7 @@ Then you can install the operator itself in a dedicated namespace -let's say `mi
 
 ```sh
 kubectl create namespace microcks
-kubectl apply -f deploy/operator-jvm.yml -n microcks
+kubectl apply -f deploy/operator-jvm.yaml -n microcks
 ```
 
 ## Usage
