@@ -105,7 +105,7 @@ into the [Architecture & deployment options](https://microcks.io/documentation/e
 
 ### Ingresses configuration
 
-Microcks web app component is by default exposed to the outer workd using Kubernetes `Ingresses`.
+Microcks web app component is by default exposed to the outer world using Kubernetes `Ingresses`.
 For this component, the operator creates 2 ingresses:
 * One `ingress` for HTTP traffic that allows access to UI, APIs and HTTP-based mocks,
 * One `ingress` for gRPC traffic that allows access to gRPC mocks.
@@ -154,6 +154,73 @@ spec:
 ```
 
 ## Keycloak specification details
+
+This part of the Custom Resource allows you to configure the Keycloak web app component deployment as described
+into the [Architecture & deployment options](https://microcks.io/documentation/explanations/deployment-options/).
+
+### Basic configuration
+
+| Property       | Description                                                                                                                                                                                                                                                                                                                      |
+|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `install`      | **Optional**. Flag for Keycloak installation. Default is `true`. Set to `false` if you want to reuse an existing Keycloak instance.                                                                                                                                                                                              |
+| `url`          | **Mandatory on Kube if keycloak.install==false, Optional otherwise**. The URL of Keycloak instance - just the hostname + port part. If missing on OpenShift, default URL schema handled by Router is used.                                                                                                                       |
+| `privateUrl`   | **Optional but recommended**. A private URL - a full URL here - used by the Microcks component to internally join Keycloak. This is also known as `backend url` in [Keycloak doc](https://www.keycloak.org/server/hostname-deprecated#_backend). When specified, the `keycloak.url` is used as `frontend url` in Keycloak terms. |
+| `realm`        | **Optional**. Name of Keycloak realm to use. Should be setup only if `install` is `false` and you want to reuse an existing realm. Default is `microcks`.                                                                                                                                                                        |
+
+### Ingresses configuration
+
+When installed by this Operator, Keycloak component is by default exposed to the outer world using Kubernetes `Ingress`, configured via a specific property: `ingress`.
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  [...]
+  keycloak:
+    ingress: <ingress-specification-details>
+```
+
+This property follow the same `ingress-specification-details` structure that is described below:
+
+| Property             | Description                                                                                                                                                                                                                                                                                                           |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ingressSecretRef`   | **Optional on Kube, not used on OpenShift**. The name of a TLS Secret for securing `Ingress`. <br/>If missing on Kubernetes, a self-signed certificate is generated.                                                                                                                                                  | 
+| `ingressAnnotations` | **Optional**. Some custom annotations to add on `Ingress` or OpenShift `Route`. <br/>If these annotations are triggering a Certificate generation (for example through https://cert-manager.io/ or https://github.com/redhat-cop/cert-utils-operator), the `generateCert` property should be set to `false` for Kube. |
+| `generateCert`       | **Optional on Kube, not used on OpenShift**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                            |
+
+### Resources configuration
+
+When installed by this Operator, resources assigned to Keycloak pod can be configured using regular Kubernetes resources definition.
+Here is below an example with the default values that are used by the operator:
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  [...]
+  keycloak:
+    resources:
+      requests:
+        cpu: 400m
+        memory: 512Mi
+      limits:
+        memory: 512Mi
+```
+
+### Persistence configuration
+
+When installed by this Operator, Keycloak component is using a PostgreSQL database for persistence. The persitence related configuration properties are
+the following ones:
+
+| Property             | Description                                                                                                                                                                                                                                                                                                   |
+|----------------------|-------------------------------------------------------------------------|
+| `persistent`         | **Optional**. Flag for Keycloak persistence. Default is `true`. Set to `false` if you want an ephemeral Keycloak installation. |
+| `volumeSize`         | **Optional**. Size of persistent volume claim for Keycloak. Default is `1Gi`. Not used if not persistent install asked. |
+| `storageClassName`   | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class. |
 
 ## MongoDB specification details
 

@@ -72,7 +72,6 @@ spec:
     url: microcks.m.minikube.local
   keycloak:
     url: keycloak.m.minikube.local
-    privateUrl: http://microcks-keycloak.microcks.svc.cluster.local:8080
 EOF
 ```
 

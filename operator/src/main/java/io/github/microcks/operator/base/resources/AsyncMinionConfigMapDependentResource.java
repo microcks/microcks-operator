@@ -70,7 +70,7 @@ public class AsyncMinionConfigMapDependentResource extends CRUDKubernetesDepende
       final String microcksName = microcksMetadata.getName();
 
       // Compute configuration files with Qute templates.
-      String applicationProperties = Templates.application(microcksName, microcks.getSpec()).render();
+      String applicationProperties = Templates.application(microcksName, microcksMetadata.getNamespace(), microcks.getSpec()).render();
 
       ConfigMapBuilder builder = new ConfigMapBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
@@ -89,6 +89,6 @@ public class AsyncMinionConfigMapDependentResource extends CRUDKubernetesDepende
    @CheckedTemplate
    public static class Templates {
       /** Qute template for application.properties. */
-      public static native TemplateInstance application(String name, MicrocksSpec spec);
+      public static native TemplateInstance application(String name, String namespace, MicrocksSpec spec);
    }
 }

@@ -77,8 +77,8 @@ public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentR
       final String microcksName = microcksMetadata.getName();
 
       // Compute configuration files with Qute templates.
-      String applicationProperties = Templates.application(microcksName, microcks.getSpec()).render();
-      String featuresProperties = Templates.features(microcksName, microcks.getSpec()).render();
+      String applicationProperties = Templates.application(microcksName, microcksMetadata.getNamespace(), microcks.getSpec()).render();
+      String featuresProperties = Templates.features(microcksName, microcksMetadata.getNamespace(), microcks.getSpec()).render();
       String logbackXml = Templates.logback(microcks.getSpec()).render();
 
       ConfigMapBuilder builder = new ConfigMapBuilder().withNewMetadata().withName(getSecondaryResourceName(microcks))
@@ -109,10 +109,10 @@ public class MicrocksConfigMapDependentResource extends CRUDKubernetesDependentR
    @CheckedTemplate
    public static class Templates {
       /** Qute template for application.properties. */
-      public static native TemplateInstance application(String name, MicrocksSpec spec);
+      public static native TemplateInstance application(String name, String namespace, MicrocksSpec spec);
 
       /** Qute template for features.properties. */
-      public static native TemplateInstance features(String name, MicrocksSpec spec);
+      public static native TemplateInstance features(String name, String namespace, MicrocksSpec spec);
 
       /** Qute template for logback.xml. */
       public static native TemplateInstance logback(MicrocksSpec spec);

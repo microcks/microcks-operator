@@ -17,6 +17,7 @@ package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -66,6 +67,7 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
+      final MicrocksSpec spec = microcks.getSpec();
 
       Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-deployment.yml");
       DeploymentBuilder builder = new DeploymentBuilder(deployment)
@@ -76,8 +78,8 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
                .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
                .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
                .addToLabels("app.kubernetes.io/part-of", microcksName)
-               .addToLabels(microcks.getSpec().getCommonLabels())
-               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+               .addToLabels(spec.getCommonLabels())
+               .addToAnnotations(spec.getCommonAnnotations())
             .endMetadata()
             .editSpec()
                .editSelector().addToMatchLabels("app", microcksName).endSelector()
@@ -85,8 +87,8 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
                   // make sure label selector matches label (which has to be matched by service selector too)
                   .editMetadata()
                      .addToLabels("app", microcksName)
-                     .addToLabels(microcks.getSpec().getCommonLabels())
-                     .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+                     .addToLabels(spec.getCommonLabels())
+                     .addToAnnotations(spec.getCommonAnnotations())
                   .endMetadata()
                   .editSpec()
                      .editFirstContainer()
@@ -127,7 +129,7 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
             .endContainer()
             .endSpec().endTemplate().endSpec();
 
-      if (microcks.getSpec().getKeycloak().getPrivateUrl() != null) {
+      if (spec.getKeycloak().isInstall() || spec.getKeycloak().getPrivateUrl() != null) {
          builder.editSpec().editTemplate().editSpec()
                .editFirstContainer()
                   .addToArgs("--hostname-strict-backchannel=false")

@@ -19,6 +19,7 @@ import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationType;
 import io.github.microcks.operator.api.base.v1alpha1.KafkaSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -68,6 +69,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
+      final MicrocksSpec spec = microcks.getSpec();
 
       Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/microcks-deployment.yml");
       DeploymentBuilder builder = new DeploymentBuilder(deployment);
@@ -78,8 +80,8 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                .addToLabels("app.kubernetes.io/name", getDeploymentName(microcks))
                .addToLabels("app.kubernetes.io/version", microcks.getSpec().getVersion())
                .addToLabels("app.kubernetes.io/part-of", microcksName)
-               .addToLabels(microcks.getSpec().getCommonLabels())
-               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+               .addToLabels(spec.getCommonLabels())
+               .addToAnnotations(spec.getCommonAnnotations())
                .addToAnnotations("app.openshift.io/connects-to", MongoDBDeploymentDependentResource.getDeploymentName(microcks)
                      + "," + PostmanRuntimeDeploymentDependentResource.getDeploymentName(microcks)
                      + "," + KeycloakDeploymentDependentResource.getDeploymentName(microcks))
@@ -90,8 +92,8 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                   // make sure label selector matches label (which has to be matched by service selector too)
                   .editMetadata()
                      .addToLabels("app", microcksName)
-                     .addToLabels(microcks.getSpec().getCommonLabels())
-                     .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+                     .addToLabels(spec.getCommonLabels())
+                     .addToAnnotations(spec.getCommonAnnotations())
                   .endMetadata()
                   .editSpec()
                      .editFirstContainer()
@@ -135,7 +137,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                .endTemplate()
             .endSpec();
 
-      if (microcks.getSpec().getKeycloak().getPrivateUrl() != null) {
+      if (spec.getKeycloak().isInstall() || spec.getKeycloak().getPrivateUrl() != null) {
          builder.editSpec()
                .editTemplate()
                   .editSpec()
@@ -272,8 +274,12 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
    }
 
    private String getKeycloakUrl(Microcks microcks) {
-      if (microcks.getSpec().getKeycloak().getPrivateUrl() != null) {
-         return microcks.getSpec().getKeycloak().getPrivateUrl();
+      final MicrocksSpec spec = microcks.getSpec();
+      if (spec.getKeycloak().isInstall() && spec.getKeycloak().getPrivateUrl() == null) {
+         return "http://" + KeycloakServiceDependentResource.getServiceName(microcks) + "."
+               + microcks.getMetadata().getNamespace() + ".svc.cluster.local:8080";
+      }  else if (spec.getKeycloak().getPrivateUrl() != null) {
+         return spec.getKeycloak().getPrivateUrl();
       }
       return getKeycloakPublicUrl(microcks);
    }
