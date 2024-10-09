@@ -20,6 +20,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: Build
     steps:
+      - name: Get current date
+        id: date
+        #run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H:%M:%S')"
+        run: echo "date=$(date +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -101,6 +106,8 @@ jobs:
             --provenance=false \
             --build-arg TAG=$IMAGE_TAG \
             --file src/main/docker/Dockerfile.jvm \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --label "org.opencontainers.image.created=${{ steps.date.outputs.date }}" \
             --tag=quay.io/microcks/microcks-operator:$IMAGE_TAG .
 
       - name: Build and push native container image for operator

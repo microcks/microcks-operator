@@ -1,5 +1,14 @@
 FROM registry.access.redhat.com/ubi8/openjdk-21:1.19
 
+# Some version information
+LABEL maintainer="Laurent Broudoux <laurent@microcks.io>" \
+      org.opencontainers.image.authors="Laurent Broudoux <laurent@microcks.io>" \
+      org.opencontainers.image.title="Microcks Operator" \
+      org.opencontainers.image.description="Microcks is Open Source cloud-native native tool for API Mocking and Testing" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.documentation="https://github.com/microcks/microcks-operator" \
+      io.artifacthub.package.readme-url="https://raw.githubusercontent.com/microcks/microcks-operator/main/README.md"
+
 ENV LANGUAGE='en_US:en'
 
 # We make four distinct layers so if there are application changes the library layers can be re-used
