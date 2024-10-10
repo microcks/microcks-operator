@@ -29,7 +29,19 @@ of a Microcks-dependent resource:
 
 ```mermaid
 sequenceDiagram
-    
+    Microcks Operator-->>Microcks Operator: check instance is PRESENT
+    Microcks Operator->>+Kube API: getMicrocksCR(instance)
+    Kube API-->-Microcks Operator: Microcks CR
+    Microcks Operator-->>Microcks Operator: check instance is READY
+    Microcks Operator->>+Microcks Instance: getKeycloakConfig()
+    Microcks Instance-->-Microcks Operator: KeycloakConfig
+    Microcks Operator-->>Microcks Operator: check keycloak is ENABLED
+    Note over Microcks Operator: Depends on Keycloak setup
+    Microcks Operator->>+Microcks Operator: retrieve service account info
+    Microcks Operator->>+Keycloak Instance: authenticate(clientId, clientSecret)
+    Keycloak Instance-->-Microcks Operator: access token
+    Note over Microcks Operator,Microcks Instance: Authorization: Bearer <access token>
+    Microcks Operator->>+Microcks Instance: invoke API
 ```
 
 This flow goes as follow:
