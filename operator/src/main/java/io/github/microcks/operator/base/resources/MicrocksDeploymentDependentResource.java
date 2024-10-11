@@ -169,7 +169,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
             .endSpec().endTemplate().endSpec();
 
       // Complete configuration with optional stuffs.
-      if (microcks.getSpec().getFeatures().getAsync().isEnabled()) {
+      if (spec.getFeatures().getAsync().isEnabled()) {
          builder.editSpec()
                .editTemplate()
                   .editSpec()
@@ -222,6 +222,13 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                      .endTemplate().endSpec();
             }
          }
+      }
+
+      if (spec.getCommonAffinities() != null) {
+         builder.editSpec().editTemplate().editSpec().withAffinity(spec.getCommonAffinities()).endSpec().endTemplate().endSpec();
+      }
+      if (spec.getCommonTolerations() != null) {
+         builder.editSpec().editTemplate().editSpec().withTolerations(spec.getCommonTolerations()).endSpec().endTemplate().endSpec();
       }
 
       return builder.build();

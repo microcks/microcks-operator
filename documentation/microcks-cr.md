@@ -50,8 +50,8 @@ metadata:
   namepsace: m2
 spec:
   version: 1.10.0
-  [...]
-statuc:
+  #[...]
+status:
   status: READY
   observedGeneration: 0
   microcksUrl: microcks.m2.minikube.local
@@ -82,7 +82,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  [...]
+  #[...]
   commonLabels:
     acme.com/team: Team A
     acme.com/billing-id: 123-456-789
@@ -90,6 +90,46 @@ spec:
     acme.com/custom-annotation: my-custom-value
     acme.com/other-custom-annotation: my-other-custom-value
 ```
+
+Kubernetes scheduling can be customized for the different dependent `Deployments` creates by the Operator.
+For that, you can use the `commonAffinities` and `commonTolerations` properties like illustrated below:
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  #[...]
+  commonAffinities:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                  - antarctica-east1
+                  - antarctica-west1
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: another-node-label-key
+                operator: In
+                values:
+                  - another-node-label-value
+  commonTolerations:
+    - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoSchedule"
+    - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoExecute"
+```
+
 
 ## Microcks specification details
 
@@ -118,7 +158,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  [...]
+  #[...]
   microcks:
     ingress: <ingress-specification-details>
     grpcIngress: <ingress-specification-details>
@@ -143,7 +183,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  [...]
+  #[...]
   microcks:
     resources:
       requests:
@@ -177,7 +217,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  [...]
+  #[...]
   keycloak:
     ingress: <ingress-specification-details>
 ```
@@ -201,7 +241,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  [...]
+  #[...]
   keycloak:
     resources:
       requests:

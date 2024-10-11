@@ -91,6 +91,14 @@ public class PostmanRuntimeDeploymentDependentResource extends CRUDKubernetesDep
                .endTemplate()
             .endSpec();
 
+      // Complete configuration with optional stuffs.
+      if (microcks.getSpec().getCommonAffinities() != null) {
+         builder.editSpec().editTemplate().editSpec().withAffinity(microcks.getSpec().getCommonAffinities()).endSpec().endTemplate().endSpec();
+      }
+      if (microcks.getSpec().getCommonTolerations() != null) {
+         builder.editSpec().editTemplate().editSpec().withTolerations(microcks.getSpec().getCommonTolerations()).endSpec().endTemplate().endSpec();
+      }
+
       return builder.build();
    }
 }

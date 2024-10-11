@@ -20,8 +20,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.fabric8.kubernetes.api.model.Affinity;
+import io.fabric8.kubernetes.api.model.Toleration;
 import io.sundr.builder.annotations.Buildable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,7 +33,8 @@ import java.util.Map;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "version", "microcks", "postman", "keycloak", "mongodb", "features" })
+@JsonPropertyOrder({ "version", "microcks", "postman", "keycloak", "mongodb", "features",
+      "commonLabels", "commonAnnotations", "commonAffinities", "commonTolerations" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class MicrocksSpec {
 
@@ -58,6 +62,12 @@ public class MicrocksSpec {
 
    @JsonPropertyDescription("Common annotations added to all managed resources")
    private Map<String, String> commonAnnotations;
+
+   @JsonPropertyDescription("Common affinities added to all managed resources")
+   private Affinity commonAffinities;
+
+   @JsonPropertyDescription("Common tolerations added to all managed resources")
+   private List<Toleration> commonTolerations;
 
    public String getVersion() {
       return version;
@@ -121,5 +131,21 @@ public class MicrocksSpec {
 
    public void setCommonAnnotations(Map<String, String> commonAnnotations) {
       this.commonAnnotations = commonAnnotations;
+   }
+
+   public Affinity getCommonAffinities() {
+      return commonAffinities;
+   }
+
+   public void setCommonAffinities(Affinity commonAffinities) {
+      this.commonAffinities = commonAffinities;
+   }
+
+   public List<Toleration> getCommonTolerations() {
+      return commonTolerations;
+   }
+
+   public void setCommonTolerations(List<Toleration> commonTolerations) {
+      this.commonTolerations = commonTolerations;
    }
 }
