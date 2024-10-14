@@ -37,7 +37,7 @@ public class PostmanRuntimeSpec {
    private ImageSpec image;
 
    @JsonPropertyDescription("Number of desired pods for Postman runtime")
-   private int replicas;
+   private int replicas = 1;
 
    public ImageSpec getImage() {
       return image;

@@ -159,21 +159,9 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
       logger.infof("Starting reconcile operation for '%s'", microcks.getMetadata().getName());
 
-      /*
-       * // Some diagnostic helpers during development.
-       * ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
-       * logger.info("initSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(spec));
-       * logger.info("ExtraProperties before: " + spec.getMicrocks().getExtraProperties());
-       * logger.info("mockInvocationStats before: " + spec.getMicrocks().isMockInvocationStats());
-       */
-
       // Load default values for CR and build a complete representation.
-      /*
-      Microcks defaultCR = loadDefaultMicrocksCR();
-      MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
-      */
-
-      MicrocksSpec completeSpec = loadDefaultMicrocksSpec(microcks.getSpec().getVersion());
+      MicrocksSpec defaultSpec = loadDefaultMicrocksSpec(microcks.getSpec().getVersion());
+      MicrocksSpec completeSpec = merger.mergeResources(defaultSpec, microcks.getSpec());
 
       Microcks completeCR = new Microcks();
       completeCR.setKind(microcks.getKind());
@@ -181,13 +169,10 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       completeCR.setSpec(completeSpec);
       completeCR.setStatus(microcks.getStatus());
 
-      /*
-       * // Some diagnostic helpers during development.
-       * logger.info("defaultCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultCR.getSpec()));
-       * logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
-       * logger.info("ExtraProperties after: " + completeCR.getSpec().getMicrocks().getExtraProperties());
-       * logger.info("mockInvocationStats after: " + completeCR.getSpec().getMicrocks().isMockInvocationStats());
-       */
+//      // Some diagnostic helpers during development.
+//      ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+//      logger.info("defaultSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultSpec);
+//      logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
 
       boolean isOpenShift = client.adapt(OpenShiftClient.class).isSupported();
       final List<OwnerReference> refs = List.of(getOwnerReference(completeCR));
@@ -349,11 +334,6 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       return DeleteControl.defaultDelete();
    }
 
-   /** Load from YAML resource. */
-   private Microcks loadDefaultMicrocksCR() throws Exception {
-      return ReconcilerUtils.loadYaml(Microcks.class, getClass(), "/k8s/microcks-default.yml");
-   }
-
    /**
     * Load a MicrocksSpec with default values for given version
     * @param version The version of Microcks to get a full default spec for
@@ -510,14 +490,6 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
                logger.errorf(" - errored: '%s'", entry.getValue().toString());
             }
          }
-
-         /*
-          * // Some diagnostic helpers during development. for (DependentResource depRes :
-          * result.getReconciledDependents()) { ReconcileResult recRes = result.getReconcileResults().get(depRes);
-          * logger.debugf("- reconciled: '%s' with op", depRes.getClass().getSimpleName());
-          * logger.infof("- reconciled: '%s' with op %s", depRes.getClass().getSimpleName(),
-          * recRes.getSingleOperation()); }
-          */
       }
       return updateStatus;
    }

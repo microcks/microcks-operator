@@ -38,6 +38,7 @@ class MicrocksReconcilerTest {
       Assertions.assertEquals("quay.io/microcks/microcks:1.10.1", spec.getMicrocks().getImage().getCoordinates());
       Assertions.assertEquals("quay.io/microcks/microcks-postman-runtime:0.6.0", spec.getPostman().getImage().getCoordinates());
       Assertions.assertEquals(1, spec.getMicrocks().getReplicas());
+      Assertions.assertEquals(1, spec.getPostman().getReplicas());
    }
 
    @Test

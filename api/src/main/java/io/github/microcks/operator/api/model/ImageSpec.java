@@ -25,7 +25,7 @@ import io.sundr.builder.annotations.Buildable;
  * Representation of a container image coordinates of an operator-managed Microcks installation.
  * @author laurent
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true, value = { "coordinates" })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "registry", "repository", "tag", "digest" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
