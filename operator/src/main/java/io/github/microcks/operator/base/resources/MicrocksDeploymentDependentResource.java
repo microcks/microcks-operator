@@ -137,6 +137,20 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                .endTemplate()
             .endSpec();
 
+      microcks.getSpec().getMicrocks().getEnv().forEach(env -> {
+         builder.editSpec()
+               .editTemplate()
+                 .editSpec()
+                    .editFirstContainer()
+                        .addNewEnv()
+                            .withName(env.getName())
+                            .withValue(env.getValue())
+                        .endEnv()
+                    .endContainer()
+                 .endSpec()
+               .endTemplate().endSpec();
+      });
+
       if (spec.getKeycloak().isInstall() || spec.getKeycloak().getPrivateUrl() != null) {
          builder.editSpec()
                .editTemplate()
