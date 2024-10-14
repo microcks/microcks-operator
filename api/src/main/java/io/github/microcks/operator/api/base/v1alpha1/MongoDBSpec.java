@@ -15,12 +15,14 @@
  */
 package io.github.microcks.operator.api.base.v1alpha1;
 
+import io.github.microcks.operator.api.model.ImageSpec;
 import io.github.microcks.operator.api.model.SecretReferenceSpec;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.sundr.builder.annotations.Buildable;
 
@@ -30,11 +32,16 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({ "install", "image", "uri", "uriParameters", "database", "secretRef", "resources", "persistent",
+      "volumeSize", "storageClassName" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class MongoDBSpec {
 
    @JsonPropertyDescription("Install MongoDB or reuse an existing instance? Default to true.")
    private boolean install = true;
+
+   @JsonPropertyDescription("The container image to use for MongoDB")
+   private ImageSpec image;
 
    @JsonProperty("uri")
    @JsonPropertyDescription("MongoDB root URI to use for access")
@@ -67,6 +74,14 @@ public class MongoDBSpec {
 
    public void setInstall(boolean install) {
       this.install = install;
+   }
+
+   public ImageSpec getImage() {
+      return image;
+   }
+
+   public void setImage(ImageSpec image) {
+      this.image = image;
    }
 
    public String getUri() {

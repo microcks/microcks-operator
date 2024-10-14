@@ -15,6 +15,7 @@
  */
 package io.github.microcks.operator.api.base.v1alpha1;
 
+import io.github.microcks.operator.api.model.ImageSpec;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.model.LogLevel;
 import io.github.microcks.operator.api.model.OpenShiftSpec;
@@ -37,10 +38,13 @@ import java.util.Map;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "url", "replicas", "ingress", "grpcIngress", "resources", "mockInvocationStats", "logLevel",
+@JsonPropertyOrder({ "url", "image", "replicas", "ingress", "grpcIngress", "resources", "mockInvocationStats", "logLevel",
       "openshift", "env", "extraProperties" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class MicrocksServiceSpec {
+
+   @JsonPropertyDescription("The container image to use for Microcks service")
+   private ImageSpec image;
 
    @JsonPropertyDescription("Number of desired pods for Microcks service")
    private int replicas = 1;
@@ -71,6 +75,14 @@ public class MicrocksServiceSpec {
 
    @JsonPropertyDescription("Extra properties to integration into application-extra configuration")
    private Map<String, AnyType> extraProperties;
+
+   public ImageSpec getImage() {
+      return image;
+   }
+
+   public void setImage(ImageSpec image) {
+      this.image = image;
+   }
 
    public int getReplicas() {
       return replicas;

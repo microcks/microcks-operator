@@ -15,9 +15,12 @@
  */
 package io.github.microcks.operator.api.base.v1alpha1;
 
+import io.github.microcks.operator.api.model.ImageSpec;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
 /**
@@ -26,11 +29,23 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({ "image", "replicas" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class PostmanRuntimeSpec {
 
+   @JsonPropertyDescription("The container image to use for Postman runtime")
+   private ImageSpec image;
+
    @JsonPropertyDescription("Number of desired pods for Postman runtime")
    private int replicas;
+
+   public ImageSpec getImage() {
+      return image;
+   }
+
+   public void setImage(ImageSpec image) {
+      this.image = image;
+   }
 
    public int getReplicas() {
       return replicas;

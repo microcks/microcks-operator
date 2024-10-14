@@ -87,7 +87,9 @@ public class PostmanRuntimeDeploymentDependentResource extends CRUDKubernetesDep
                      .addToLabels(microcks.getSpec().getCommonLabels())
                      .addToAnnotations(microcks.getSpec().getCommonAnnotations())
                   .endMetadata()
-                  .editSpec().editFirstContainer().withImage("quay.io/microcks/microcks-postman-runtime:0.5.0").endContainer().endSpec()
+                  .editSpec()
+                     .editFirstContainer().withImage(microcks.getSpec().getPostman().getImage().getCoordinates()).endContainer()
+                  .endSpec()
                .endTemplate()
             .endSpec();
 

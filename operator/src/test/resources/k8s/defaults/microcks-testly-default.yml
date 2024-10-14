@@ -1,0 +1,13 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  version: testly
+  microcks:
+    image:
+      tag: nightly
+  postman:
+    replicas: 2
+    image:
+      tag: nightly

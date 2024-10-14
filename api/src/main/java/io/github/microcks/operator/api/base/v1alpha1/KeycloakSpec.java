@@ -15,6 +15,7 @@
  */
 package io.github.microcks.operator.api.base.v1alpha1;
 
+import io.github.microcks.operator.api.model.ImageSpec;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.model.OpenShiftSpec;
 
@@ -31,7 +32,7 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "install", "realm", "url", "privateUrl", "ingress", "persistent", "volumeSize", "storageClassName",
+@JsonPropertyOrder({ "install", "realm", "image", "url", "privateUrl", "ingress", "persistent", "volumeSize", "storageClassName",
       "serviceAccount", "serviceAccountCredentials", "openshift" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class KeycloakSpec {
@@ -41,6 +42,9 @@ public class KeycloakSpec {
 
    @JsonPropertyDescription("Keycloak realm to use for authentication on Microcks")
    private String realm;
+
+   @JsonPropertyDescription("The container image to use for Keycloak")
+   private ImageSpec image;
 
    @JsonProperty("url")
    @JsonPropertyDescription("Keycloak root URL to use for access and Ingress if created")
@@ -91,6 +95,14 @@ public class KeycloakSpec {
 
    public void setRealm(String realm) {
       this.realm = realm;
+   }
+
+   public ImageSpec getImage() {
+      return image;
+   }
+
+   public void setImage(ImageSpec image) {
+      this.image = image;
    }
 
    public String getUrl() {

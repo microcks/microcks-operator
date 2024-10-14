@@ -3,9 +3,12 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  version: nightly
+  version: latest
 
   microcks:
+    image:
+      registry: quay.io
+      repository: microcks/microcks
     replicas: 1
     ingress:
       generateCert: true
@@ -26,6 +29,9 @@ spec:
     mockInvocationStats: true
 
   postman:
+    image:
+      registry: quay.io
+      repository: microcks/microcks-postman-runtime
     replicas: 1
 
   keycloak:
@@ -58,6 +64,9 @@ spec:
   features:
     async:
       enabled: false
+      image:
+        registry: quay.io
+        repository: microcks/microcks-async-minion
       defaultBinding: KAFKA
       defaultFrequency: 10
       defaultAvroEncoding: RAW

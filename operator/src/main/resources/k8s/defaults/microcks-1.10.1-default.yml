@@ -1,0 +1,13 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  version: 1.10.1
+  microcks:
+    image:
+      tag: 1.10.1
+  features:
+    async:
+      image:
+        tag: 1.10.1

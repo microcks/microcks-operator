@@ -15,6 +15,8 @@
  */
 package io.github.microcks.operator.api.base.v1alpha1;
 
+import io.github.microcks.operator.api.model.ImageSpec;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -27,13 +29,16 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "enabled", "defaultBinding", "defaultFrequency", "defaultAvroEncoding", "kafka", "amqp", "mqtt",
-      "nats", "googlepubsub" })
+@JsonPropertyOrder({ "enabled", "image", "defaultBinding", "defaultFrequency", "defaultAvroEncoding", "kafka", "amqp",
+      "mqtt", "nats", "googlepubsub", "sqs", "sns" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class AsyncFeatureSpec {
 
    @JsonPropertyDescription("Enable/disable this feature. Default is false")
    private boolean enabled = false;
+
+   @JsonPropertyDescription("The container image to use for Async Minion component")
+   private ImageSpec image;
 
    @JsonPropertyDescription("Default protocol binding to use if no specified in AsyncAPI document")
    private String defaultBinding;
@@ -72,6 +77,14 @@ public class AsyncFeatureSpec {
 
    public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+   }
+
+   public ImageSpec getImage() {
+      return image;
+   }
+
+   public void setImage(ImageSpec image) {
+      this.image = image;
    }
 
    public String getDefaultBinding() {

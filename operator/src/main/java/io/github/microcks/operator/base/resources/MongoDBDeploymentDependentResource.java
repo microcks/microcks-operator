@@ -92,7 +92,7 @@ public class MongoDBDeploymentDependentResource extends CRUDKubernetesDependentR
                   .endMetadata()
                   .editSpec()
                      .editFirstContainer()
-                        .withImage("library/mongo:4.4.29")
+                        .withImage(spec.getMongoDB().getImage().getCoordinates())
                         .withResources(spec.getMongoDB().getResources())
                         .addNewEnv()
                            .withName("MONGODB_USER")

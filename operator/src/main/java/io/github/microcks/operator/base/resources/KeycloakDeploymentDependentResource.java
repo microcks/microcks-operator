@@ -92,7 +92,7 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
                   .endMetadata()
                   .editSpec()
                      .editFirstContainer()
-                        .withImage("quay.io/keycloak/keycloak:24.0.4")
+                        .withImage(spec.getKeycloak().getImage().getCoordinates())
                         .addNewEnv()
                            .withName("KEYCLOAK_ADMIN")
                            .withNewValueFrom()

@@ -17,7 +17,9 @@ package io.github.microcks.operator.base;
 
 import io.github.microcks.operator.WatcherKey;
 import io.github.microcks.operator.WatcherManager;
+import io.github.microcks.operator.api.base.v1alpha1.FeaturesSpecBuilder;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksServiceSpecBuilder;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksStatus;
 import io.github.microcks.operator.api.model.Condition;
@@ -166,9 +168,13 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
        */
 
       // Load default values for CR and build a complete representation.
+      /*
       Microcks defaultCR = loadDefaultMicrocksCR();
-
       MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
+      */
+
+      MicrocksSpec completeSpec = loadDefaultMicrocksSpec(microcks.getSpec().getVersion());
+
       Microcks completeCR = new Microcks();
       completeCR.setKind(microcks.getKind());
       completeCR.setMetadata(microcks.getMetadata());
@@ -320,8 +326,12 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
       try {
          // Do our best to recreate complete CR in order to remove Strimzi watchers.
+         /*
          Microcks defaultCR = loadDefaultMicrocksCR();
          MicrocksSpec completeSpec = merger.mergeResources(defaultCR.getSpec(), microcks.getSpec());
+         */
+
+         MicrocksSpec completeSpec = loadDefaultMicrocksSpec(microcks.getSpec().getVersion());
 
          Microcks completeCR = new Microcks();
          completeCR.setKind(microcks.getKind());
@@ -342,6 +352,56 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    /** Load from YAML resource. */
    private Microcks loadDefaultMicrocksCR() throws Exception {
       return ReconcilerUtils.loadYaml(Microcks.class, getClass(), "/k8s/microcks-default.yml");
+   }
+
+   /**
+    * Load a MicrocksSpec with default values for given version
+    * @param version The version of Microcks to get a full default spec for
+    * @return A MicrocksSpec with default values
+    * @throws Exception If default values cannot be loaded
+    */
+   public MicrocksSpec loadDefaultMicrocksSpec(String version) throws Exception {
+      Microcks versionCR = null;
+      MicrocksSpec versionSpec = null;
+
+      // Look at specific version defaults first.
+      try {
+         versionCR = ReconcilerUtils.loadYaml(Microcks.class, getClass(), String.format("/k8s/defaults/microcks-%s-default.yml", version));
+         versionSpec = versionCR.getSpec();
+      } catch (Exception e) {
+         // Default for this version does not exist, fallback to logical defaults.
+         versionSpec = new MicrocksSpec();
+         versionSpec.setVersion(version);
+         versionSpec.setMicrocks(new MicrocksServiceSpecBuilder()
+               .withNewImage()
+                  .withRegistry("quay.io")
+                  .withRepository("microcks/microcks")
+                  .withTag(version)
+               .endImage().build());
+         versionSpec.setFeatures(new FeaturesSpecBuilder().withNewAsync()
+               .withNewImage()
+                  .withRegistry("quay.io")
+                  .withRepository("microcks/microcks-async-minion")
+                  .withTag(version)
+               .endImage().endAsync().build());
+      }
+
+      // Look at minor version defaults if any.
+      if (version.contains(".")) {
+         String[] versionDigits = version.split("\\.");
+         try {
+            Microcks minorCR = ReconcilerUtils.loadYaml(Microcks.class, getClass(),
+                  String.format("/k8s/defaults/microcks-%s.%s-default.yml", versionDigits[0], versionDigits[1]));
+
+            versionSpec = merger.mergeResources(minorCR.getSpec(), versionSpec);
+         } catch (Exception e) {
+            // Default for this minor does not exist. Nothing special to do here.
+         }
+      }
+
+      // Finally, merge with global defaults.
+      Microcks defaultCR = ReconcilerUtils.loadYaml(Microcks.class, getClass(), "/k8s/microcks-default.yml");
+      return merger.mergeResources(defaultCR.getSpec(), versionSpec);
    }
 
    /** Build a new OwnerReference to assign to CR resources. */

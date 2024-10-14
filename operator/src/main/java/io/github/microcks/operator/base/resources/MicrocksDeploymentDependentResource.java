@@ -97,7 +97,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                   .endMetadata()
                   .editSpec()
                      .editFirstContainer()
-                        .withImage("quay.io/microcks/microcks:nightly")
+                        .withImage(spec.getMicrocks().getImage().getCoordinates())
                         .addNewEnv()
                            .withName("SPRING_PROFILES_ACTIVE")
                            .withValue("prod")
