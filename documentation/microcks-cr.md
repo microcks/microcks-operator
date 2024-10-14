@@ -138,10 +138,32 @@ into the [Architecture & deployment options](https://microcks.io/documentation/e
 
 ### Basic configuration
 
-| Property      | Description                          |
-|---------------|--------------------------------------|
-| `url`         | **Mandatory on Kube, Optional on OpenShift**. The URL to use for exposing `Ingress`. <br/>If missing on OpenShift, default URL schema handled by Router is used. |  
-| `replicas`    | **Optional**. The number of replicas for the Microcks main pod. Default is `1`. |
+| Property      | Description                                                                                                                                                      |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `url`         | **Mandatory on Kube, Optional on OpenShift**. The URL to use for exposing `Ingress`. <br/>If missing on OpenShift, default URL schema handled by Router is used. |
+| `image`       | **Optional**. The Microcks container image to use. Default is `quay.io/microcks/microcks:<version>`. See note on `ImageSpec` below.                              |
+| `replicas`    | **Optional**. The number of replicas for the Microcks main pod. Default is `1`.                                                                                  |
+
+#### Image specification
+
+Microcks container image can be specified using the `image` property. This property is of type `ImageSpec` and is defined as follows:
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  #[...]
+  microcks:
+    image:
+      registry: quay.io
+      repository: microcks/microcks
+      tag: 1.10.1
+      #digest: sha256:3ce0494688e973ef45c77faa1812f58eb74aaced849c5f57067af81712e5df72
+```
+
+User can override any of `registry`, `repository`, `tag` and `digest` properties. If `digest` is provided, it will take precedence over `tag`.
 
 ### Ingresses configuration
 
@@ -200,12 +222,13 @@ into the [Architecture & deployment options](https://microcks.io/documentation/e
 
 ### Basic configuration
 
-| Property       | Description                                                                                                                                                                                                                                                                                                                      |
-|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `install`      | **Optional**. Flag for Keycloak installation. Default is `true`. Set to `false` if you want to reuse an existing Keycloak instance.                                                                                                                                                                                              |
-| `url`          | **Mandatory on Kube if keycloak.install==false, Optional otherwise**. The URL of Keycloak instance - just the hostname + port part. If missing on OpenShift, default URL schema handled by Router is used.                                                                                                                       |
-| `privateUrl`   | **Optional but recommended**. A private URL - a full URL here - used by the Microcks component to internally join Keycloak. This is also known as `backend url` in [Keycloak doc](https://www.keycloak.org/server/hostname-deprecated#_backend). When specified, the `keycloak.url` is used as `frontend url` in Keycloak terms. |
-| `realm`        | **Optional**. Name of Keycloak realm to use. Should be setup only if `install` is `false` and you want to reuse an existing realm. Default is `microcks`.                                                                                                                                                                        |
+| Property        | Description                                                                                                                                                                                                                                                                                                                      |
+|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `install`       | **Optional**. Flag for Keycloak installation. Default is `true`. Set to `false` if you want to reuse an existing Keycloak instance.                                                                                                                                                                                              |
+| `image`         | **Optional**. The Keycloak container image to use. Default depends on Microcks version. <br/> This property if of type `ImageSpec` as explained in [Image specification](#image-specification) section.                                                                                                                          |
+| `url`           | **Mandatory on Kube if keycloak.install==false, Optional otherwise**. The URL of Keycloak instance - just the hostname + port part. If missing on OpenShift, default URL schema handled by Router is used.                                                                                                                       |
+| `privateUrl`    | **Optional but recommended**. A private URL - a full URL here - used by the Microcks component to internally join Keycloak. This is also known as `backend url` in [Keycloak doc](https://www.keycloak.org/server/hostname-deprecated#_backend). When specified, the `keycloak.url` is used as `frontend url` in Keycloak terms. |
+| `realm`         | **Optional**. Name of Keycloak realm to use. Should be setup only if `install` is `false` and you want to reuse an existing realm. Default is `microcks`.                                                                                                                                                                        |
 
 ### Ingresses configuration
 
@@ -264,6 +287,85 @@ the following ones:
 
 ## MongoDB specification details
 
+### Basic configuration
+
+| Property        | Description                                                                                                                                                                                             
+|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `install`       | **Optional**. Flag for MongoDN installation. Default is `true`. Set to `false` if you want to reuse an existing MongoDB instance.                                                                       |
+| `image`         | **Optional**. The Keycloak container image to use. Default depends on Microcks version. <br/> This property if of type `ImageSpec` as explained in [Image specification](#image-specification) section. |
+| `uri`           | **Optional**. MongoDB URI in case you're reusing existing MongoDB instance. Mandatory if `install` is `false`.                                                                                          |
+| `uriParameters` | **Optional**. Allows you to add parameters to the mongodb uri connection string.                                                                                                                        |
+| `database`      | **Optional**. MongoDB database name in case you're reusing existing MongoDB instance. Used if `install` is `false`. Default to `appName`.                                                                                                                                                                             |
+| `secretRef`     | **Optional**. Reference of a Secret containing credentials for connecting a provided MongoDB instance. Mandatory if `install` is `false`.                                                                                                                                                                             |
+
+### Resources configuration
+
+When installed by this Operator, resources assigned to MongoDB pod can be configured using regular Kubernetes resources definition.
+Here is below an example with the default values that are used by the operator:
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  #[...]
+  mongodb:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        #cpu: 500m
+        memory: 512Mi
+```
+
+### Persistence configuration
+
+When installed by this Operator, MongoDB component is using a persistent volume. The persitence related configuration properties are
+the following ones:
+
+| Property            | Description                                                                                                                             |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `persistent`        | **Optional**. Flag for MongoDB persistence. Default is `true`. Set to `false` if you want an ephemeral MongoDB installation.            |
+| `volumeSize`        | **Optional**. Size of persistent volume claim for MongoDB. Default is `2Gi`. Not used if not persistent install asked.                  |
+| `storageClassName`  | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class. |
+
 ## Postman specification details
 
+### Basic configuration
+
+| Property    | Description                                                                                                                                                                                                    
+|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `image`     | **Optional**. The Postman runtime container image to use. Default depends on Microcks version. <br/> This property if of type `ImageSpec` as explained in [Image specification](#image-specification) section. |
+| `replicas`  | **Optional**. The number of replicas for the Microcks Postman pod. Default is `1`.                                                                                                                             |
+
+### Resources configuration
+
+When installed by this Operator, resources assigned to Postman runtime pod can be configured using regular Kubernetes resources definition.
+Here is below an example with the default values that are used by the operator:
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  #[...]
+  postman:
+    resources:
+      requests:
+        memory: 256Mi
+      limits:
+        memory: 256Mi
+```
+
 ## Features specification details
+
+### AsyncAPI support
+
+### Repository Filtering
+
+### Repository Tenancy
+
+### Hub Integration

@@ -33,6 +33,11 @@ spec:
       registry: quay.io
       repository: microcks/microcks-postman-runtime
     replicas: 1
+    resources:
+      requests:
+        memory: 256Mi
+      limits:
+        memory: 256Mi
 
   keycloak:
     install: true
@@ -59,7 +64,9 @@ spec:
     resources:
       requests:
         cpu: 250m
-        memory: 400Mi
+        memory: 512Mi
+      limits:
+        memory: 512Mi
 
   features:
     async:
