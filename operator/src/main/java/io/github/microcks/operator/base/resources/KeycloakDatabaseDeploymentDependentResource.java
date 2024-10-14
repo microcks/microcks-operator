@@ -91,7 +91,7 @@ public class KeycloakDatabaseDeploymentDependentResource extends CRUDKubernetesD
                   .endMetadata()
                   .editSpec()
                      .editFirstContainer()
-                        .withImage("library/postgres:16.3-alpine")
+                        .withImage(spec.getKeycloak().getPostgresImage().getCoordinates())
                         .addNewEnv()
                            .withName("POSTGRES_USER")
                            .withNewValueFrom()

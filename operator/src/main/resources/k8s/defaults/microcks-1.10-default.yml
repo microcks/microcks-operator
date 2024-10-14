@@ -17,6 +17,10 @@ spec:
       registry: quay.io
       repository: keycloak/keycloak
       tag: 24.0.4
+    postgresImage:
+      registry: docker.io
+      repository: library/postgres
+      tag: 16.3-alpine
   mongodb:
     image:
       registry: docker.io

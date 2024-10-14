@@ -60,6 +60,9 @@ public class KeycloakSpec {
    @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true.")
    private boolean persistent = true;
 
+   @JsonPropertyDescription("The container image to use for PostgreSQL database")
+   private ImageSpec postgresImage;
+
    @JsonPropertyDescription("Size of persistent storage volume if persistent")
    private String volumeSize;
 
@@ -135,6 +138,14 @@ public class KeycloakSpec {
 
    public void setPersistent(boolean persistent) {
       this.persistent = persistent;
+   }
+
+   public ImageSpec getPostgresImage() {
+      return postgresImage;
+   }
+
+   public void setPostgresImage(ImageSpec postgresImage) {
+      this.postgresImage = postgresImage;
    }
 
    public String getVolumeSize() {

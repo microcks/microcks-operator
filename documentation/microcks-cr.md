@@ -47,7 +47,7 @@ apiVersion: microcks.io/v1alpha1
 kind: Microcks
 metadata:
   name: microcks
-  namepsace: m2
+  namespace: m2
 spec:
   version: 1.10.0
   #[...]
@@ -279,13 +279,17 @@ spec:
 When installed by this Operator, Keycloak component is using a PostgreSQL database for persistence. The persitence related configuration properties are
 the following ones:
 
-| Property             | Description                                                                                                                                                                                                                                                                                                   |
-|----------------------|-------------------------------------------------------------------------|
-| `persistent`         | **Optional**. Flag for Keycloak persistence. Default is `true`. Set to `false` if you want an ephemeral Keycloak installation. |
-| `volumeSize`         | **Optional**. Size of persistent volume claim for Keycloak. Default is `1Gi`. Not used if not persistent install asked. |
-| `storageClassName`   | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class. |
+| Property           | Description                                                                                                                                                                                               |
+|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `persistent`       | **Optional**. Flag for Keycloak persistence. Default is `true`. Set to `false` if you want an ephemeral Keycloak installation.                                                                            |
+| `postgresImage`    | **Optional**. The PostgreSQL container image to use. Default depends on Microcks version. <br/> This property if of type `ImageSpec` as explained in [Image specification](#image-specification) section. |
+| `volumeSize`       | **Optional**. Size of persistent volume claim for Keycloak. Default is `1Gi`. Not used if not persistent install asked.                                                                                   |
+| `storageClassName` | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class.                                                                   |
 
 ## MongoDB specification details
+
+This part of the Custom Resource allows you to configure the MongoDB component deployment as described
+into the [Architecture & deployment options](https://microcks.io/documentation/explanations/deployment-options/).
 
 ### Basic configuration
 
@@ -332,6 +336,9 @@ the following ones:
 | `storageClassName`  | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class. |
 
 ## Postman specification details
+
+This part of the Custom Resource allows you to configure the Postman runtime component deployment as described
+into the [Architecture & deployment options](https://microcks.io/documentation/explanations/deployment-options/).
 
 ### Basic configuration
 
