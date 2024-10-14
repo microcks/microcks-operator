@@ -9,7 +9,7 @@ spec:
     url: microcks.m.minikube.local
   keycloak:
     url: keycloak.m.minikube.local
-    pvcAnnnotations:
+    pvcAnnotations:
       microcks.io/volume: standard
   commonLabels:
     custom-label-1: custom-value
