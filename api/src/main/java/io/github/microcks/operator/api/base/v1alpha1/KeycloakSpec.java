@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
+import java.util.Map;
+
 /**
  * Representation of the Keycloak part of an operator-managed Microcks installation.
  * @author laurent
@@ -33,7 +35,7 @@ import io.sundr.builder.annotations.Buildable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "install", "realm", "image", "url", "privateUrl", "ingress", "persistent", "volumeSize", "storageClassName",
-      "serviceAccount", "serviceAccountCredentials", "openshift" })
+      "pvcAnnotations", "serviceAccount", "serviceAccountCredentials", "openshift" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class KeycloakSpec {
 
@@ -68,6 +70,9 @@ public class KeycloakSpec {
 
    @JsonPropertyDescription("Name of storage class to use if not relying on default")
    private String storageClassName;
+
+   @JsonPropertyDescription("Annotations to be added to managed Persistent Volume Claim")
+   private Map<String, String> pvcAnnotations;
 
    @JsonPropertyDescription("Service Account for connecting external services to Microcks")
    private String serviceAccount;
@@ -162,6 +167,14 @@ public class KeycloakSpec {
 
    public void setStorageClassName(String storageClassName) {
       this.storageClassName = storageClassName;
+   }
+
+   public Map<String, String> getPvcAnnotations() {
+      return pvcAnnotations;
+   }
+
+   public void setPvcAnnotations(Map<String, String> pvcAnnotations) {
+      this.pvcAnnotations = pvcAnnotations;
    }
 
    public String getServiceAccount() {

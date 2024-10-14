@@ -42,6 +42,16 @@ metadata:
 status:
   readyReplicas: 1
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: microcks-keycloak-postgresql
+  namespace: microcks
+  annotations:
+    microcks.io/volume: standard
+status:
+  phase: Bound
+---
 kind: Service
 apiVersion: v1
 metadata:

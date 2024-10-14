@@ -73,6 +73,7 @@ public class KeycloakDatabasePVCDependentResource
                .addToLabels("group", "microcks")
                .addToLabels(microcks.getSpec().getCommonLabels())
                .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+               .addToAnnotations(microcks.getSpec().getKeycloak().getPvcAnnotations())
             .endMetadata()
             .withNewSpec().withAccessModes("ReadWriteOnce")
             .withNewResources().addToRequests("storage", new Quantity(microcks.getSpec().getKeycloak().getVolumeSize()))

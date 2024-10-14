@@ -285,6 +285,7 @@ the following ones:
 | `postgresImage`    | **Optional**. The PostgreSQL container image to use. Default depends on Microcks version. <br/> This property if of type `ImageSpec` as explained in [Image specification](#image-specification) section. |
 | `volumeSize`       | **Optional**. Size of persistent volume claim for Keycloak. Default is `1Gi`. Not used if not persistent install asked.                                                                                   |
 | `storageClassName` | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class.                                                                   |
+| `pvcAnnotations`   | **Optional**. A map of annotations that will be added to the `pvc` for the Keycloak PostgreSQL persistence.                                                                                               |
 
 ## MongoDB specification details
 
@@ -329,11 +330,12 @@ spec:
 When installed by this Operator, MongoDB component is using a persistent volume. The persitence related configuration properties are
 the following ones:
 
-| Property            | Description                                                                                                                             |
-|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `persistent`        | **Optional**. Flag for MongoDB persistence. Default is `true`. Set to `false` if you want an ephemeral MongoDB installation.            |
-| `volumeSize`        | **Optional**. Size of persistent volume claim for MongoDB. Default is `2Gi`. Not used if not persistent install asked.                  |
-| `storageClassName`  | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class. |
+| Property           | Description                                                                                                                             |
+|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `persistent`       | **Optional**. Flag for MongoDB persistence. Default is `true`. Set to `false` if you want an ephemeral MongoDB installation.            |
+| `volumeSize`       | **Optional**. Size of persistent volume claim for MongoDB. Default is `2Gi`. Not used if not persistent install asked.                  |
+| `storageClassName` | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class. |
+| `pvcAnnotations`   | **Optional**. A map of annotations that will be added to the `pvc` for the MongoDB persistence. |
 
 ## Postman specification details
 

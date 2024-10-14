@@ -822,12 +822,35 @@ spec:
                       description: Use persistent storage or ephemeral one? Default
                         to true.
                       type: boolean
+                    postgresImage:
+                      description: The container image to use for PostgreSQL database
+                      properties:
+                        digest:
+                          description: The digest of the image
+                          type: string
+                        registry:
+                          description: "The registry where to pull this image (docker.io,\
+                          \ quay.io, internal one...)"
+                          type: string
+                        repository:
+                          description: The repository name of the image
+                          type: string
+                        tag:
+                          description: The tag of the image
+                          type: string
+                      type: object
                     privateUrl:
                       description: "A private URL - a full URL here - used by the Microcks\
                       \ component to internally join Keycloak. This is also known\
                       \ as `backendUrl` in Keycloak. When specified, the `keycloak.url`\
                       \ is used as `frontendUrl` in Keycloak terms."
                       type: string
+                    pvcAnnotations:
+                      additionalProperties:
+                        type: string
+                      description: Annotations to be added to managed Persistent Volume
+                        Claim
+                      type: object
                     realm:
                       description: Keycloak realm to use for authentication on Microcks
                       type: string
@@ -1081,6 +1104,12 @@ spec:
                       description: Use persistent storage or ephemeral one? Default
                         to true
                       type: boolean
+                    pvcAnnotations:
+                      additionalProperties:
+                        type: string
+                      description: Annotations to be added to managed Persistent Volume
+                        Claim
+                      type: object
                     resources:
                       description: Kubernetes resource requirements for MongoDB
                       properties:

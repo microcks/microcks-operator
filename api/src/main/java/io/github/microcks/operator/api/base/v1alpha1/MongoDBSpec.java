@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.sundr.builder.annotations.Buildable;
 
+import java.util.Map;
+
 /**
  * Representation of the MongoDB part of an operator-managed Microcks installation.
  * @author laurent
@@ -33,7 +35,7 @@ import io.sundr.builder.annotations.Buildable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "install", "image", "uri", "uriParameters", "database", "secretRef", "resources", "persistent",
-      "volumeSize", "storageClassName" })
+      "volumeSize", "storageClassName", "pvcAnnotations" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class MongoDBSpec {
 
@@ -67,6 +69,9 @@ public class MongoDBSpec {
 
    @JsonPropertyDescription("Name of storage class to use if not relying on default")
    private String storageClassName;
+
+   @JsonPropertyDescription("Annotations to be added to managed Persistent Volume Claim")
+   private Map<String, String> pvcAnnotations;
 
    public boolean isInstall() {
       return install;
@@ -146,5 +151,13 @@ public class MongoDBSpec {
 
    public void setStorageClassName(String storageClassName) {
       this.storageClassName = storageClassName;
+   }
+
+   public Map<String, String> getPvcAnnotations() {
+      return pvcAnnotations;
+   }
+
+   public void setPvcAnnotations(Map<String, String> pvcAnnotations) {
+      this.pvcAnnotations = pvcAnnotations;
    }
 }

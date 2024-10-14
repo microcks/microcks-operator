@@ -4,12 +4,13 @@ metadata:
   name: microcks
   namespace: microcks
 spec:
-  version: 1.10.0
+  version: 1.10.1
   microcks:
     url: microcks.m.minikube.local
   keycloak:
     url: keycloak.m.minikube.local
-    privateUrl: http://microcks-keycloak.microcks.svc.cluster.local:8080
+    pvcAnnnotations:
+      microcks.io/volume: standard
   commonLabels:
     custom-label-1: custom-value
     custom-label-2: custom-value
