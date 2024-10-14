@@ -62,7 +62,7 @@ class ResourceMergerTest {
       }
 
       assertNotNull(result);
-      assertEquals("nightly", result.getVersion());
+      assertEquals("latest", result.getVersion());
       assertEquals(1, result.getMicrocks().getReplicas());
       assertEquals(1, result.getPostman().getReplicas());
       assertTrue(result.getKeycloak().isInstall());

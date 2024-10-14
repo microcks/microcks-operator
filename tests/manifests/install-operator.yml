@@ -441,6 +441,23 @@ spec:
                               type: object
                               x-kubernetes-preserve-unknown-fields: true
                           type: object
+                        image:
+                          description: The container image to use for Async Minion component
+                          properties:
+                            digest:
+                              description: The digest of the image
+                              type: string
+                            registry:
+                              description: "The registry where to pull this image (docker.io,\
+                              \ quay.io, internal one...)"
+                              type: string
+                            repository:
+                              description: The repository name of the image
+                              type: string
+                            tag:
+                              description: The tag of the image
+                              type: string
+                          type: object
                         kafka:
                           description: Configuration of Kafka broker access and/or install
                           properties:
@@ -728,6 +745,23 @@ spec:
                 keycloak:
                   description: Configuration of Keycloak access and/or install
                   properties:
+                    image:
+                      description: The container image to use for Keycloak
+                      properties:
+                        digest:
+                          description: The digest of the image
+                          type: string
+                        registry:
+                          description: "The registry where to pull this image (docker.io,\
+                          \ quay.io, internal one...)"
+                          type: string
+                        repository:
+                          description: The repository name of the image
+                          type: string
+                        tag:
+                          description: The tag of the image
+                          type: string
+                      type: object
                     ingress:
                       description: Configuration to apply to Ingress if created
                       properties:
@@ -905,6 +939,23 @@ spec:
                             name
                           type: string
                       type: object
+                    image:
+                      description: The container image to use for Microcks service
+                      properties:
+                        digest:
+                          description: The digest of the image
+                          type: string
+                        registry:
+                          description: "The registry where to pull this image (docker.io,\
+                          \ quay.io, internal one...)"
+                          type: string
+                        repository:
+                          description: The repository name of the image
+                          type: string
+                        tag:
+                          description: The tag of the image
+                          type: string
+                      type: object
                     ingress:
                       description: Configuration to apply to Ingress if created
                       properties:
@@ -1013,6 +1064,23 @@ spec:
                       description: MongoDB database name in case you're reusing existing
                         one. Only if install if false.
                       type: string
+                    image:
+                      description: The container image to use for MongoDB
+                      properties:
+                        digest:
+                          description: The digest of the image
+                          type: string
+                        registry:
+                          description: "The registry where to pull this image (docker.io,\
+                          \ quay.io, internal one...)"
+                          type: string
+                        repository:
+                          description: The repository name of the image
+                          type: string
+                        tag:
+                          description: The tag of the image
+                          type: string
+                      type: object
                     install:
                       description: Install MongoDB or reuse an existing instance? Default
                         to true.
@@ -1076,6 +1144,23 @@ spec:
                 postman:
                   description: Configuration of Postman runtime
                   properties:
+                    image:
+                      description: The container image to use for Postman runtime
+                      properties:
+                        digest:
+                          description: The digest of the image
+                          type: string
+                        registry:
+                          description: "The registry where to pull this image (docker.io,\
+                          \ quay.io, internal one...)"
+                          type: string
+                        repository:
+                          description: The repository name of the image
+                          type: string
+                        tag:
+                          description: The tag of the image
+                          type: string
+                      type: object
                     replicas:
                       description: Number of desired pods for Postman runtime
                       type: integer
