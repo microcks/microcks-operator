@@ -98,6 +98,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                   .editSpec()
                      .editFirstContainer()
                         .withImage(spec.getMicrocks().getImage().getCoordinates())
+                        .addAllToEnv(spec.getMicrocks().getEnv())
                         .addNewEnv()
                            .withName("SPRING_PROFILES_ACTIVE")
                            .withValue("prod")
@@ -136,20 +137,6 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                   .endSpec()
                .endTemplate()
             .endSpec();
-
-      microcks.getSpec().getMicrocks().getEnv().forEach(env -> {
-         builder.editSpec()
-               .editTemplate()
-                 .editSpec()
-                    .editFirstContainer()
-                        .addNewEnv()
-                            .withName(env.getName())
-                            .withValue(env.getValue())
-                        .endEnv()
-                    .endContainer()
-                 .endSpec()
-               .endTemplate().endSpec();
-      });
 
       if (spec.getKeycloak().isInstall() || spec.getKeycloak().getPrivateUrl() != null) {
          builder.editSpec()
