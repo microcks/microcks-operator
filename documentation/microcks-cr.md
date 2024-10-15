@@ -106,11 +106,11 @@ spec:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
-              - key: topology.kubernetes.io/zone
-                operator: In
-                values:
-                  - antarctica-east1
-                  - antarctica-west1
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+                - antarctica-east1
+                - antarctica-west1
       preferredDuringSchedulingIgnoredDuringExecution:
         - weight: 1
           preference:
@@ -372,6 +372,114 @@ spec:
 ## Features specification details
 
 ### AsyncAPI support
+
+| Property         | Description                                                                                                                                                                                                                                                                      
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `async.enabled`  | **Optional**. Feature allowing to mock an tests asynchronous APIs through Events. Enabling it requires an active message broker. Default is `false`.                                                                                                                             |
+| `async.image`    | **Optional**. The Async Minion component container image to use. Default is `quay.io/microcks/microcks-async-minion:<version>`. <br/> This property if of type `ImageSpec` as explained in [Image specification](#image-specification) section.                                  |
+| `async.env`      | **Optional**. Some environment variables to add on `async-minion` container. This should be expressed using [Kubernetes syntax](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/#define-an-environment-variable-for-a-container). |
+
+### Kafka feature details
+
+Here are below the configuration properties of the Kafka support feature:
+
+| Section                               | Property                         | Description                                                                                                                                                                                                            |
+| ------------------------------------- |----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `features.async.kafka`                | `install`                        | **Optional**. Flag for Kafka installation. Default is `true` and require Strimzi Operator to be setup. Set to `false` if you want to reuse an existing Kafka instance.                                                 |
+| `features.async.kafka`                | `url`                            | **Optional**. The URL of Kafka broker if it already exists or the one used for exposing Kafka `Ingress` when we install it. In this later case, it should only be the subdomain part (eg: `apps.example.com`).         |
+| `features.async.kafka`                | `ingressClassName`               | **Optional**. The ingress class to use for exposing broker to the outer world when installing it. Default is `nginx`.                                                                                                  |
+| `features.async.kafka`                | `persistent`                     | **Optional**. Flag for Kafka persistence. Default is `false`. Set to `true` if you want a persistent Kafka installation.                                                                                               |
+| `features.async.kafka`                | `volumeSize`                     | **Optional**. Size of persistent volume claim for Kafka. Default is `2Gi`. Not used if not persistent install asked.                                                                                                   |
+| `features.async.kafka.schemaRegistry` | `url`                            | **Optional**. The API URL of a Kafka Schema Registry. Used for Avro based serialization                                                                                                                                |
+| `features.async.kafka.schemaRegistry` | `confluent`                      | **Optional**. Flag for indicating that registry is a Confluent one, or using a Confluent compatibility mode. Default to `true`                                                                                         |
+| `features.async.kafka.schemaRegistry` | `username`                       | **Optional**. Username for connecting to the specified Schema registry. Default to ``                                                                                                                                  |
+| `features.async.kafka.schemaRegistry` | `credentialsSource`              | **Optional**. Source of the credentials for connecting to the specified Schema registry. Default to `USER_INFO`                                                                                                        |
+| `features.async.kafka.authentication` | `type`                           | **Optional**. The type of authentication for connecting to a pre-existing Kafka broker. Supports `SSL` or `SASL_SSL`. Default to `none`                                                                                |
+| `features.async.kafka.authentication` | `truststoreType`                 | **Optional**. For TLS transport, you'll always need a truststore to hold your cluster certificate. Default to `PKCS12`                                                                                                 |
+| `features.async.kafka.authentication` | `truststoreSecretRef`            | **Optional**. For TLS transport, the reference of a Secret holding truststore and its password. Set `secret`, `storeKey` and `passwordKey` properties                                                                  |
+| `features.async.kafka.authentication` | `keystoreType`                   | **Optional**. In case of `SSL` type, you'll also need a keystore to hold your user private key for mutual TLS authentication. Default to `PKCS12`                                                                      |
+| `features.async.kafka.authentication` | `keystoreSecretRef`              | **Optional**. For mutual TLS authentication, the reference of a Secret holding keystore and its password. Set `secret`, `storeKey` and `passwordKey` properties                                                        |
+| `features.async.kafka.authentication` | `saslMechanism`                  | **Optional**. For SASL authentication, you'll have to specify an additional authentication mechanism such as `SCRAM-SHA-512` or `OAUTHBEARER`                                                                          |
+| `features.async.kafka.authentication` | `saslJaasConfig`                 | **Optional**. For SASL authentication, you'll have to specify a JAAS configuration line with login module, username and password.                                                                                      |
+| `features.async.kafka.authentication` | `saslLoginCallbackHandlerClass`  | **Optional**. For SASL authentication, you may want to provide a Login Callback Handler implementations. This implementation may be provided by extending the main and `async-minion` images and adding your own libs. |
+
+
+#### MQTT feature details
+
+Here are below the configuration properties of the MQTT support feature:
+
+| Section               | Property   | Description                                                                                                                              |
+| --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `features.async.mqtt` | `url`      | **Optional**. The URL of MQTT broker (eg: `my-mqtt-broker.example.com:1883`). Default is undefined which means that feature is disabled. |
+| `features.async.mqtt` | `username` | **Optional**. The username to use for connecting to secured MQTT broker. Default to `microcks`.                                          |
+| `features.async.mqtt` | `password` | **Optional**. The password to use for connecting to secured MQTT broker. Default to `microcks`.                                          |
+
+#### WebSocket feature details
+
+Here are below the configuration properties of the WebSocket support feature:
+
+| Section             | Property             | Description                                                                                                                                                                                                                                                                                 |
+| ------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `features.async.ws` | `ingressSecretRef`   | **Optional**. The name of a TLS Secret for securing WebSocket `Ingress`. If missing, self-signed certificate is generated.                                                                                                                                                                  |
+| `features.async.ws` | `ingressAnnotations` | **Optional**. A map of annotations that will be added to the `Ingress` for Microcks WebSocket mocks. If these annotations are triggering a Certificate generation (for example through [cert-mamanger.io](https://cert-manager.io/)). The `generateCert` property should be set to `false`. |
+| `features.async.ws` | `generateCert`       | **Optional**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                                 |
+
+#### AMQP feature details
+
+Here are below the configuration properties of the AMQP support feature:
+
+| Section               | Property   | Description                                                                                                                              |
+| --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `features.async.amqp` | `url`      | **Optional**. The URL of AMQP broker (eg: `my-amqp-broker.example.com:5672`). Default is undefined which means that feature is disabled. |
+| `features.async.amqp` | `username` | **Optional**. The username to use for connecting to secured AMQP broker. Default to `microcks`.                                          |
+| `features.async.amqp` | `password` | **Optional**. The password to use for connecting to secured AMQP broker. Default to `microcks`.                                          |
+
+#### NATS feature details
+
+Here are below the configuration properties of the NATS support feature:
+
+| Section               | Property   | Description                                                                                                                              |
+| --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `features.async.nats` | `url`      | **Optional**. The URL of NATS broker (eg: `my-nats-broker.example.com:4222`). Default is undefined which means that feature is disabled. |
+| `features.async.nats` | `username` | **Optional**. The username to use for connecting to secured NATS broker. Default to `microcks`.                                          |
+| `features.async.nats` | `password` | **Optional**. The password to use for connecting to secured NATS broker. Default to `microcks`.                                          |
+
+#### Google PubSub feature details
+
+Here are below the configuration properties of the Google PubSub support feature:
+
+| Section                       | Property  | Description                                                                                                                          |
+|-------------------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `features.async.googlepubsub` | `project` | **Optional**. The GCP project id of PubSub (eg: `my-gcp-project-347219`). Default is undefined which means that feature is disabled. |
+| `features.async.googlepubsub` | `serviceAccountSecretRef` | **Optional**. The name of a Generic Secret holding Service Account JSON credentiels. Set `secret` and `fileKey` properties.          |
+
+#### Amazon SQS feature details
+
+Here are below the configuration properties of the Amazon SQS support feature:
+
+| Section              | Property               | Description                                                                                                                                                                                                                                                                     |
+|----------------------|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `features.async.sqs` | `region`               | **Optional**. The AWS region for connecting SQS service (eg: `eu-west-3`). Default is undefined which means that feature is disabled.                                                                                                                                           |
+| `features.async.sqs` | `credentialsType`      | **Optional**. The type of credentials we use for authentication. 2 options here `env-variable` or `profile`. Default to `env-variable`.                                                                                                                                         |
+| `features.async.sqs` | `credentialsProfile`   | **Optional**. When using `profile` authent, name of profile to use for authenticating to SQS. This profile should be present into a credentials file mounted from a Secret (see below). Default to `microcks-sqs-admin`.                                                        |
+| `features.async.sqs` | `credentialsSecretRef` | **Optional**. The name of a Generic Secret holding either environment variables (set `secret` and `accessKeyIdKey`, `secretAccessKeyKey` and optional `sessionTokenKey` properties) or an AWS credentials file with referenced profile (set `secret` and `fileKey` properties). |
+| `features.async.sqs` | `endpointOverride`     | **Optional**. The AWS endpoint URI used for API calls. Handy for using SQS via [LocalStack](https://localstack.cloud).                                                                                                                                                          |
+
+#### Amazon SNS feature details
+
+Here are below the configuration properties of the Amazon SNS support feature:
+
+| Section              | Property               | Description                                                                                                                                                                                                                                                                     |
+|----------------------|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `features.async.sns` | `region`               | **Optional**. The AWS region for connecting SNS service (eg: `eu-west-3`). Default is undefined which means that feature is disabled.                                                                                                                                           |
+| `features.async.sns` | `credentialsType`      | **Optional**. The type of credentials we use for authentication. 2 options here `env-variable` or `profile`. Default to `env-variable`.                                                                                                                                         |
+| `features.async.sns` | `credentialsProfile`   | **Optional**. When using `profile` authent, name of profile to use for authenticating to SQS. This profile should be present into a credentials file mounted from a Secret (see below). Default to `microcks-sns-admin`.                                                        |
+| `features.async.sns` | `credentialsSecretRef` | **Optional**. The name of a Generic Secret holding either environment variables (set `secret` and `accessKeyIdKey`, `secretAccessKeyKey` and optional `sessionTokenKey` properties) or an AWS credentials file with referenced profile (set `secret` and `fileKey` properties). |
+| `features.async.sns` | `endpointOverride`     | **Optional**. The AWS endpoint URI used for API calls. Handy for using SNS via [LocalStack](https://localstack.cloud).                                                                                                                                                          |
+
+> **Note:** Enabling both SQS and SNS features and using `env-variable` credentials type for both, may lead to collision as both clients rely on the
+> same environment variables. So you have to specify `credentialsSecretRef` on only one of those two services and be sure that the access key and secret
+> access key mounted refers to a IAM account having write access to both services.
 
 ### Repository Filtering
 

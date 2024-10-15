@@ -4,7 +4,7 @@ metadata:
   name: microcks
 spec:
   microcks:
-    url: microcks.192.168.49.2.nip.io
+    url: microcks.m2.minikube.local
     ingress:
       annotations:
         cert-manager.io/issuer: my-cert-issuer
@@ -19,5 +19,4 @@ spec:
       route:
         enabled: false
   keycloak:
-    url: keycloak.192.168.49.2.nip.io
-    privateUrl: microcks-keycloak
+    url: keycloak.m2.minikube.local

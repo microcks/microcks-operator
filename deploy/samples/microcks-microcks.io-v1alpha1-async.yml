@@ -3,16 +3,16 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
+  version: 1.10.1
   microcks:
-    url: microcks.192.168.49.2.nip.io
+    url: microcks.m2.minikube.local
   keycloak:
-    url: keycloak.192.168.49.2.nip.io
-    privateUrl: http://microcks-keycloak:8080
+    url: keycloak.m2.minikube.local
   features:
     async:
       enabled: true
       kafka:
-        url: 192.168.49.2.nip.io
+        url: kafka.m2.minikube.local
       #sqs:
       #  region: eu-west-3
       #  credentialsSecretRef:
