@@ -98,6 +98,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                   .editSpec()
                      .editFirstContainer()
                         .withImage(spec.getMicrocks().getImage().getCoordinates())
+                        .addAllToEnv(spec.getMicrocks().getEnv())
                         .addNewEnv()
                            .withName("SPRING_PROFILES_ACTIVE")
                            .withValue("prod")
