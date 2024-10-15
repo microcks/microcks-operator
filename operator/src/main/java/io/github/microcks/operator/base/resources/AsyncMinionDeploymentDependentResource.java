@@ -96,6 +96,7 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
                   .editSpec()
                      .editFirstContainer()
                         .withImage(asyncFeatureSpec.getImage().getCoordinates())
+                        .addAllToEnv(asyncFeatureSpec.getEnv())
                      .endContainer()
                      .editFirstVolume()
                         .editConfigMap()

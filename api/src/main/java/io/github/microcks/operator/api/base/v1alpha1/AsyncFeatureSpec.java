@@ -21,7 +21,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.sundr.builder.annotations.Buildable;
+
+import java.util.List;
 
 /**
  * Representation of the Async features config of an operator-managed Microcks installation.
@@ -29,7 +32,7 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "enabled", "image", "defaultBinding", "defaultFrequency", "defaultAvroEncoding", "kafka", "amqp",
+@JsonPropertyOrder({ "enabled", "image", "env", "defaultBinding", "defaultFrequency", "defaultAvroEncoding", "kafka", "amqp",
       "mqtt", "nats", "googlepubsub", "sqs", "sns" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class AsyncFeatureSpec {
@@ -39,6 +42,9 @@ public class AsyncFeatureSpec {
 
    @JsonPropertyDescription("The container image to use for Async Minion component")
    private ImageSpec image;
+
+   @JsonPropertyDescription("Environment variables for Async Minion component")
+   private List<EnvVar> env;
 
    @JsonPropertyDescription("Default protocol binding to use if no specified in AsyncAPI document")
    private String defaultBinding;
@@ -85,6 +91,14 @@ public class AsyncFeatureSpec {
 
    public void setImage(ImageSpec image) {
       this.image = image;
+   }
+
+   public List<EnvVar> getEnv() {
+      return env;
+   }
+
+   public void setEnv(List<EnvVar> env) {
+      this.env = env;
    }
 
    public String getDefaultBinding() {
