@@ -16,6 +16,7 @@
 package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
+import io.github.microcks.operator.api.base.v1alpha1.KeycloakSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
@@ -69,7 +70,14 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
       final String microcksName = microcksMetadata.getName();
       final MicrocksSpec spec = microcks.getSpec();
 
-      Deployment deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-deployment.yml");
+      int keycloakMajorVersion = getKeycloakMajorVersion(spec);
+
+      Deployment deployment = null;
+      if (keycloakMajorVersion >= 26) {
+         deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-26-deployment.yml");
+      } else {
+         deployment = ReconcilerUtils.loadYaml(Deployment.class, getClass(), "/k8s/keycloak-deployment.yml");
+      }
       DeploymentBuilder builder = new DeploymentBuilder(deployment)
             .editMetadata()
                .withName(getDeploymentName(microcks))
@@ -122,19 +130,33 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
                .endTemplate()
             .endSpec();
 
-      // Add the Keycloak URL as hostname arg.
-      builder.editSpec().editTemplate().editSpec()
-            .editFirstContainer()
-               .addToArgs("--hostname=" + microcks.getStatus().getKeycloakUrl())
-            .endContainer()
-            .endSpec().endTemplate().endSpec();
 
       if (spec.getKeycloak().isInstall() || spec.getKeycloak().getPrivateUrl() != null) {
-         builder.editSpec().editTemplate().editSpec()
-               .editFirstContainer()
-                  .addToArgs("--hostname-strict-backchannel=false")
-               .endContainer()
-               .endSpec().endTemplate().endSpec();
+         if (keycloakMajorVersion >= 26) {
+            // Add the Keycloak URL as hostname arg with https prefix.
+            builder.editSpec().editTemplate().editSpec()
+                  .editFirstContainer()
+                  .addToArgs("--hostname=https://" + microcks.getStatus().getKeycloakUrl())
+                  .endContainer()
+                  .endSpec().endTemplate().endSpec();
+            builder.editSpec().editTemplate().editSpec()
+                  .editFirstContainer()
+                     .addToArgs("--hostname-backchannel-dynamic=true")
+                  .endContainer()
+                  .endSpec().endTemplate().endSpec();
+         } else {
+            // Add the Keycloak URL as hostname arg.
+            builder.editSpec().editTemplate().editSpec()
+                  .editFirstContainer()
+                  .addToArgs("--hostname=" + microcks.getStatus().getKeycloakUrl())
+                  .endContainer()
+                  .endSpec().endTemplate().endSpec();
+            builder.editSpec().editTemplate().editSpec()
+                  .editFirstContainer()
+                     .addToArgs("--hostname-strict-backchannel=false")
+                  .endContainer()
+                  .endSpec().endTemplate().endSpec();
+         }
       }
 
       // Complete configuration with optional stuffs.
@@ -146,5 +168,19 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
       }
 
       return builder.build();
+   }
+
+   private int getKeycloakMajorVersion(MicrocksSpec spec) {
+      KeycloakSpec keycloakSpec = spec.getKeycloak();
+      String[] parts = keycloakSpec.getImage().getTag().split("\\.");
+      try {
+         return Integer.parseInt(parts[0]);
+      } catch (NumberFormatException nfe) {
+         logger.warnf("Cannot parse Keycloak version from tag '%s'", keycloakSpec.getImage().getTag());
+      }
+      if ("nightly".equals(spec.getVersion())) {
+         return 26;
+      }
+      return 24;
    }
 }

@@ -7,6 +7,23 @@ spec:
   microcks:
     image:
       tag: nightly
+  postman:
+    image:
+      tag: 0.6.0
+  keycloak:
+    image:
+      registry: quay.io
+      repository: keycloak/keycloak
+      tag: 26.0.0
+    postgresImage:
+      registry: docker.io
+      repository: library/postgres
+      tag: 16.3-alpine
+  mongodb:
+    image:
+      registry: docker.io
+      repository: library/mongo
+      tag: 4.4.29
   features:
     async:
       image:
