@@ -17,7 +17,9 @@ package io.github.microcks.operator.artifact;
 
 import io.github.microcks.client.ApiClient;
 import io.github.microcks.client.ApiException;
+import io.github.microcks.client.api.DefaultApi;
 import io.github.microcks.client.api.JobApi;
+import io.github.microcks.client.api.MockApi;
 import io.github.microcks.client.model.ImportJob;
 import io.github.microcks.client.model.Metadata;
 import io.github.microcks.client.model.SecretRef;
@@ -34,6 +36,9 @@ import io.github.microcks.operator.api.artifact.v1alpha1.ImporterSpec;
 import io.github.microcks.operator.model.ConditionUtil;
 import io.github.microcks.operator.model.ResourceMerger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
@@ -63,12 +68,15 @@ public class APISourceReconciler extends AbstractMicrocksDependantReconciler<API
 
    private final ResourceMerger merger = new ResourceMerger();
 
+   private final ObjectMapper mapper;
+
    /**
     * Default constructor with injected Kubernetes client.
     * @param client A Kubernetes client for interacting with the cluster
     */
    public APISourceReconciler(KubernetesClient client) {
       this.client = client;
+      this.mapper = new ObjectMapper();
       this.keycloakHelper = new KeycloakHelper(client);
    }
 
@@ -109,8 +117,10 @@ public class APISourceReconciler extends AbstractMicrocksDependantReconciler<API
          Condition condition = ConditionUtil.getOrCreateCondition(apiSource.getStatus(), artifactSpec.getUrl());
 
          try {
-            ensureArtifactIsLoaded(apiClient, artifactSpec);
+            String serviceId = ensureArtifactIsLoaded(apiClient, artifactSpec);
             condition.setStatus(Status.READY);
+            // TODO: Store API | Service identifier in condition additional property instead.
+            condition.setMessage(serviceId);
          } catch (ApiException e) {
             logger.errorf("Error while loading artifact '%s' for APISource '%s'", artifactSpec.getUrl(), apiSource.getMetadata().getName());
             logger.errorf(API_EXCEPTION_ERROR_LOG, e.getMessage(), e.getResponseBody());
@@ -185,6 +195,26 @@ public class APISourceReconciler extends AbstractMicrocksDependantReconciler<API
          ApiClient apiClient = apiClientControl.apiClient();
          JobApi jobApi = new JobApi(apiClient);
 
+         // Remove artifacts related API | Service from Microcks instance unless keepAPIOnDelete is set.
+         if (!spec.isKeepAPIOnDelete()) {
+            MockApi mockApi = new MockApi(apiClient);
+            for (ArtifactSpec artifactSpec : spec.getArtifacts()) {
+               Condition condition = ConditionUtil.getOrCreateCondition(apiSource.getStatus(), artifactSpec.getUrl());
+               String serviceId = condition.getMessage();
+
+               if (serviceId != null) {
+                  try {
+                     mockApi.deleteService(serviceId);
+                  } catch (ApiException e) {
+                     logger.errorf("Error while deleting service '%s' for APISource '%s' artifact '%s'", serviceId,
+                           apiSource.getMetadata().getName(), artifactSpec.getUrl());
+                     logger.errorf(API_EXCEPTION_ERROR_LOG, e.getMessage(), e.getResponseBody());
+                     return DeleteControl.noFinalizerRemoval().rescheduleAfter(Duration.ofSeconds(30));
+                  }
+               }
+            }
+         }
+
          // Remove importJobs from Microcks instance.
          for (ImporterSpec importerSpec : spec.getImporters()) {
             Condition condition = ConditionUtil.getOrCreateCondition(apiSource.getStatus(), importerSpec.getRepository().getUrl());
@@ -217,10 +247,20 @@ public class APISourceReconciler extends AbstractMicrocksDependantReconciler<API
    }
 
    /** Ensure an artifact is loaded by reloading in Microcks instance. */
-   protected void ensureArtifactIsLoaded(ApiClient apiClient, ArtifactSpec artifactSpec) throws ApiException {
-      // Use the apiCLient to download the artifact.
+   protected String ensureArtifactIsLoaded(ApiClient apiClient, ArtifactSpec artifactSpec) throws ApiException {
+      // Use the apiClient to download the artifact.
       JobApi jobApi = new JobApi(apiClient);
-      String result = jobApi.downloadArtifact(artifactSpec.getUrl(), artifactSpec.getMainArtifact(), artifactSpec.getSecretRef());
+      String result =  jobApi.downloadArtifact(artifactSpec.getUrl(), artifactSpec.getMainArtifact(), artifactSpec.getSecretRef());
+      try {
+         JsonNode resultNode = mapper.readTree(result);
+         if (resultNode.has("name")) {
+            return resultNode.get("name").asText();
+         }
+      } catch (JsonProcessingException e) {
+         logger.errorf("Error while parsing artifact download response: %s", result);
+         throw new ApiException("Error while parsing artifact download JSON response");
+      }
+      throw new ApiException("No 'name' property found in response");
    }
 
    /** Ensure an importer (ImportJob) exists by checking by id, updating if found or cre-creating if not found. */

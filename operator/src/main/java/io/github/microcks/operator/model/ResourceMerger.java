@@ -28,13 +28,13 @@ import java.util.Map;
 public class ResourceMerger {
 
    /** List of Java primitive types typically found in Json/Yaml documents. */
-   private final List<String> PRIMITIVE_JSON_TYPES = Arrays.asList("Long", "Long[]", "Integer", "Integer[]", "String",
+   private static final List<String> PRIMITIVE_JSON_TYPES = Arrays.asList("Long", "Long[]", "Integer", "Integer[]", "String",
          "String[]", "Boolean", "boolean[]", "ArrayList");
 
    /** List of Java types that must be merged as associative maps. */
-   private final List<String> MAP_JSON_TYPES = Arrays.asList("HashMap", "LinkedHashMap");
+   private static final List<String> MAP_JSON_TYPES = Arrays.asList("HashMap", "LinkedHashMap");
 
-   private final List<String> RESOURCES_EXCLUDED_TYPES = Arrays.asList("io.fabric8.kubernetes.api.model.ObjectMeta");
+   private static final List<String> RESOURCES_EXCLUDED_TYPES = Arrays.asList("io.fabric8.kubernetes.api.model.ObjectMeta");
 
    /**
     * Merge 2 resources of class T together, producing a third one. The first argument is considered as the default

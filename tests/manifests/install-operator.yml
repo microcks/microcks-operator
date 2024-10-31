@@ -1392,6 +1392,10 @@ spec:
                         type: object
                     type: object
                   type: array
+                keepAPIOnDelete:
+                  description: Flag to keep API when deleting an artifact. Default is
+                    false
+                  type: boolean
               type: object
             status:
               properties:

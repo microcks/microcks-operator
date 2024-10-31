@@ -33,11 +33,22 @@ import java.util.List;
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class APISourceSpec {
 
+   @JsonPropertyDescription("Flag to keep API when deleting an artifact. Default is false")
+   private boolean keepAPIOnDelete = false;
+
    @JsonPropertyDescription("A list of Artifacts to import into Microcks instance")
    private List<ArtifactSpec> artifacts;
 
    @JsonPropertyDescription("A list of Importers to create in Microcks instance")
    private List<ImporterSpec> importers;
+
+   public boolean isKeepAPIOnDelete() {
+      return keepAPIOnDelete;
+   }
+
+   public void setKeepAPIOnDelete(boolean keepAPIOnDelete) {
+      this.keepAPIOnDelete = keepAPIOnDelete;
+   }
 
    public List<ArtifactSpec> getArtifacts() {
       return artifacts;
