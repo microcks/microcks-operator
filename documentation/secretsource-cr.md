@@ -2,7 +2,7 @@
 ## Overview
 
 The `SecretSource` Custom Resource (CR) allows you to define secrets in Microcks. Those secrets can be directly specified
-in the resource of synchronized from Kubernetes `Secrets` existing in the same namespace.
+in the resource or synchronized from Kubernetes `Secrets` existing in the same namespace.
 `SecretSource` Custom Resource Definition is currently defined using the `microcks.io/v1alpha1` API version. To access
 the full schema definition you may want to check the 
 [secretsources.microcks.io-v1.yml](../deploy/crd/secretsources.microcks.io-v1.yml) file.
