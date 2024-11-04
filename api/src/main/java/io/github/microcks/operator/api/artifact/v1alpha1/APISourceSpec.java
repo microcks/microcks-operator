@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ import java.util.List;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "artifacts", "importers" })
+@JsonPropertyOrder({ "keepAPIOnDelete", "artifacts", "importers" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class APISourceSpec {
 
@@ -51,7 +52,7 @@ public class APISourceSpec {
    }
 
    public List<ArtifactSpec> getArtifacts() {
-      return artifacts;
+      return artifacts != null ? artifacts : Collections.emptyList();
    }
 
    public void setArtifacts(List<ArtifactSpec> artifacts) {
@@ -59,7 +60,7 @@ public class APISourceSpec {
    }
 
    public List<ImporterSpec> getImporters() {
-      return importers;
+      return importers != null ? importers : Collections.emptyList();
    }
 
    public void setImporters(List<ImporterSpec> importers) {
