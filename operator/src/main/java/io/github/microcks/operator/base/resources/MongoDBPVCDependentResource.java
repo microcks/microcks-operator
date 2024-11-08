@@ -75,7 +75,7 @@ public class MongoDBPVCDependentResource extends CRUDKubernetesDependentResource
                .addToAnnotations(microcks.getSpec().getCommonAnnotations())
                .addToAnnotations(microcks.getSpec().getMongoDB().getPvcAnnotations())
             .endMetadata().withNewSpec().withAccessModes("ReadWriteOnce").withNewResources()
-            .addToRequests("storage", new Quantity(microcks.getSpec().getKeycloak().getVolumeSize())).endResources()
+            .addToRequests("storage", new Quantity(microcks.getSpec().getMongoDB().getVolumeSize())).endResources()
             .endSpec();
 
       // Add optional storage class name if any.

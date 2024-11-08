@@ -151,7 +151,7 @@ public class MongoDBDeploymentDependentResource extends CRUDKubernetesDependentR
             .endSpec().endTemplate().endSpec();
 
 
-      if (spec.getKeycloak().isPersistent()) {
+      if (spec.getMongoDB().isPersistent()) {
          builder.editSpec().editTemplate()
                .editSpec()
                   .addNewVolume()
