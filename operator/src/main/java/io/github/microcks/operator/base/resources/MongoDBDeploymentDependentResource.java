@@ -150,7 +150,6 @@ public class MongoDBDeploymentDependentResource extends CRUDKubernetesDependentR
                .endVolume()
             .endSpec().endTemplate().endSpec();
 
-
       if (spec.getMongoDB().isPersistent()) {
          builder.editSpec().editTemplate()
                .editSpec()
@@ -174,6 +173,10 @@ public class MongoDBDeploymentDependentResource extends CRUDKubernetesDependentR
       }
 
       // Complete configuration with optional stuffs.
+      if (spec.getMongoDB().getSecurityContext() != null) {
+         builder.editSpec().editTemplate().editSpec().withSecurityContext(spec.getMongoDB().getSecurityContext()).endSpec().endTemplate().endSpec();
+      }
+
       if (spec.getCommonAffinities() != null) {
          builder.editSpec().editTemplate().editSpec().withAffinity(spec.getCommonAffinities()).endSpec().endTemplate().endSpec();
       }

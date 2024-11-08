@@ -8,7 +8,12 @@ spec:
     url: microcks.m2.minikube.local
   keycloak:
     url: keycloak.m2.minikube.local
-    #privateUrl: http://microcks-keycloak.microcks2.svc.cluster.local:8080
+#    privateUrl: http://microcks-keycloak.microcks2.svc.cluster.local:8080
+#  mongodb:
+#    securityContext:
+#      runAsUser: 999
+#      runAsGroup: 999
+#      fsGroup: 999
 #  commonLabels:
 #    custom-label-1: custom-value
 #    custom-label-2: custom-value

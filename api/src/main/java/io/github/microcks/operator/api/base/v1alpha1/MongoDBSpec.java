@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.fabric8.kubernetes.api.model.PodSecurityContext;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.sundr.builder.annotations.Buildable;
 
@@ -60,6 +61,9 @@ public class MongoDBSpec {
 
    @JsonPropertyDescription("Kubernetes resource requirements for MongoDB")
    private ResourceRequirements resources;
+
+   @JsonPropertyDescription("Security context for MongoDB deployment")
+   private PodSecurityContext securityContext;
 
    @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true")
    private boolean persistent = true;
@@ -127,6 +131,14 @@ public class MongoDBSpec {
 
    public void setResources(ResourceRequirements resources) {
       this.resources = resources;
+   }
+
+   public PodSecurityContext getSecurityContext() {
+      return securityContext;
+   }
+
+   public void setSecurityContext(PodSecurityContext securityContext) {
+      this.securityContext = securityContext;
    }
 
    public boolean isPersistent() {
