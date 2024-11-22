@@ -134,9 +134,7 @@ jobs:
           labels: |
             org.opencontainers.image.revision=${GITHUB_SHA}
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
-          tags: |
-            ${{ steps.docker_meta.outputs.tags }}
-            quay.io/microcks/microcks-operator:$IMAGE_TAG
+          tags: ${{ steps.docker_meta.outputs.tags }},quay.io/microcks/microcks-operator:${IMAGE_TAG}
 
       - name: Sign the images with GitHub OIDC Token
         env:
