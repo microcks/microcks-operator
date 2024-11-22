@@ -158,3 +158,10 @@ spec:
     microcksHub:
       enabled: true
       allowedRoles: admin,manager,manager-any
+
+    aiCopilot:
+      enabled: false
+      implementation: openai
+      openai:
+        apiKey: sk-my-openai-api-token
+        timeout: 20

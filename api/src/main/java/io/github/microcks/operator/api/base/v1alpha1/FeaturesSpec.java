@@ -17,6 +17,7 @@ package io.github.microcks.operator.api.base.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.sundr.builder.annotations.Buildable;
@@ -42,6 +43,10 @@ public class FeaturesSpec {
 
    @JsonPropertyDescription("Configuration for Microcks Hub related features")
    private MicrocksHubSpec microcksHub;
+
+   @JsonProperty("aiCopilot")
+   @JsonPropertyDescription("Configuration for AI Copilot related features")
+   private AICopilotSpec aiCopilot;
 
 
    public AsyncFeatureSpec getAsync() {
@@ -74,5 +79,13 @@ public class FeaturesSpec {
 
    public void setMicrocksHub(MicrocksHubSpec microcksHub) {
       this.microcksHub = microcksHub;
+   }
+
+   public AICopilotSpec getAiCopilot() {
+      return aiCopilot;
+   }
+
+   public void setAiCopilot(AICopilotSpec aiCopilot) {
+      this.aiCopilot = aiCopilot;
    }
 }

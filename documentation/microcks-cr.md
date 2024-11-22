@@ -305,7 +305,7 @@ into the [Architecture & deployment options](https://microcks.io/documentation/e
 
 ### Resources configuration
 
-When installed by this Operator, resources assigned to MongoDB pod can be configured using regular Kubernetes resources definition.
+When installed by this Operator, `resources` assigned to MongoDB pod can be configured using regular Kubernetes resources definition.
 Here is below an example with the default values that are used by the operator:
 
 ```yaml
@@ -336,6 +336,29 @@ the following ones:
 | `volumeSize`       | **Optional**. Size of persistent volume claim for MongoDB. Default is `2Gi`. Not used if not persistent install asked.                  |
 | `storageClassName` | **Optional**. The cluster storage class to use for persistent volume claim. If not specified, we rely on cluster default storage class. |
 | `pvcAnnotations`   | **Optional**. A map of annotations that will be added to the `pvc` for the MongoDB persistence. |
+
+### SecurityContext configuration
+
+When installed by this Operator, `securityContext` assigned to MongoDB pod can be configured using regular Kubernetes `PodSecurityContext` definition.
+
+> **Note:** Setting this securityContext is typically required on certain Kubernetes distributions like EKS with default EBS storage to
+> prevent permissions issues while accessing the underlying persistent volume.
+
+Here is below an example with the default values that matches the current default MongoDB image:
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  #[...]
+  mongodb:
+    securityContext:
+      runAsUser: 999
+      runAsGroup: 999
+      fsGroup: 999
+```
 
 ## Postman specification details
 
