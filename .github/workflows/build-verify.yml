@@ -98,13 +98,6 @@ jobs:
           BUILDER=buildx-multi-arch
           docker buildx inspect $BUILDER || docker buildx create --name=$BUILDER --driver=docker-container --driver-opt=network=host
 
-      - name: Get Docker metadata
-        id: docker-meta
-        uses: docker/metadata-action@v4.4.0
-        with:
-          images: quay.io/microcks/microcks-operator
-          tags: type=sha,format=long
-
 #      - name: Build and push JVM container image for operator
 #        if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
 #        run: |
@@ -134,18 +127,20 @@ jobs:
           labels: |
             org.opencontainers.image.revision=${GITHUB_SHA}
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
-          tags: ${{ steps.docker-meta.outputs.tags }},quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}
+          tags: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}
 
-      - name: Sign the images with GitHub OIDC Token
+      - name: Sign the images with our Cosign key
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          TAGS: ${{ steps.docker-meta.outputs.tags }}
+          TAGS: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
           images=""
           for tag in ${TAGS}; do
             images+="${tag}@${DIGEST} "
           done
-          cosign sign --yes ${images}
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
 
       - name: Build and push native container image for operator
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
