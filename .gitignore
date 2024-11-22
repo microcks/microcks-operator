@@ -6,6 +6,7 @@ target
 
 # IDE specific files
 .idea
+*.iml
 .classpath
 .project
 .settings
@@ -34,3 +35,6 @@ hs_err_pid*
 # kuttl kubeconfig and log files
 kubeconfig
 kind-logs-*
+
+# MacOS .DS_Store files
+.DS_Store
