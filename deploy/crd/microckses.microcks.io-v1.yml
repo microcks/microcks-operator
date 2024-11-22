@@ -377,6 +377,32 @@ spec:
                 features:
                   description: Configuration of optional features in Microcks
                   properties:
+                    aiCopilot:
+                      description: Configuration for AI Copilot related features
+                      properties:
+                        enabled:
+                          description: Enable/disable this feature. Default is false
+                          type: boolean
+                        implementation:
+                          description: The implementation to use for AI Copilot feature
+                          type: string
+                        openai:
+                          description: Configuration of OpenAI access
+                          properties:
+                            apiKey:
+                              description: The OpenAI API key to use
+                              type: string
+                            maxTokens:
+                              description: The maximum number of tokens to generate/transfer
+                              type: integer
+                            model:
+                              description: The model to use for OpenAI API calls
+                              type: string
+                            timeout:
+                              description: The timeout for OpenAI API calls
+                              type: integer
+                          type: object
+                      type: object
                     async:
                       description: Configuration for asynchronous features
                       properties:
