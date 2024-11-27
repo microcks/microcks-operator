@@ -16,6 +16,7 @@
 package io.github.microcks.operator.api.base.v1alpha1;
 
 import io.github.microcks.operator.api.model.ImageSpec;
+import io.github.microcks.operator.api.model.IngressSpec;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,7 +34,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "enabled", "image", "env", "defaultBinding", "defaultFrequency", "defaultAvroEncoding", "kafka", "amqp",
-      "mqtt", "nats", "googlepubsub", "sqs", "sns" })
+      "mqtt", "nats", "googlepubsub", "sqs", "sns", "ws" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class AsyncFeatureSpec {
 
@@ -50,7 +51,7 @@ public class AsyncFeatureSpec {
    private String defaultBinding;
 
    @JsonPropertyDescription("Default frequency for publishing async mock messages")
-   private int defaultFrequency;
+   private int defaultFrequency = 10;
 
    @JsonPropertyDescription("Default Avro encoding mode for publishing mock messages")
    private AvroEncoding defaultAvroEncoding;
@@ -75,6 +76,9 @@ public class AsyncFeatureSpec {
 
    @JsonPropertyDescription("Configuration of Amazon SNS access")
    private AmazonServiceConnectionSpec sns;
+
+   @JsonPropertyDescription("Configuration of WebSocket ingress")
+   private IngressSpec ws;
 
 
    public boolean isEnabled() {
@@ -179,5 +183,13 @@ public class AsyncFeatureSpec {
 
    public void setSns(AmazonServiceConnectionSpec sns) {
       this.sns = sns;
+   }
+
+   public IngressSpec getWs() {
+      return ws;
+   }
+
+   public void setWs(IngressSpec ws) {
+      this.ws = ws;
    }
 }

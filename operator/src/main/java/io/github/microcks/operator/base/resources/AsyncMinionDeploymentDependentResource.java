@@ -33,6 +33,8 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernete
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.logging.Logger;
 
+import java.util.Collections;
+
 /**
  * An Async Minion Kubernetes Deployment dependent resource.
  * @author laurent
@@ -96,7 +98,7 @@ public class AsyncMinionDeploymentDependentResource extends CRUDKubernetesDepend
                   .editSpec()
                      .editFirstContainer()
                         .withImage(asyncFeatureSpec.getImage().getCoordinates())
-                        .addAllToEnv(asyncFeatureSpec.getEnv())
+                        .addAllToEnv(asyncFeatureSpec.getEnv() != null ? asyncFeatureSpec.getEnv() : Collections.emptyList())
                      .endContainer()
                      .editFirstVolume()
                         .editConfigMap()

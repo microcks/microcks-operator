@@ -171,7 +171,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
 //      // Some diagnostic helpers during development.
 //      ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
-//      logger.info("defaultSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultSpec);
+//      logger.info("defaultSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultSpec));
 //      logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
 
       boolean isOpenShift = client.adapt(OpenShiftClient.class).isSupported();

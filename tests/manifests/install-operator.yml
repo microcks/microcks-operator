@@ -779,6 +779,30 @@ spec:
                                 this service
                               type: string
                           type: object
+                        ws:
+                          description: Configuration of WebSocket ingress
+                          properties:
+                            annotations:
+                              additionalProperties:
+                                type: string
+                              description: Annotations to apply to Ingress if created
+                              type: object
+                            className:
+                              description: "When exposed, sets the ingressClassName\
+                              \ property"
+                              type: string
+                            expose:
+                              description: Whether Ingress should be exposed (ie. created)
+                              type: boolean
+                            generateCert:
+                              description: Whether operator should generate self-signed
+                                certificate for this ingress
+                              type: boolean
+                            secretRef:
+                              description: Existing Secret holding TLS key and certificate
+                                name
+                              type: string
+                          type: object
                       type: object
                     microcksHub:
                       description: Configuration for Microcks Hub related features

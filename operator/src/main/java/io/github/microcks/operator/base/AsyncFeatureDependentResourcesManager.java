@@ -21,11 +21,16 @@ import io.github.microcks.operator.base.resources.AsyncMinionDeploymentDependent
 import io.github.microcks.operator.base.resources.AsyncMinionInstallPrecondition;
 import io.github.microcks.operator.base.resources.AsyncMinionReadyCondition;
 import io.github.microcks.operator.base.resources.AsyncMinionServiceDependentResource;
+import io.github.microcks.operator.base.resources.AsyncMinionWSIngressDependentResource;
+import io.github.microcks.operator.base.resources.AsyncMinionWSSecretDependentResource;
+import io.github.microcks.operator.base.resources.AsyncMinionWSSecretInstallPrecondition;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
 import io.javaoperatorsdk.operator.api.reconciler.ResourceIDMatcherDiscriminator;
@@ -51,6 +56,8 @@ public class AsyncFeatureDependentResourcesManager {
    private KubernetesDependentResource<ConfigMap, Microcks> configMapDR;
    private KubernetesDependentResource<Deployment, Microcks> deploymentDR;
    private KubernetesDependentResource<Service, Microcks> serviceDR;
+   private KubernetesDependentResource<Secret, Microcks> wsSecretDR;
+   private KubernetesDependentResource<Ingress, Microcks> wsIngressDR;
 
    /**
     * Create a new AsyncFeatureDependentResourcesManager.
@@ -68,19 +75,25 @@ public class AsyncFeatureDependentResourcesManager {
       configMapDR = new AsyncMinionConfigMapDependentResource();
       deploymentDR = new AsyncMinionDeploymentDependentResource();
       serviceDR = new AsyncMinionServiceDependentResource();
+      wsSecretDR = new AsyncMinionWSSecretDependentResource();
+      wsIngressDR = new AsyncMinionWSIngressDependentResource();
 
       // Build the workflow.
       WorkflowBuilder<Microcks> builder = new WorkflowBuilder<>();
       Condition installedCondition = new AsyncMinionInstallPrecondition();
 
       // Configure the dependent resources.
-      Arrays.asList(configMapDR, deploymentDR, serviceDR).forEach(dr -> {
+      Arrays.asList(configMapDR, deploymentDR, serviceDR, wsSecretDR, wsIngressDR).forEach(dr -> {
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
                         p.getMetadata().getNamespace())));
          }
          builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
+         // Add an installation condition on websocket secret.
+         if (dr == wsSecretDR) {
+            builder.withReconcilePrecondition(new AsyncMinionWSSecretInstallPrecondition());
+         }
          // Add a ready condition on deployment.
          if (dr == deploymentDR) {
             builder.withReadyPostcondition(new AsyncMinionReadyCondition());
@@ -99,6 +112,8 @@ public class AsyncFeatureDependentResourcesManager {
       return new EventSource[] {
             configMapDR.initEventSource(context),
             deploymentDR.initEventSource(context),
-            serviceDR.initEventSource(context) };
+            serviceDR.initEventSource(context),
+            wsSecretDR.initEventSource(context),
+            wsIngressDR.initEventSource(context) };
    }
 }

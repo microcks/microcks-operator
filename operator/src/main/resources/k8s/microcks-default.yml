@@ -144,6 +144,8 @@ spec:
           #sessionTokenKey: session_token
           #fileKey: aws.profile
 
+      ws:
+        generateCert: true
 
     repositoryFilter:
       enabled: false

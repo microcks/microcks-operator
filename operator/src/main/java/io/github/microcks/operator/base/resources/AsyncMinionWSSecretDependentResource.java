@@ -32,20 +32,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A Microcks GRPC ingress Kubernetes Secret dependent resource.
+ * An Async Minion Kubernetes Secret dependent resource.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class MicrocksGRPCSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
+public class AsyncMinionWSSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
       implements Creator<Secret, Microcks>, Deleter<Microcks>, NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String RESOURCE_SUFFIX = "-grpc-ingress";
+   private static final String RESOURCE_SUFFIX = "-ws";
 
    /** Default empty constructor. */
-   public MicrocksGRPCSecretDependentResource() {
+   public AsyncMinionWSSecretDependentResource() {
       super(Secret.class);
    }
 
@@ -55,7 +55,7 @@ public class MicrocksGRPCSecretDependentResource extends KubernetesDependentReso
     * @return The name of Secret
     */
    public static final String getSecretName(Microcks microcks) {
-      return IngressSpecUtil.getSecretName(microcks.getSpec().getMicrocks().getGrpcIngress(),
+      return IngressSpecUtil.getSecretName(microcks.getSpec().getFeatures().getAsync().getWs(),
             microcks.getMetadata().getName() + RESOURCE_SUFFIX);
    }
 
@@ -66,15 +66,14 @@ public class MicrocksGRPCSecretDependentResource extends KubernetesDependentReso
 
    @Override
    protected Secret desired(Microcks microcks, Context<Microcks> context) {
-      logger.debugf("Building desired Microcks GRPC Secret for '%s'", microcks.getMetadata().getName());
+      logger.debugf("Building desired Microcks WebSocket Secret for '%s'", microcks.getMetadata().getName());
 
       // Prepare labels and hosts.
       Map<String, String> labels = Map.of("app", microcks.getMetadata().getName(),
             "group", "microcks");
       List<String> hosts = List.of(
-            microcks.getStatus().getMicrocksUrl(),
-            MicrocksGRPCIngressDependentResource.getGRPCHost(microcks),
-            MicrocksGRPCServiceDependentResource.getServiceName(microcks) + ".svc.cluster.local",
+            AsyncMinionWSIngressDependentResource.getWSHost(microcks),
+            AsyncMinionServiceDependentResource.getServiceName(microcks) + ".svc.cluster.local",
             "localhost");
 
       return IngressSpecUtil.generateSelfSignedCertificateSecret(getSecretName(microcks), labels, hosts);

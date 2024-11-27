@@ -3,7 +3,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  version: 1.10.1
+  version: nightly
   microcks:
     url: microcks.m2.minikube.local
   keycloak:
