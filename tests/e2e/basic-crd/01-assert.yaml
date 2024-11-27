@@ -11,7 +11,7 @@ metadata:
 kind: Secret
 apiVersion: v1
 metadata:
-  name: microcks-grpc
+  name: microcks-grpc-ingress
   namespace: microcks
 ---
 kind: Ingress
