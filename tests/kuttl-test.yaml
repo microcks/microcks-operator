@@ -6,6 +6,7 @@ startKIND: true
 kindContainers:
 - quay.io/microcks/microcks-operator:e2e-tests
 #- quay.io/lbroudoux/microcks-operator:jvm-latest
+crdDir: deploy/crd
 manifestDirs:
 - tests/manifests
 testDirs:
