@@ -14,7 +14,10 @@ on:
       - 'ADOPTERS*'
       - 'LICENSE'
       - '*.md'
-permissions: read-all
+permissions:
+  contents: read
+  id-token: write # needed for signing the images with GitHub OIDC Token
+
 jobs:
   build-verify-package:
     runs-on: ubuntu-latest
@@ -55,14 +58,14 @@ jobs:
           curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
             && sudo mv ./kubectl /usr/local/bin/kubectl \
             && sudo chmod +x /usr/local/bin/kubectl
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.21.0/kind-linux-amd64 \
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64 \
             && sudo mv ./kind /usr/local/bin/kind \
             && sudo chmod +x /usr/local/bin/kind
 
       - name: Run e2e tests on operator using Kuttl.dev
         run: |
           set -x
-          curl -Lo ./kuttl https://github.com/kudobuilder/kuttl/releases/download/v0.18.0/kubectl-kuttl_0.18.0_linux_x86_64 \
+          curl -Lo ./kuttl https://github.com/kudobuilder/kuttl/releases/download/v0.19.0/kubectl-kuttl_0.19.0_linux_x86_64 \
             && sudo cp kuttl /usr/local/bin/kubectl-kuttl \
             && sudo chmod +x /usr/local/bin/kubectl-kuttl
           kubectl kuttl test --config=./tests/kuttl-test.yaml
@@ -129,18 +132,30 @@ jobs:
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
           tags: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}
 
-      - name: Sign the images with our Cosign key
+#      - name: Sign the images with our Cosign key
+#        env:
+#          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+#          TAGS: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}
+#          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+#          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+#        run: |
+#          images=""
+#          for tag in ${TAGS}; do
+#            images+="${tag}@${DIGEST} "
+#          done
+#          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+
+      - name: Sign the images with GitHub OIDC Token
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          COSIGN_EXPERIMENTAL: "true"
         run: |
           images=""
           for tag in ${TAGS}; do
             images+="${tag}@${DIGEST} "
           done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+          cosign sign --yes ${images}
 
       - name: Build and push native container image for operator
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
