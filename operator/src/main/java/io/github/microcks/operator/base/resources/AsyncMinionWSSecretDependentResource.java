@@ -42,7 +42,7 @@ public class AsyncMinionWSSecretDependentResource extends KubernetesDependentRes
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String RESOURCE_SUFFIX = "-ws";
+   private static final String RESOURCE_SUFFIX = "-ws-ingress";
 
    /** Default empty constructor. */
    public AsyncMinionWSSecretDependentResource() {

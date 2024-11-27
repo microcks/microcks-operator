@@ -41,7 +41,7 @@ public class AsyncMinionWSIngressDependentResource extends CRUDKubernetesDepende
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String RESOURCE_SUFFIX = "-ws-ingress";
+   private static final String RESOURCE_SUFFIX = "-ws";
 
    /** Default empty constructor. */
    public AsyncMinionWSIngressDependentResource() {
