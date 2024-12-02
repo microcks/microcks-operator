@@ -101,22 +101,6 @@ jobs:
           BUILDER=buildx-multi-arch
           docker buildx inspect $BUILDER || docker buildx create --name=$BUILDER --driver=docker-container --driver-opt=network=host
 
-#      - name: Build and push JVM container image for operator
-#        if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
-#        run: |
-#          cd ${{github.workspace}}/operator
-#          mvn -B package
-#          docker buildx build --push \
-#            --platform=linux/amd64,linux/arm64 \
-#            --builder=buildx-multi-arch \
-#            --provenance=false \
-#            --build-arg TAG=$IMAGE_TAG \
-#            --file src/main/docker/Dockerfile.jvm \
-#            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
-#            --label "org.opencontainers.image.created=${{ steps.date.outputs.date }}" \
-#            --tag=${{ steps.docker-meta.outputs.tags }} \
-#            --tag=quay.io/microcks/microcks-operator:$IMAGE_TAG .
-
       - name: Build and push JVM container image for operator
         id: build-and-push
         uses: docker/build-push-action@v4.0.0
@@ -132,19 +116,6 @@ jobs:
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
           tags: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}
 
-#      - name: Sign the images with our Cosign key
-#        env:
-#          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-#          TAGS: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}
-#          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-#          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-#        run: |
-#          images=""
-#          for tag in ${TAGS}; do
-#            images+="${tag}@${DIGEST} "
-#          done
-#          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
-
       - name: Sign the images with GitHub OIDC Token
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
@@ -157,15 +128,35 @@ jobs:
           done
           cosign sign --yes ${images}
 
-      - name: Build and push native container image for operator
+      - name: Compile application in native mode
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
         run: |
           cd ${{github.workspace}}/operator
           mvn -B package -Pnative -Dquarkus.native.container-build=true
-          docker buildx build --push \
-            --platform=linux/amd64,linux/arm64 \
-            --builder=buildx-multi-arch \
-            --provenance=false \
-            --build-arg TAG=$IMAGE_TAG-native \
-            --file src/main/docker/Dockerfile.native \
-            --tag=quay.io/microcks/microcks-operator:$IMAGE_TAG-native .
+
+      - name: Build and push native container image for operator
+        id: build-and-push-native
+        uses: docker/build-push-action@v4.0.0
+        if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
+        with:
+          context: ${{github.workspace}}/operator
+          push: true
+          platforms: linux/amd64,linux/arm64
+          builder: buildx-multi-arch
+          file: operator/src/main/docker/Dockerfile.native
+          labels: |
+            org.opencontainers.image.revision=${GITHUB_SHA}
+            org.opencontainers.image.created=${{ steps.date.outputs.date }}
+          tags: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}-native
+
+      - name: Sign the native images with GitHub OIDC Token
+        env:
+          DIGEST: ${{ steps.build-and-push-native.outputs.digest }}
+          TAGS: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}-native
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes ${images}
