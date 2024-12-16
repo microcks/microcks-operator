@@ -14,9 +14,9 @@ that is kinda hard to maintain and to evolve.
 
 ## Build Status
 
-Latest release version is `0.0.1`.
+Latest release version is `0.0.2`.
 
-The current development version is `0.0.2-SNAPSHOT`. 
+The current development version is `0.0.3-SNAPSHOT`. 
 
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/microcks/microcks-operator/build-verify.yml?logo=github&style=for-the-badge)](https://github.com/microcks/microcks/actions)
 
