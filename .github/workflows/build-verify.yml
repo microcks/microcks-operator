@@ -104,7 +104,7 @@ jobs:
 
       - name: Build and push JVM container image for operator
         id: build-and-push
-        uses: docker/build-push-action@v6.10.0
+        uses: docker/build-push-action@v6.11.0
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
         with:
           context: ${{github.workspace}}/operator
@@ -138,7 +138,7 @@ jobs:
 
       - name: Build and push native container image for operator
         id: build-and-push-native
-        uses: docker/build-push-action@v6.10.0
+        uses: docker/build-push-action@v6.11.0
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
         with:
           context: ${{github.workspace}}/operator
