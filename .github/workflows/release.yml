@@ -38,7 +38,10 @@ jobs:
           cache: maven
 
       - name: Set release version
-        run: mvn -B -q versions:set -DnewVersion=${{ github.event.inputs.version }}
+        run: |
+          mvn -B -q versions:set -DnewVersion=${{ github.event.inputs.version }}
+          sed -i 's=quay.io/microcks/microcks-operator:latest=quay.io/microcks/microcks-operator:${{ github.event.inputs.version }}=g' deploy/operator-jvm.yaml
+          sed -i 's=quay.io/microcks/microcks-operator:latest-native=quay.io/microcks/microcks-operator:${{ github.event.inputs.version }}=g' deploy/operator.yaml
 
       - name: Commit, push and tag changes
         run: |
@@ -72,7 +75,10 @@ jobs:
             target/jreleaser/output.properties
 
       - name: Set next iteration version
-        run: mvn -B -q versions:set -DnewVersion=${{ github.event.inputs.nextVersion }}-SNAPSHOT
+        run: |
+          mvn -B -q versions:set -DnewVersion=${{ github.event.inputs.nextVersion }}-SNAPSHOT
+          sed -i 's=quay.io/microcks/microcks-operator:${{ github.event.inputs.version }}=quay.io/microcks/microcks-operator:latest=g' deploy/operator-jvm.yaml
+          sed -i 's=quay.io/microcks/microcks-operator:${{ github.event.inputs.version }}=quay.io/microcks/microcks-operator:latest-native=g' deploy/operator.yaml
 
       - name: Commit, push and tag changes
         run: |
