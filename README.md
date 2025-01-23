@@ -43,6 +43,13 @@ The current development version is `0.0.3-SNAPSHOT`.
 
 To get involved with our community, please make sure you are familiar with the project's [Code of Conduct](./CODE_OF_CONDUCT.md).
 
+## Versions
+
+| Operator         | Microcks Version       |
+|------------------|------------------------|
+| `0.0.1`, `0.0.2` | `1.10.x`               |
+| `0.0.3`          | `1.11.x` and `nightly` |
+
 ## Installation
 
 Assuming you're connected to a Kubernetes cluster as an administrator, you must start installing the CRD in your cluster:
@@ -64,7 +71,7 @@ kubectl apply -f deploy/operator-jvm.yaml -n microcks
 
 Once operator is installed, you can create a new `Microcks` Custom Resource (CR) to get a working instance of Microcks.
 
-In below example, we're creating a new `Microcks` CR named `microcks` that will install Microcks `1.10.0`.
+In below example, we're creating a new `Microcks` CR named `microcks` that will install Microcks `1.11.0`.
 You need to customize the two `url` fields to match your environment with DNS names that will be mapped to the Microcks and Keycloak ingresses. 
 
 ```sh
@@ -74,7 +81,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  version: 1.10.0
+  version: 1.11.0
   microcks:
     url: microcks.m.minikube.local
   keycloak:
