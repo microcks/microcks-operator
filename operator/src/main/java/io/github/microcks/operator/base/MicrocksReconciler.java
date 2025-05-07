@@ -215,44 +215,46 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       }
       microcks.getStatus().setMicrocksUrl(microcksUrl);
 
-      String keycloakUrl = null;
-      if (spec.getKeycloak().isInstall() && completeSpec.getKeycloak().getIngress().isExpose()) {
-         if (isOpenShift && spec.getKeycloak().getOpenshift().getRoute().isEnabled()) {
-            // We can create an OpenShift Route here to get the Url.
-            keycloakUrl = manageRouteAndGetURL(KeycloakIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
-            logger.infof("Retrieved Keycloak URL from Route: %s", keycloakUrl);
-         } else if (completeCR.getSpec().getKeycloak().isInstall()
-               && completeCR.getSpec().getKeycloak().getUrl() != null) {
-            // We can create an Ingress here to get the Url.
-            keycloakUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getKeycloak().getIngress(),
-                  KeycloakIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getKeycloak().getUrl(),
-                  KeycloakIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
+      if (spec.getKeycloak().isEnabled()) {
+         String keycloakUrl = null;
+         if (spec.getKeycloak().isInstall() && completeSpec.getKeycloak().getIngress().isExpose()) {
+            if (isOpenShift && spec.getKeycloak().getOpenshift().getRoute().isEnabled()) {
+               // We can create an OpenShift Route here to get the Url.
+               keycloakUrl = manageRouteAndGetURL(KeycloakIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
+               logger.infof("Retrieved Keycloak URL from Route: %s", keycloakUrl);
+            } else if (completeCR.getSpec().getKeycloak().isInstall()
+                  && completeCR.getSpec().getKeycloak().getUrl() != null) {
+               // We can create an Ingress here to get the Url.
+               keycloakUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getKeycloak().getIngress(),
+                     KeycloakIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getKeycloak().getUrl(),
+                     KeycloakIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
 
-            logger.infof("Retrieved Keycloak URL from Ingress: %s", keycloakUrl);
+               logger.infof("Retrieved Keycloak URL from Ingress: %s", keycloakUrl);
+            } else {
+               logger.error(
+                     "No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url "
+                           + "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
+               microcks.getStatus().setStatus(Status.ERROR);
+               microcks.getStatus().setMessage(
+                     "No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url "
+                           + "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
+               return UpdateControl.updateStatus(microcks);
+            }
          } else {
-            logger.error(
-                  "No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url "
-                        + "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
-            microcks.getStatus().setStatus(Status.ERROR);
-            microcks.getStatus().setMessage(
-                  "No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url "
-                        + "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
-            return UpdateControl.updateStatus(microcks);
+            if (spec.getKeycloak() != null && spec.getKeycloak().getUrl() != null) {
+               keycloakUrl = spec.getKeycloak().getUrl();
+            } else {
+               logger.error(
+                     "Not installing Keycloak but no URL specified. You must either add spec.keycloak.url or spec.keycloak.install=true with OpenShift support.");
+               microcks.getStatus().setStatus(Status.ERROR);
+               microcks.getStatus()
+                     .setMessage("Not installing Keycloak but no URL specified. You must either add spec.keycloak.url "
+                           + "or spec.keycloak.install=true with OpenShift support.");
+               return UpdateControl.updateStatus(microcks);
+            }
          }
-      } else {
-         if (spec.getKeycloak() != null && spec.getKeycloak().getUrl() != null) {
-            keycloakUrl = spec.getKeycloak().getUrl();
-         } else {
-            logger.error(
-                  "Not installing Keycloak but no URL specified. You must either add spec.keycloak.url or spec.keycloak.install=true with OpenShift support.");
-            microcks.getStatus().setStatus(Status.ERROR);
-            microcks.getStatus()
-                  .setMessage("Not installing Keycloak but no URL specified. You must either add spec.keycloak.url "
-                        + "or spec.keycloak.install=true with OpenShift support.");
-            return UpdateControl.updateStatus(microcks);
-         }
+         microcks.getStatus().setKeycloakUrl(keycloakUrl);
       }
-      microcks.getStatus().setKeycloakUrl(keycloakUrl);
 
       // Reconcile all our different workflows and handle the results.
       WorkflowReconcileResult keycloakResult = keycloakModuleWF.reconcile(completeCR, context);
@@ -490,6 +492,12 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
                logger.errorf(" - errored: '%s'", entry.getValue().toString());
             }
          }
+      } else {
+         logger.debugf("  No dependents to reconcile. Mark module as ready!");
+         Condition condition = ConditionUtil.getOrCreateCondition(status, module + "Ready");
+         condition.setStatus(Status.READY);
+         ConditionUtil.touchConditionTime(condition);
+         updateStatus = true;
       }
       return updateStatus;
    }

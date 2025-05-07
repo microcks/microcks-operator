@@ -226,13 +226,14 @@ into the [Architecture & deployment options](https://microcks.io/documentation/e
 
 ### Basic configuration
 
-| Property        | Description                                                                                                                                                                                                                                                                                                                      |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `install`       | **Optional**. Flag for Keycloak installation. Default is `true`. Set to `false` if you want to reuse an existing Keycloak instance.                                                                                                                                                                                              |
-| `image`         | **Optional**. The Keycloak container image to use. Default depends on Microcks version. <br/> This property if of type `ImageSpec` as explained in [Image specification](#image-specification) section.                                                                                                                          |
-| `url`           | **Mandatory on Kube if keycloak.install==false, Optional otherwise**. The URL of Keycloak instance - just the hostname + port part (https is assumed). If missing on OpenShift, default URL schema handled by Router is used.                                                                                                    |
-| `privateUrl`    | **Optional but recommended**. A private URL - a full URL here - used by the Microcks component to internally join Keycloak. This is also known as `backend url` in [Keycloak doc](https://www.keycloak.org/server/hostname-deprecated#_backend). When specified, the `keycloak.url` is used as `frontend url` in Keycloak terms. |
-| `realm`         | **Optional**. Name of Keycloak realm to use. Should be setup only if `install` is `false` and you want to reuse an existing realm. Default is `microcks`.                                                                                                                                                                        |
+| Property     | Description                                                                                                                                                                                                                                                                                                                      |
+|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `enabled`    | **Optional**. Flag for Keycloak enablement. Default is `true`. Set to `false` if you want to run Microcks without authentication.                                                                                                                                                                                                |
+| `install`    | **Optional**. Flag for Keycloak installation. Default is `true`. Set to `false` if you want to reuse an existing Keycloak instance.                                                                                                                                                                                              |
+| `image`      | **Optional**. The Keycloak container image to use. Default depends on Microcks version. <br/> This property if of type `ImageSpec` as explained in [Image specification](#image-specification) section.                                                                                                                          |
+| `url`        | **Mandatory on Kube if keycloak.install==false, Optional otherwise**. The URL of Keycloak instance - just the hostname + port part (https is assumed). If missing on OpenShift, default URL schema handled by Router is used.                                                                                                    |
+| `privateUrl` | **Optional but recommended**. A private URL - a full URL here - used by the Microcks component to internally join Keycloak. This is also known as `backend url` in [Keycloak doc](https://www.keycloak.org/server/hostname-deprecated#_backend). When specified, the `keycloak.url` is used as `frontend url` in Keycloak terms. |
+| `realm`      | **Optional**. Name of Keycloak realm to use. Should be setup only if `install` is `false` and you want to reuse an existing realm. Default is `microcks`.                                                                                                                                                                        |
 
 ### Ingresses configuration
 
@@ -560,3 +561,25 @@ Here are below the configuration properties of the Amazon SNS support feature:
 |----------------------------|------------------------------------------------------------------------------------------------------------|
 | `microcksHub.enabled`      | **Optional**. Feature allowing to enable Microcks Hub integration. Default is `true`.                      |
 | `microcksHub.allowedRoles` | **Optional**. The list of roles that are allowed to access the Hub. Default is `admin,manager,manager-any` |
+
+### AI Copilot support
+
+`features.aiCopilot` allows you to enable and configure the support of AI Copilot related features as described into the [Enabling the AI Copilot](https://microcks.io/documentation/guides/integration/ai-copilot/).
+
+| Property                   | Description                                                                                                                    |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `aiCopilot.enabled`        | **Optional**. Feature allowing to use AI Copilot assictance. Default is `false`.                                               |
+| `aiCopilot.implementation` | **Optional**. The name of the LLM implementation the Copilot is using. Possible implementation is only `openai` at the moment. |
+
+#### OpenAI implementation details
+
+Here are below the configuration properties of the Amazon SNS support feature:
+
+| Section            | Property    | Description                                                                                                                        |
+|--------------------|-------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `aiCopilot.openai` | `apiKey`    | **Mandatory**. The OpenAI API key to use for authenticating to OpenAI endpoint.                                                    |
+| `aiCopilot.openai` | `apiUrl`    | **Optional**. The OpenAI API url. Default to public OpenAI endpoints.                                                              |
+| `aiCopilot.openai` | `timeout`   | **Optional**. The timeout in seconds during LLM exchanges. Default depends on Microcks version. Typically `30` at time of writing. |
+| `aiCopilot.openai` | `model`     | **Optional**. The model to use on the OpenAI LLM. Default depends on Microcks version. Typically `gpt-3.5` at time of writing.     |
+| `aiCopilot.openai` | `maxTokens` | **Optional**. The maximum number of tokens to use during exchanges. Typically `3000` at time of writing.                           |
+

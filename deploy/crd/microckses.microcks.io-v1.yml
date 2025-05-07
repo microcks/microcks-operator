@@ -840,6 +840,9 @@ spec:
               keycloak:
                 description: Configuration of Keycloak access and/or install
                 properties:
+                  enabled:
+                    description: Enable Keycloak for authentication. Default to true.
+                    type: boolean
                   image:
                     description: The container image to use for Keycloak
                     properties:

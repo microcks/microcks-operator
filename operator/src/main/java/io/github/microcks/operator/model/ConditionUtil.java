@@ -35,10 +35,10 @@ public class ConditionUtil {
    }
 
    /**
-    *
-    * @param status
-    * @param type
-    * @return
+    * Retrieve a condition of a given type from a status.
+    * @param status The status to check.
+    * @param type The type of condition to look for.
+    * @return The condition if found, null otherwise.
     */
    public static Condition getCondition(MultiConditionsStatus status, String type) {
       if (status.getConditions() != null) {
@@ -52,10 +52,10 @@ public class ConditionUtil {
    }
 
    /**
-    *
-    * @param status
-    * @param type
-    * @return
+    * Get or create a condition of a given type in a status.
+    * @param status The status to check.
+    * @param type The type of condition to look for.
+    * @return The condition if found, or a new one if not found.
     */
    public static Condition getOrCreateCondition(MultiConditionsStatus status, String type) {
       Condition condition = getCondition(status, type);
@@ -68,8 +68,8 @@ public class ConditionUtil {
    }
 
    /**
-    *
-    * @param condition
+    * Update the last transition time of a condition to the current time.
+    * @param condition The condition to update.
     */
    public static void touchConditionTime(Condition condition) {
       condition.setLastTransitionTime(TRANSITION_FORMATTER.format(ZonedDateTime.now(ZoneId.of("UTC"))));

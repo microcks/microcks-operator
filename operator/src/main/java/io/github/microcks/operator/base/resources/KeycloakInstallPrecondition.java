@@ -31,6 +31,7 @@ public class KeycloakInstallPrecondition implements Condition<HasMetadata, Micro
    @Override
    public boolean isMet(DependentResource<HasMetadata, Microcks> dependentResource, Microcks microcks,
          Context<Microcks> context) {
-      return microcks.getSpec().getKeycloak().isInstall() && microcks.getStatus().getKeycloakUrl() != null;
+      return microcks.getSpec().getKeycloak().isEnabled()
+            && microcks.getSpec().getKeycloak().isInstall() && microcks.getStatus().getKeycloakUrl() != null;
    }
 }

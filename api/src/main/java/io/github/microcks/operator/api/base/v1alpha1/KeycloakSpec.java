@@ -34,10 +34,13 @@ import java.util.Map;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "install", "realm", "image", "url", "privateUrl", "ingress", "persistent", "volumeSize", "storageClassName",
+@JsonPropertyOrder({ "enabled", "install", "realm", "image", "url", "privateUrl", "ingress", "persistent", "volumeSize", "storageClassName",
       "pvcAnnotations", "serviceAccount", "serviceAccountCredentials", "openshift" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class KeycloakSpec {
+
+   @JsonPropertyDescription("Enable Keycloak for authentication. Default to true.")
+   private boolean enabled = true;
 
    @JsonPropertyDescription("Install Keycloak or reuse an existing instance? Default to true.")
    private boolean install = true;
@@ -87,6 +90,14 @@ public class KeycloakSpec {
    private OpenShiftSpec openshift;
 
    public KeycloakSpec() {
+   }
+
+   public boolean isEnabled() {
+      return enabled;
+   }
+
+   public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
    }
 
    public boolean isInstall() {

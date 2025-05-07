@@ -1,0 +1,23 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  version: nightly
+  microcks:
+    url: microcks.m2.minikube.local
+  keycloak:
+    url: keycloak.m2.minikube.local
+    #privateUrl: http://microcks-keycloak.microcks2.svc.cluster.local:8080
+  features:
+    aiCopilot:
+      enabled: true
+      openai:
+        apiKey: YOUR_OPENAI_API_KEY
+        apiUrl: https://api.openai.com/v1
+#  commonLabels:
+#    custom-label-1: custom-value
+#    custom-label-2: custom-value
+#  commonAnnotations:
+#    microcks.io/foo: foo-value
+#    microcks.io/bar: bar-value
