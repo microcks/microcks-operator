@@ -35,6 +35,9 @@ public class OpenAISpec {
    @JsonPropertyDescription("The OpenAI API key to use")
    private String apiKey;
 
+   @JsonPropertyDescription("The OpenAI API URL to use")
+   private String apiUrl;
+
    @JsonPropertyDescription("The timeout for OpenAI API calls")
    private int timeout;
 
@@ -44,15 +47,20 @@ public class OpenAISpec {
    @JsonPropertyDescription("The maximum number of tokens to generate/transfer")
    private int maxTokens;
 
-   @JsonPropertyDescription("The OpenAI API URL to use")
-   private String apiUrl; 
-
    public String getApiKey() {
       return apiKey;
    }
 
    public void setApiKey(String apiKey) {
       this.apiKey = apiKey;
+   }
+
+   public String getApiUrl(){
+      return apiUrl;
+   }
+
+   public void setApiUrl(String apiUrl){
+      this.apiUrl = apiUrl;
    }
 
    public int getTimeout() {
@@ -77,13 +85,5 @@ public class OpenAISpec {
 
    public void setMaxTokens(int maxTokens) {
       this.maxTokens = maxTokens;
-   }
-
-   public String getApiUrl(){
-      return apiUrl;
-   }
-
-   public void setApiUrl(String apiUrl){
-      this.apiUrl = apiUrl;
    }
 }
