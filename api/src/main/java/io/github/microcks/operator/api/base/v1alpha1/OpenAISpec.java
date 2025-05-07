@@ -44,6 +44,9 @@ public class OpenAISpec {
    @JsonPropertyDescription("The maximum number of tokens to generate/transfer")
    private int maxTokens;
 
+   @JsonPropertyDescription("The OpenAI API URL to use")
+   private String apiUrl; 
+
    public String getApiKey() {
       return apiKey;
    }
@@ -74,5 +77,13 @@ public class OpenAISpec {
 
    public void setMaxTokens(int maxTokens) {
       this.maxTokens = maxTokens;
+   }
+
+   public String getApiUrl(){
+      return apiUrl;
+   }
+
+   public void setApiUrl(String apiUrl){
+      this.apiUrl = apiUrl;
    }
 }
