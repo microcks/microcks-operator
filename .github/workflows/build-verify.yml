@@ -29,10 +29,10 @@ jobs:
         run: echo "date=$(date +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK 17 for x64
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -84,15 +84,16 @@ jobs:
           fi
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.8.2
+        if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
+        uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
 
       - name: Set up QEMU
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
 
       - name: Set up Docker Buildx
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
       - name: Login to Quay.io and Docker Hub registries and setup multi-arch builder
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
@@ -104,7 +105,7 @@ jobs:
 
       - name: Build and push JVM container image for operator
         id: build-and-push
-        uses: docker/build-push-action@v6.16.0
+        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
         with:
           context: ${{github.workspace}}/operator
@@ -139,7 +140,7 @@ jobs:
 
       - name: Build and push native container image for operator
         id: build-and-push-native
-        uses: docker/build-push-action@v6.16.0
+        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
         if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
         with:
           context: ${{github.workspace}}/operator
@@ -155,6 +156,7 @@ jobs:
           tags: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}-native,docker.io/microcks/microcks-operator:${{env.IMAGE_TAG}}-native
 
       - name: Sign the native images with GitHub OIDC Token
+        if: github.repository_owner == 'microcks' && env.PACKAGE_IMAGE == 'true'
         env:
           DIGEST: ${{ steps.build-and-push-native.outputs.digest }}
           TAGS: quay.io/microcks/microcks-operator:${{env.IMAGE_TAG}}-native docker.io/microcks/microcks-operator:${{env.IMAGE_TAG}}-native
