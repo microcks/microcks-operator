@@ -17,6 +17,7 @@ package io.github.microcks.operator.api.model;
 
 /**
  * Enumeration of possible reconciliation status.
+ * @author laurent
  */
 public enum Status {
    PREEXISTING,

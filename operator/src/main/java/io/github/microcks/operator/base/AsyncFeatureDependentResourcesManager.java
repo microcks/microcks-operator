@@ -24,6 +24,7 @@ import io.github.microcks.operator.base.resources.AsyncMinionServiceDependentRes
 import io.github.microcks.operator.base.resources.AsyncMinionWSIngressDependentResource;
 import io.github.microcks.operator.base.resources.AsyncMinionWSSecretDependentResource;
 import io.github.microcks.operator.base.resources.AsyncMinionWSSecretInstallPrecondition;
+import io.github.microcks.operator.base.workflow.AndConditions;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -92,7 +93,8 @@ public class AsyncFeatureDependentResourcesManager {
          builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
          // Add an installation condition on websocket secret.
          if (dr == wsSecretDR) {
-            builder.withReconcilePrecondition(new AsyncMinionWSSecretInstallPrecondition());
+            builder.withReconcilePrecondition(
+                  new AndConditions(installedCondition, new AsyncMinionWSSecretInstallPrecondition()));
          }
          // Add a ready condition on deployment.
          if (dr == deploymentDR) {
