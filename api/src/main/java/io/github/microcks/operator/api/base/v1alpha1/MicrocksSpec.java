@@ -15,6 +15,8 @@
  */
 package io.github.microcks.operator.api.base.v1alpha1;
 
+import io.github.microcks.operator.api.model.ExpositionSpec;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,7 +36,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "version", "microcks", "postman", "keycloak", "mongodb", "features",
-      "commonLabels", "commonAnnotations", "commonAffinities", "commonTolerations" })
+      "commonLabels", "commonAnnotations", "commonAffinities", "commonTolerations", "commonExpositions" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class MicrocksSpec {
 
@@ -68,6 +70,9 @@ public class MicrocksSpec {
 
    @JsonPropertyDescription("Common tolerations added to all managed resources")
    private List<Toleration> commonTolerations;
+
+   @JsonPropertyDescription("Common exposition settings that applies to all managed resources")
+   private ExpositionSpec commonExpositions;
 
    public String getVersion() {
       return version;
@@ -147,5 +152,13 @@ public class MicrocksSpec {
 
    public void setCommonTolerations(List<Toleration> commonTolerations) {
       this.commonTolerations = commonTolerations;
+   }
+
+   public ExpositionSpec getCommonExpositions() {
+      return commonExpositions;
+   }
+
+   public void setCommonExpositions(ExpositionSpec commonExpositions) {
+      this.commonExpositions = commonExpositions;
    }
 }

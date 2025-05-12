@@ -1,0 +1,15 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  version: nightly
+  microcks:
+    url: microcks.127.0.0.1.nip.io
+    #url: microcks.m2.minikube.local
+  keycloak:
+    enabled: false
+  commonExpositions:
+    type: GATEWAYROUTE
+    gatewayRoute:
+      gatewayRefNamespace: default

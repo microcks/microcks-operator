@@ -18,9 +18,12 @@ package io.github.microcks.operator.base;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.base.resources.MicrocksDeploymentDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksGRPCIngressDependentResource;
+import io.github.microcks.operator.base.resources.MicrocksGRPCRouteDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksGRPCSecretDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksGRPCSecretInstallPrecondition;
 import io.github.microcks.operator.base.resources.MicrocksGRPCServiceDependentResource;
+import io.github.microcks.operator.base.resources.MicrocksGRPCRouteInstallPrecondition;
+import io.github.microcks.operator.base.resources.MicrocksGRPCIngressInstallPrecondition;
 import io.github.microcks.operator.base.resources.MicrocksReadyCondition;
 import io.github.microcks.operator.base.resources.MicrocksServiceDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksConfigMapDependentResource;
@@ -30,6 +33,7 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.GRPCRoute;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
@@ -58,6 +62,7 @@ public class MicrocksDependentResourcesManager {
    private KubernetesDependentResource<Service, Microcks> serviceDR;
    private KubernetesDependentResource<Service, Microcks> grpcServiceDR;
    private KubernetesDependentResource<Ingress, Microcks> grpcIngressDR;
+   private KubernetesDependentResource<GRPCRoute, Microcks> grpcRouteDR;
 
    /**
     * Creates a MicrocksDependentResourcesManager.
@@ -78,12 +83,13 @@ public class MicrocksDependentResourcesManager {
       serviceDR = new MicrocksServiceDependentResource();
       grpcServiceDR = new MicrocksGRPCServiceDependentResource();
       grpcIngressDR = new MicrocksGRPCIngressDependentResource();
+      grpcRouteDR = new MicrocksGRPCRouteDependentResource();
 
       // Build the workflow.
       WorkflowBuilder<Microcks> builder = new WorkflowBuilder<>();
 
       // Configure the dependent resources.
-      Arrays.asList(grpcSecretDR, configMapDR, deploymentDR, serviceDR, grpcServiceDR, grpcIngressDR).forEach(dr -> {
+      Arrays.asList(grpcSecretDR, configMapDR, deploymentDR, serviceDR, grpcServiceDR, grpcIngressDR, grpcRouteDR).forEach(dr -> {
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
@@ -93,6 +99,13 @@ public class MicrocksDependentResourcesManager {
          // Add an installation condition on grpc secret.
          if (dr == grpcSecretDR) {
             builder.withReconcilePrecondition(new MicrocksGRPCSecretInstallPrecondition());
+         }
+         // Add installation conditions on Ingress and GRPCRoute.
+         if (dr == grpcIngressDR) {
+            builder.withReconcilePrecondition(new MicrocksGRPCIngressInstallPrecondition());
+         }
+         if (dr == grpcRouteDR) {
+            builder.withReconcilePrecondition(new MicrocksGRPCRouteInstallPrecondition());
          }
          // Add a ready condition on deployment.
          if (dr == deploymentDR) {
@@ -115,7 +128,8 @@ public class MicrocksDependentResourcesManager {
             deploymentDR.initEventSource(context),
             serviceDR.initEventSource(context),
             grpcServiceDR.initEventSource(context),
-            grpcIngressDR.initEventSource(context)
+            grpcIngressDR.initEventSource(context),
+            grpcRouteDR.initEventSource(context)
       };
    }
 }

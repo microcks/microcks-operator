@@ -17,13 +17,14 @@ package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.MicrocksOperatorConfig;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
-import io.github.microcks.operator.api.model.IngressSpec;
-import io.github.microcks.operator.model.IngressSpecUtil;
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
+import io.github.microcks.operator.api.model.GatewayRouteSpec;
+import io.github.microcks.operator.model.GatewayRouteSpecUtil;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
-import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.GRPCRoute;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.GRPCRouteBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
@@ -32,11 +33,11 @@ import org.jboss.logging.Logger;
 import java.util.Map;
 
 /**
- * A Microcks Kubernetes Ingress dependent resource for gRPC traffic.
+ * A Microcks Kubernetes GRPCRoute dependent resource for gRPC traffic.
  * @author laurent
  */
 @KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
-public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependentResource<Ingress, Microcks>
+public class MicrocksGRPCRouteDependentResource extends CRUDKubernetesDependentResource<GRPCRoute, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 
    /** Get a JBoss logging logger. */
@@ -45,8 +46,8 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
    private static final String RESOURCE_SUFFIX = "-grpc";
 
    /** Default empty constructor. */
-   public MicrocksGRPCIngressDependentResource() {
-      super(Ingress.class);
+   public MicrocksGRPCRouteDependentResource() {
+      super(GRPCRoute.class);
    }
 
    /**
@@ -67,56 +68,47 @@ public class MicrocksGRPCIngressDependentResource extends CRUDKubernetesDependen
    }
 
    @Override
-   protected Ingress desired(Microcks microcks, Context<Microcks> context) {
-      logger.debugf("Building desired Microcks GRPC Ingress for '%s'", microcks.getMetadata().getName());
+   protected GRPCRoute desired(Microcks microcks, Context<Microcks> context) {
+      logger.infof("Building desired Microcks GRPCRoute for '%s'", microcks.getMetadata().getName());
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
-      final IngressSpec spec = microcks.getSpec().getMicrocks().getGrpcIngress();
+      final MicrocksSpec spec = microcks.getSpec();
+      final GatewayRouteSpec gatewayRouteSpec = spec.getMicrocks().getGrpcGatewayRoute();
 
-      IngressBuilder builder = new IngressBuilder()
+      GRPCRouteBuilder builder = new GRPCRouteBuilder()
             .withNewMetadata()
                .withName(getSecondaryResourceName(microcks))
                .withNamespace(microcksMetadata.getNamespace())
                .addToLabels("app", microcksName)
                .addToLabels("group", "microcks")
-               .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/")
-               .addToAnnotations(Map.of("nginx.ingress.kubernetes.io/backend-protocol", "GRPC",
-                  "nginx.ingress.kubernetes.io/ssl-passthrough", "true"))
-               .addToLabels(microcks.getSpec().getCommonLabels())
-               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
+               .addToLabels(spec.getCommonLabels())
+               .addToAnnotations(spec.getCommonAnnotations())
             .endMetadata()
             .withNewSpec()
-               .addNewTl()
-                  .addToHosts(getGRPCHost(microcks))
-                  .withSecretName(MicrocksGRPCSecretDependentResource.getSecretName(microcks))
-               .endTl()
+               .addNewParentRef()
+                  .withName(GatewayRouteSpecUtil.getGatewayName(spec, gatewayRouteSpec))
+                  .withSectionName(GatewayRouteSpecUtil.getGatewaySectionName(spec, gatewayRouteSpec))
+               .endParentRef()
+               .addToHostnames(getGRPCHost(microcks))
                .addNewRule()
-                  .withHost(getGRPCHost(microcks))
-                  .withNewHttp()
-                     .addNewPath()
-                        .withPath("/")
-                        .withPathType("Prefix")
-                        .withNewBackend()
-                           .withNewService()
-                              .withName(MicrocksGRPCServiceDependentResource.getServiceName(microcks))
-                              .withNewPort()
-                                 .withNumber(9090)
-                              .endPort()
-                           .endService()
-                        .endBackend()
-                     .endPath()
-                  .endHttp()
+                  .addNewBackendRef()
+                     .withKind("Service")
+                     .withName(MicrocksGRPCServiceDependentResource.getServiceName(microcks))
+                     .withPort(9090)
+                  .endBackendRef()
                .endRule()
             .endSpec();
 
-      // Add ingress classname if specified.
-      if (spec != null && spec.getClassName() != null) {
-         builder.editSpec().withIngressClassName(spec.getClassName()).endSpec();
+      if (GatewayRouteSpecUtil.getGatewayNamespace(spec, gatewayRouteSpec) != null) {
+         builder.editSpec()
+               .editFirstParentRef()
+                  .withNamespace(GatewayRouteSpecUtil.getGatewayNamespace(spec, gatewayRouteSpec))
+               .endParentRef().endSpec();
       }
 
       // Add complementary annotations if any.
-      Map<String, String> annotations = IngressSpecUtil.getAnnotationsIfAny(spec);
+      Map<String, String> annotations = GatewayRouteSpecUtil.getAnnotationsIfAny(gatewayRouteSpec);
       if (annotations != null) {
          builder.editMetadata().addToAnnotations(annotations).endMetadata();
       }

@@ -15,6 +15,7 @@
  */
 package io.github.microcks.operator.api.base.v1alpha1;
 
+import io.github.microcks.operator.api.model.GatewayRouteSpec;
 import io.github.microcks.operator.api.model.ImageSpec;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.model.OpenShiftSpec;
@@ -61,6 +62,9 @@ public class KeycloakSpec {
 
    @JsonPropertyDescription("Configuration to apply to Ingress if created")
    private IngressSpec ingress;
+
+   @JsonPropertyDescription("Configuration to apply to HTTPRoute if created")
+   private GatewayRouteSpec gatewayRoute;
 
    @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true.")
    private boolean persistent = true;
@@ -146,6 +150,14 @@ public class KeycloakSpec {
 
    public void setIngress(IngressSpec ingress) {
       this.ingress = ingress;
+   }
+
+   public GatewayRouteSpec getGatewayRoute() {
+      return gatewayRoute;
+   }
+
+   public void setGatewayRoute(GatewayRouteSpec gatewayRoute) {
+      this.gatewayRoute = gatewayRoute;
    }
 
    public boolean isPersistent() {

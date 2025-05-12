@@ -15,12 +15,17 @@
  */
 package io.github.microcks.operator.base.resources;
 
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
+import io.github.microcks.operator.api.model.GatewayRouteSpec;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.model.OpenShiftRouteSpec;
+import io.github.microcks.operator.model.GatewayRouteSpecUtil;
 import io.github.microcks.operator.model.IngressSpecUtil;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.HTTPRoute;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.HTTPRouteBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
 import io.fabric8.openshift.api.model.Route;
@@ -173,6 +178,66 @@ public class MicrocksIngressesPreparer {
       Map<String, String> annotations = IngressSpecUtil.getAnnotationsIfAny(spec);
       if (annotations != null) {
          builder.editMetadata().addToAnnotations(annotations);
+      }
+
+      return builder.build();
+   }
+
+   /**
+    * Prepare a HTTPRoute resource giving the primary microcks.
+    * @param microcks The primary Microcks resource
+    * @param context  The reconciliation context
+    * @return A vanilla Kubernetes HTTPRoute resource
+    */
+   public static HTTPRoute prepareHTTPRoute(Microcks microcks, Context<Microcks> context) {
+      logger.debugf("Preparing desired Microcks HTTPRoute for '%s'", microcks.getMetadata().getName());
+
+      final ObjectMeta microcksMetadata = microcks.getMetadata();
+      final String microcksName = microcksMetadata.getName();
+      final MicrocksSpec spec = microcks.getSpec();
+      final GatewayRouteSpec gatewayRouteSpec = spec.getMicrocks().getGatewayRoute();
+
+      HTTPRouteBuilder builder = new HTTPRouteBuilder()
+            .withNewMetadata()
+               .withName(getRouteName(microcks))
+               .addToLabels("app", microcksName)
+               .addToLabels("group", "microcks")
+               .addToLabels(spec.getCommonLabels())
+               .addToAnnotations(spec.getCommonAnnotations())
+            .endMetadata()
+            .withNewSpec()
+               .addNewParentRef()
+                  .withName(GatewayRouteSpecUtil.getGatewayName(spec, gatewayRouteSpec))
+                  .withSectionName(GatewayRouteSpecUtil.getGatewaySectionName(spec, gatewayRouteSpec))
+               .endParentRef()
+               .addToHostnames(spec.getMicrocks().getUrl())
+               .addNewRule()
+                  .addNewMatch()
+                     .withNewPath()
+                        .withValue("/")
+                        .withType("PathPrefix")
+                     .endPath()
+                  .endMatch()
+                  .addNewBackendRef()
+                     .withKind("Service")
+                     .withName(MicrocksServiceDependentResource.getServiceName(microcks))
+                     .withPort(8080)
+                  .endBackendRef()
+               .endRule()
+            .endSpec();
+
+      // Add gateway namespace if specified.
+      if (GatewayRouteSpecUtil.getGatewayNamespace(spec, gatewayRouteSpec) != null) {
+         builder.editSpec()
+               .editFirstParentRef()
+                  .withNamespace(GatewayRouteSpecUtil.getGatewayNamespace(spec, gatewayRouteSpec))
+               .endParentRef().endSpec();
+      }
+
+      // Add complementary annotations if any.
+      Map<String, String> annotations = GatewayRouteSpecUtil.getAnnotationsIfAny(gatewayRouteSpec);
+      if (annotations != null) {
+         builder.editMetadata().addToAnnotations(annotations).endMetadata();
       }
 
       return builder.build();

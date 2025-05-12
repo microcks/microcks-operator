@@ -77,8 +77,8 @@ public class AsyncFeatureSpec {
    @JsonPropertyDescription("Configuration of Amazon SNS access")
    private AmazonServiceConnectionSpec sns;
 
-   @JsonPropertyDescription("Configuration of WebSocket ingress")
-   private IngressSpec ws;
+   @JsonPropertyDescription("Configuration of WebSocket exposition")
+   private WebSocketExpositionSpec ws;
 
 
    public boolean isEnabled() {
@@ -185,11 +185,11 @@ public class AsyncFeatureSpec {
       this.sns = sns;
    }
 
-   public IngressSpec getWs() {
+   public WebSocketExpositionSpec getWs() {
       return ws;
    }
 
-   public void setWs(IngressSpec ws) {
+   public void setWs(WebSocketExpositionSpec ws) {
       this.ws = ws;
    }
 }

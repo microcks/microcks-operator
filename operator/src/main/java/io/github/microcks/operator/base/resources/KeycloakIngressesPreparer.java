@@ -15,12 +15,16 @@
  */
 package io.github.microcks.operator.base.resources;
 
+import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.model.OpenShiftRouteSpec;
+import io.github.microcks.operator.model.GatewayRouteSpecUtil;
 import io.github.microcks.operator.model.IngressSpecUtil;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.HTTPRoute;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.HTTPRouteBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.openshift.api.model.Route;
@@ -171,5 +175,85 @@ public class KeycloakIngressesPreparer {
       }
 
       return builder.build();
+   }
+
+   /**
+    * Prepare a HTTPRoute resource giving the primary microcks.
+    * @param microcks The primary Microcks resource
+    * @param context  The reconciliation context
+    * @return A vanilla Kubernetes HTTPRoute resource
+    */
+   public static HTTPRoute prepareHTTPRoute(Microcks microcks, Context<Microcks> context) {
+      logger.debugf("Preparing desired Keycloak Ingress for '%s'", microcks.getMetadata().getName());
+
+      final ObjectMeta microcksMetadata = microcks.getMetadata();
+      final String microcksName = microcksMetadata.getName();
+      final MicrocksSpec spec = microcks.getSpec();
+
+      HTTPRouteBuilder builder = new HTTPRouteBuilder()
+            .withNewMetadata()
+               .withName(getRouteName(microcks))
+               .addToLabels("app", microcksName)
+               .addToLabels("group", "microcks")
+               .addToLabels(spec.getCommonLabels())
+               .addToAnnotations(spec.getCommonAnnotations())
+            .endMetadata()
+            .withNewSpec()
+               .addNewParentRef()
+                  .withName(getGatewayName(spec))
+                  .withSectionName(getGatewaySectionName(spec))
+               .endParentRef()
+               .addToHostnames(spec.getKeycloak().getUrl())
+               .addNewRule()
+                  .addNewMatch()
+                     .withNewPath()
+                        .withValue("/")
+                        .withType("PathPrefix")
+                     .endPath()
+                  .endMatch()
+                  .addNewBackendRef()
+                     .withKind("Service")
+                     .withName(KeycloakServiceDependentResource.getServiceName(microcks))
+                     .withPort(8080)
+                  .endBackendRef()
+               .endRule()
+            .endSpec();
+
+      // Add gateway namespace if specified.
+      if (getGatewayNamespace(spec) != null) {
+         builder.editSpec()
+               .editFirstParentRef()
+                  .withNamespace(getGatewayNamespace(spec))
+               .endParentRef().endSpec();
+      }
+
+      // Add complementary annotations if any.
+      Map<String, String> annotations = GatewayRouteSpecUtil.getAnnotationsIfAny(spec.getKeycloak().getGatewayRoute());
+      if (annotations != null) {
+         builder.editMetadata().addToAnnotations(annotations);
+      }
+
+      return builder.build();
+   }
+
+   private static String getGatewayName(MicrocksSpec microcks) {
+      if (microcks.getKeycloak().getGatewayRoute() != null && microcks.getKeycloak().getGatewayRoute().getGatewayRefName() != null) {
+         return microcks.getKeycloak().getGatewayRoute().getGatewayRefName();
+      }
+      return microcks.getCommonExpositions().getGatewayRoute().getGatewayRefName();
+   }
+
+   private static String getGatewayNamespace(MicrocksSpec microcks) {
+      if (microcks.getKeycloak().getGatewayRoute() != null && microcks.getKeycloak().getGatewayRoute().getGatewayRefNamespace() != null) {
+         return microcks.getKeycloak().getGatewayRoute().getGatewayRefNamespace();
+      }
+      return microcks.getCommonExpositions().getGatewayRoute().getGatewayRefNamespace();
+   }
+
+   private static String getGatewaySectionName(MicrocksSpec microcks) {
+      if (microcks.getKeycloak().getGatewayRoute() != null && microcks.getKeycloak().getGatewayRoute().getGatewayRefSectionName() != null) {
+         return microcks.getKeycloak().getGatewayRoute().getGatewayRefSectionName();
+      }
+      return microcks.getCommonExpositions().getGatewayRoute().getGatewayRefSectionName();
    }
 }

@@ -55,7 +55,7 @@ public class AsyncMinionWSSecretDependentResource extends KubernetesDependentRes
     * @return The name of Secret
     */
    public static final String getSecretName(Microcks microcks) {
-      return IngressSpecUtil.getSecretName(microcks.getSpec().getFeatures().getAsync().getWs(),
+      return IngressSpecUtil.getSecretName(microcks.getSpec().getFeatures().getAsync().getWs().getIngress(),
             microcks.getMetadata().getName() + RESOURCE_SUFFIX);
    }
 

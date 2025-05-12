@@ -71,7 +71,7 @@ public class AsyncMinionWSIngressDependentResource extends CRUDKubernetesDepende
 
       final ObjectMeta microcksMetadata = microcks.getMetadata();
       final String microcksName = microcksMetadata.getName();
-      final IngressSpec spec = microcks.getSpec().getFeatures().getAsync().getWs();
+      final IngressSpec spec = microcks.getSpec().getFeatures().getAsync().getWs().getIngress();
 
       IngressBuilder builder = new IngressBuilder()
             .withNewMetadata()
@@ -108,13 +108,13 @@ public class AsyncMinionWSIngressDependentResource extends CRUDKubernetesDepende
 
       // Add ingress classname if specified.
       if (spec != null && spec.getClassName() != null) {
-         builder.editSpec().withIngressClassName(spec.getClassName());
+         builder.editSpec().withIngressClassName(spec.getClassName()).endSpec();
       }
 
       // Add complementary annotations if any.
       Map<String, String> annotations = IngressSpecUtil.getAnnotationsIfAny(spec);
       if (annotations != null) {
-         builder.editMetadata().addToAnnotations(annotations);
+         builder.editMetadata().addToAnnotations(annotations).endMetadata();
       }
 
       return builder.build();

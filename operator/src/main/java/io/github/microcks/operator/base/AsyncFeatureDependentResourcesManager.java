@@ -18,10 +18,13 @@ package io.github.microcks.operator.base;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.base.resources.AsyncMinionConfigMapDependentResource;
 import io.github.microcks.operator.base.resources.AsyncMinionDeploymentDependentResource;
+import io.github.microcks.operator.base.resources.AsyncMinionHTTPRouteDependentResource;
 import io.github.microcks.operator.base.resources.AsyncMinionInstallPrecondition;
 import io.github.microcks.operator.base.resources.AsyncMinionReadyCondition;
 import io.github.microcks.operator.base.resources.AsyncMinionServiceDependentResource;
+import io.github.microcks.operator.base.resources.AsyncMinionWSHTTPRouteInstallPrecondition;
 import io.github.microcks.operator.base.resources.AsyncMinionWSIngressDependentResource;
+import io.github.microcks.operator.base.resources.AsyncMinionWSIngressInstallPrecondition;
 import io.github.microcks.operator.base.resources.AsyncMinionWSSecretDependentResource;
 import io.github.microcks.operator.base.resources.AsyncMinionWSSecretInstallPrecondition;
 import io.github.microcks.operator.base.workflow.AndConditions;
@@ -31,6 +34,7 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.HTTPRoute;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
@@ -59,6 +63,7 @@ public class AsyncFeatureDependentResourcesManager {
    private KubernetesDependentResource<Service, Microcks> serviceDR;
    private KubernetesDependentResource<Secret, Microcks> wsSecretDR;
    private KubernetesDependentResource<Ingress, Microcks> wsIngressDR;
+   private KubernetesDependentResource<HTTPRoute, Microcks> wsHTTPRouteDR;
 
    /**
     * Create a new AsyncFeatureDependentResourcesManager.
@@ -78,13 +83,14 @@ public class AsyncFeatureDependentResourcesManager {
       serviceDR = new AsyncMinionServiceDependentResource();
       wsSecretDR = new AsyncMinionWSSecretDependentResource();
       wsIngressDR = new AsyncMinionWSIngressDependentResource();
+      wsHTTPRouteDR = new AsyncMinionHTTPRouteDependentResource();
 
       // Build the workflow.
       WorkflowBuilder<Microcks> builder = new WorkflowBuilder<>();
       Condition installedCondition = new AsyncMinionInstallPrecondition();
 
       // Configure the dependent resources.
-      Arrays.asList(configMapDR, deploymentDR, serviceDR, wsSecretDR, wsIngressDR).forEach(dr -> {
+      Arrays.asList(configMapDR, deploymentDR, serviceDR, wsSecretDR, wsIngressDR, wsHTTPRouteDR).forEach(dr -> {
          if (dr instanceof NamedSecondaryResourceProvider<?>) {
             dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
                   p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
@@ -95,6 +101,15 @@ public class AsyncFeatureDependentResourcesManager {
          if (dr == wsSecretDR) {
             builder.withReconcilePrecondition(
                   new AndConditions(installedCondition, new AsyncMinionWSSecretInstallPrecondition()));
+         }
+         // Add installation conditions on Ingress and HTTPRoute.
+         if (dr == wsIngressDR) {
+            builder.withReconcilePrecondition(
+                  new AndConditions(installedCondition, new AsyncMinionWSIngressInstallPrecondition()));
+         }
+         if (dr == wsHTTPRouteDR) {
+            builder.withReconcilePrecondition(
+                  new AndConditions(installedCondition, new AsyncMinionWSHTTPRouteInstallPrecondition()));
          }
          // Add a ready condition on deployment.
          if (dr == deploymentDR) {
@@ -116,6 +131,7 @@ public class AsyncFeatureDependentResourcesManager {
             deploymentDR.initEventSource(context),
             serviceDR.initEventSource(context),
             wsSecretDR.initEventSource(context),
-            wsIngressDR.initEventSource(context) };
+            wsIngressDR.initEventSource(context),
+            wsHTTPRouteDR.initEventSource(context) };
    }
 }

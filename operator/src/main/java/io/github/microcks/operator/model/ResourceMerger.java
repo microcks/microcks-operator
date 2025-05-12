@@ -49,6 +49,15 @@ public class ResourceMerger {
    @SuppressWarnings("unchecked")
    public <T> T mergeResources(T local, T remote) throws IllegalAccessException, InstantiationException {
       Class<?> clazz = local.getClass();
+
+      // Deal with special case of Enums.
+      if (Enum.class.isAssignableFrom(local.getClass())) {
+         if (remote != null) {
+            return remote;
+         }
+         return local;
+      }
+
       Object merged = clazz.newInstance();
 
       for (Field field : clazz.getDeclaredFields()) {

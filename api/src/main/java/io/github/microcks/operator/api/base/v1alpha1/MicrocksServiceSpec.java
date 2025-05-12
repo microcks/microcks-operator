@@ -15,6 +15,7 @@
  */
 package io.github.microcks.operator.api.base.v1alpha1;
 
+import io.github.microcks.operator.api.model.GatewayRouteSpec;
 import io.github.microcks.operator.api.model.ImageSpec;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.model.LogLevel;
@@ -55,8 +56,14 @@ public class MicrocksServiceSpec {
    @JsonPropertyDescription("Configuration to apply to Ingress if created")
    private IngressSpec ingress;
 
-   @JsonPropertyDescription("Configuration to apply to Ingress for gRPC if creates")
+   @JsonPropertyDescription("Configuration to apply to Ingress for gRPC if created")
    private IngressSpec grpcIngress;
+
+   @JsonPropertyDescription("Configuration to apply to HTTPRoute if created")
+   private GatewayRouteSpec gatewayRoute;
+
+   @JsonPropertyDescription("Configuration to apply to GRPCRoute for gRPC if creates")
+   private GatewayRouteSpec grpcGatewayRoute;
 
    @JsonPropertyDescription("Kubernetes resource requirements for Microcks service")
    private ResourceRequirements resources;
@@ -114,6 +121,22 @@ public class MicrocksServiceSpec {
 
    public void setGrpcIngress(IngressSpec grpcIngress) {
       this.grpcIngress = grpcIngress;
+   }
+
+   public GatewayRouteSpec getGatewayRoute() {
+      return gatewayRoute;
+   }
+
+   public void setGatewayRoute(GatewayRouteSpec gatewayRoute) {
+      this.gatewayRoute = gatewayRoute;
+   }
+
+   public GatewayRouteSpec getGrpcGatewayRoute() {
+      return grpcGatewayRoute;
+   }
+
+   public void setGrpcGatewayRoute(GatewayRouteSpec grpcGatewayRoute) {
+      this.grpcGatewayRoute = grpcGatewayRoute;
    }
 
    public ResourceRequirements getResources() {

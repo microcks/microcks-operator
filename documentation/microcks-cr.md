@@ -76,6 +76,49 @@ to track the progress and the global status is made available via the `status.st
 The `status.microcksUrl` and `status.keycloakUrl` are made available to retrieve the exposed endpoints for those
 two components.
 
+### Network exposition
+
+Starting with version `0.0.4` of the operator, you can control the way it exposes the Microcks instance to the outer world.
+The operator can use either `Ingress` or the new [Gateway API](https://gateway-api.sigs.k8s.io/) to expose the Microcks instance.
+The default is to use `Ingress` resources.  The `spec.commonExpositions` property allows you to define common properties for expositions 
+that can be overriden at each component level.
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  #[...]
+  commonExpositions:
+    type: 'INGRESS'    # Can also be 'GATEWAYROUTE'  or 'NONE".
+    ingress: <ingress-specification-details>
+    gatewayRoute: <gateway-route-specification-details>
+```
+
+`ingress-specification-details` provides the following properties that apply if `type` is set to `INGRESS`:
+
+| Property       | Description                                                                                                                                                                                                                                                                                                           |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `expose`       | **Optional**. Whether to create an `Ingress`. Default is `true`.                                                                                                                                                                                                                                                      |
+| `className`    | **Optional**. The Ingress class name to use when creating an `Ingress`. Default is not specified - which means "cluster default class".                                                                                                                                                                               |
+| `secretRef`    | **Optional on Kube, not used on OpenShift**. The name of a TLS Secret for securing `Ingress`. <br/>If missing on Kubernetes, a self-signed certificate is generated.                                                                                                                                                  |
+| `generateCert` | **Optional on Kube, not used on OpenShift**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                            |
+| `annotations`  | **Optional**. Some custom annotations to add on `Ingress` or OpenShift `Route`. <br/>If these annotations are triggering a Certificate generation (for example through https://cert-manager.io/ or https://github.com/redhat-cop/cert-utils-operator), the `generateCert` property should be set to `false` for Kube. |
+
+`gateway-route-specification-details` provides the following properties that apply if `type` is set to `GATEWAYROUTE`:
+
+| Property                | Description                                                                                                           |
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `expose`                | **Optional**. Whether to create an `Route`. Default is `true`.                                                        |
+| `gatewayRefName`        | **Optional**. The name of the Gateway to bind this route to. Default is `default`.                                    | 
+| `gatewayRefNamespace`   | **Optional**. The namespace of the Gateway to bind this route to. Default is unspecified which mean "local namespace" |
+| `gatewayRefSectionName` | **Optional**. The Gateway section name / listener to bind this route to. Default is `https`.                          |
+| `annotations`           | **Optional**. Some custom annotations to add on `HTTPRoute`                                                           |
+
+
+### Labels, annotations and scheduling
+
 Beside the `labels` and `annotations` used for internal purposes, you can specify additional ones
 for your own needs using the `commonLabels` and `commonAnnotations` like illustrated below. Those labels
 and annotations will be added to all the resources managed by the Operator.
@@ -190,13 +233,27 @@ spec:
     grpcIngress: <ingress-specification-details>
 ```
 
-Both properties follow the same `ingress-specification-details` structure that is described below:
+Both properties follow the same `ingress-specification-details` structure described in [Network exposition](#network-exposition).
 
-| Property             | Description                                                                                                                                                                                                                                                                                                           |
-|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ingressSecretRef`   | **Optional on Kube, not used on OpenShift**. The name of a TLS Secret for securing `Ingress`. <br/>If missing on Kubernetes, a self-signed certificate is generated.                                                                                                                                                  | 
-| `ingressAnnotations` | **Optional**. Some custom annotations to add on `Ingress` or OpenShift `Route`. <br/>If these annotations are triggering a Certificate generation (for example through https://cert-manager.io/ or https://github.com/redhat-cop/cert-utils-operator), the `generateCert` property should be set to `false` for Kube. |
-| `generateCert`       | **Optional on Kube, not used on OpenShift**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                            |
+### Gateway Routes configuration
+
+Starting with version `0.0.4`, the operator allows the use of `HTTPRoute` and `GRPCRoutes` resources for exposing instead of `Ingress` resources.
+Each route can be configured via a specific property: `gatewayRoute` or `grpcGatewayRoute`.
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  #[...]
+  microcks:
+    gatewayRoute: <gateway-route-specification-details>
+    grpcGatewayRoute: <gateway-route-specification-details>
+```
+
+Both properties follow the same `gateway-route-specification-details` structure described in [Network exposition](#network-exposition).
+
 
 ### Resources configuration
 
@@ -250,13 +307,26 @@ spec:
     ingress: <ingress-specification-details>
 ```
 
-This property follow the same `ingress-specification-details` structure that is described below:
+This property follows the same `ingress-specification-details` structure described in [Network exposition](#network-exposition).
 
-| Property             | Description                                                                                                                                                                                                                                                                                                           |
-|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ingressSecretRef`   | **Optional on Kube, not used on OpenShift**. The name of a TLS Secret for securing `Ingress`. <br/>If missing on Kubernetes, a self-signed certificate is generated.                                                                                                                                                  | 
-| `ingressAnnotations` | **Optional**. Some custom annotations to add on `Ingress` or OpenShift `Route`. <br/>If these annotations are triggering a Certificate generation (for example through https://cert-manager.io/ or https://github.com/redhat-cop/cert-utils-operator), the `generateCert` property should be set to `false` for Kube. |
-| `generateCert`       | **Optional on Kube, not used on OpenShift**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                            |
+### Gateway Route configuration
+
+Starting with version `0.0.4`, the operator allows the use of `HTTPRoute` resource for exposing instead of `Ingress` resource.
+The route can be configured via a specific property: `gatewayRoute`.
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  #[...]
+  keycloak:
+    gatewayRoute: <gateway-route-specification-details>
+```
+
+This property follows the same `gateway-route-specification-details` structure described in [Network exposition](#network-exposition).
+
 
 ### Resources configuration
 
@@ -468,13 +538,12 @@ Here are below the configuration properties of the MQTT support feature:
 
 #### WebSocket feature details
 
-Here are below the configuration properties of the WebSocket support feature:
+Here are below the configuration properties of the WebSocket support feature depending on the exposition type chosen at the common level:
 
-| Section    | Property             | Description                                                                                                                                                                                                                                                                                 |
-|------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `async.ws` | `ingressSecretRef`   | **Optional**. The name of a TLS Secret for securing WebSocket `Ingress`. If missing, self-signed certificate is generated.                                                                                                                                                                  |
-| `async.ws` | `ingressAnnotations` | **Optional**. A map of annotations that will be added to the `Ingress` for Microcks WebSocket mocks. If these annotations are triggering a Certificate generation (for example through [cert-mamanger.io](https://cert-manager.io/)). The `generateCert` property should be set to `false`. |
-| `async.ws` | `generateCert`       | **Optional**. Whether to generate self-signed certificate or not if no valid `ingressSecretRef` provided. Default is `true`                                                                                                                                                                 |
+| Section    | Property       | Description                                                                                                                                          |
+|------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `async.ws` | `ingress`      | **Optional**. This property follows the same `ingress-specification-details` structure described in [Network exposition](#network-exposition).       |
+| `async.ws` | `gatewayRoute` | **Optional**. This property follows the same `gateway-route-specification-details` structure described in [Network exposition](#network-exposition). | 
 
 #### AMQP feature details
 

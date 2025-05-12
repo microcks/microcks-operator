@@ -145,7 +145,8 @@ spec:
           #fileKey: aws.profile
 
       ws:
-        generateCert: true
+        ingress:
+          generateCert: true
 
     repositoryFilter:
       enabled: false
@@ -167,3 +168,9 @@ spec:
       openai:
         apiKey: sk-my-openai-api-token
         timeout: 20
+
+  commonExpositions:
+    type: INGRESS
+    gatewayRoute:
+      gatewayRefName: default
+      gatewayRefSectionName: https

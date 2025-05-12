@@ -23,6 +23,7 @@ import io.github.microcks.operator.api.base.v1alpha1.MicrocksServiceSpecBuilder;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksStatus;
 import io.github.microcks.operator.api.model.Condition;
+import io.github.microcks.operator.api.model.ExpositionType;
 import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.model.Status;
 import io.github.microcks.operator.base.resources.KeycloakIngressesPreparer;
@@ -40,6 +41,7 @@ import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.gatewayapi.v1.HTTPRoute;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
@@ -178,19 +180,27 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       final List<OwnerReference> refs = List.of(getOwnerReference(completeCR));
 
       String microcksUrl = null;
-      if (completeSpec.getMicrocks().getIngress().isExpose()) {
+      if (!ExpositionType.NONE.equals(completeSpec.getCommonExpositions().getType())) {
          if (isOpenShift && completeCR.getSpec().getMicrocks().getOpenshift().getRoute().isEnabled()) {
             // We can create an OpenShift Route here to get the Url.
             microcksUrl = manageRouteAndGetURL(MicrocksIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
             logger.infof("Retrieved Microcks URL from Route: %s", microcksUrl);
          } else if (completeCR.getSpec().getMicrocks() != null && completeCR.getSpec().getMicrocks().getUrl() != null) {
-            // We can create an Ingress here to get the Url.
-            microcksUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getMicrocks().getIngress(),
-                  MicrocksIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getMicrocks().getUrl(),
-                  MicrocksIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
-            logger.infof("Retrieved Microcks URL from Ingress: %s", microcksUrl);
+            // Manage either an Ingress or an HTTPRoute.
+            if (ExpositionType.INGRESS.equals(completeCR.getSpec().getCommonExpositions().getType())) {
+               // We can create an Ingress here to get the Url.
+               microcksUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getMicrocks().getIngress(),
+                     MicrocksIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getMicrocks().getUrl(),
+                     MicrocksIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
+               logger.infof("Retrieved Microcks URL from Ingress: %s", microcksUrl);
+            } else if (ExpositionType.GATEWAYROUTE.equals(completeCR.getSpec().getCommonExpositions().getType())) {
+               // We can create an HTTPRoute here.
+               microcksUrl = manageHTTPRouteAndGetURL(completeCR,
+                     MicrocksIngressesPreparer.prepareHTTPRoute(completeCR, context), ns, refs);
+               logger.infof("Retrieved Microcks URL from HTTPRoute: %s", microcksUrl);
+            }
          } else {
-            // Problem.
+            // Houston, we have a problem...
             // Either on OpenShift and you should enable route in the CR.
             // Either on vanilla Kubernetes and you should specify URL.
             logger.error(
@@ -222,14 +232,21 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
                // We can create an OpenShift Route here to get the Url.
                keycloakUrl = manageRouteAndGetURL(KeycloakIngressesPreparer.prepareRoute(completeCR, context), ns, refs);
                logger.infof("Retrieved Keycloak URL from Route: %s", keycloakUrl);
-            } else if (completeCR.getSpec().getKeycloak().isInstall()
-                  && completeCR.getSpec().getKeycloak().getUrl() != null) {
-               // We can create an Ingress here to get the Url.
-               keycloakUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getKeycloak().getIngress(),
-                     KeycloakIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getKeycloak().getUrl(),
-                     KeycloakIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
+            } else if (completeCR.getSpec().getKeycloak().isInstall() && completeCR.getSpec().getKeycloak().getUrl() != null) {
+               // Manage either an Ingress or an HTTPRoute.
+               if (ExpositionType.INGRESS.equals(completeCR.getSpec().getCommonExpositions().getType())) {
+                  // We can create an Ingress here to get the Url.
+                  keycloakUrl = manageIngressAndGetURL(completeCR, completeCR.getSpec().getKeycloak().getIngress(),
+                        KeycloakIngressesPreparer.getIngressSecretName(microcks), completeCR.getSpec().getKeycloak().getUrl(),
+                        KeycloakIngressesPreparer.prepareIngress(completeCR, context), ns, refs);
 
-               logger.infof("Retrieved Keycloak URL from Ingress: %s", keycloakUrl);
+                  logger.infof("Retrieved Keycloak URL from Ingress: %s", keycloakUrl);
+               } else if (ExpositionType.GATEWAYROUTE.equals(completeCR.getSpec().getCommonExpositions().getType())) {
+                  // We can create an HTTPRoute here.
+                  keycloakUrl = manageHTTPRouteAndGetURL(completeCR,
+                        KeycloakIngressesPreparer.prepareHTTPRoute(completeCR, context), ns, refs);
+                  logger.infof("Retrieved Keycloak URL from HTTPRoute: %s", keycloakUrl);
+               }
             } else {
                logger.error(
                      "No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url "
@@ -425,6 +442,21 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
       ingress = client.network().v1().ingresses().inNamespace(ns).resource(ingress).createOrReplace();
 
       return ingress.getSpec().getRules().get(0).getHost();
+   }
+
+   /**
+    * Manage an HTTPRoute creation and retrieval of host name.
+    * @param microcks The primary resource this HTTPRoute comes from
+    * @param route    The HTTPRoute resource to create or replace
+    * @param ns       The namespace where to create it
+    * @param refs     The controller owner references
+    * @return The host to which the HTTPRoute is attached (read from the created or updated route).
+    */
+   protected String manageHTTPRouteAndGetURL(Microcks microcks, HTTPRoute route, String ns, List<OwnerReference> refs) {
+      route.getMetadata().setOwnerReferences(refs);
+      route = client.resource(route).inNamespace(ns).serverSideApply();
+
+      return route.getSpec().getHostnames().get(0);
    }
 
    /**

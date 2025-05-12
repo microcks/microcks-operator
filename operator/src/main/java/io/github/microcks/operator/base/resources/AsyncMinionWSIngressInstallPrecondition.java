@@ -16,7 +16,7 @@
 package io.github.microcks.operator.base.resources;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
-import io.github.microcks.operator.model.IngressSpecUtil;
+import io.github.microcks.operator.api.model.ExpositionType;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
@@ -24,14 +24,20 @@ import io.javaoperatorsdk.operator.api.reconciler.dependent.DependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 
 /**
- * A reconciliation pre-condition that is only met if WebSocket secret should be managed.
+ * A reconciliation pre-condition that is only met if WebSocket ingress should be managed.
  * @author laurent
  */
-public class AsyncMinionWSSecretInstallPrecondition implements Condition<HasMetadata, Microcks> {
+public class AsyncMinionWSIngressInstallPrecondition implements Condition<HasMetadata, Microcks> {
 
    @Override
-   public boolean isMet(DependentResource<HasMetadata, Microcks> dependentResource, Microcks microcks,
-                        Context<Microcks> context) {
-      return IngressSpecUtil.generateCertificateSecret(microcks.getSpec().getFeatures().getAsync().getWs().getIngress());
+   public boolean isMet(DependentResource<HasMetadata, Microcks> dependentResource, Microcks primary, Context<Microcks> context) {
+      if (!ExpositionType.INGRESS.equals(primary.getSpec().getCommonExpositions().getType())) {
+         return false;
+      }
+      if (primary.getSpec().getFeatures().getAsync() != null && primary.getSpec().getFeatures().getAsync().getWs() != null
+            && primary.getSpec().getFeatures().getAsync().getWs().getIngress() != null) {
+         return primary.getSpec().getFeatures().getAsync().getWs().getIngress().isExpose();
+      }
+      return primary.getSpec().getCommonExpositions().getIngress().isExpose();
    }
 }

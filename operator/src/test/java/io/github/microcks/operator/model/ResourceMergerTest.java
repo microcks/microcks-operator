@@ -18,7 +18,11 @@ package io.github.microcks.operator.model;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.api.base.v1alpha1.KeycloakSpec;
+import io.github.microcks.operator.api.model.ExpositionSpec;
+import io.github.microcks.operator.api.model.ExpositionType;
+import io.github.microcks.operator.api.model.GatewayRouteSpec;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,10 +87,18 @@ class ResourceMergerTest {
       keycloak.setRealm("custom-realm");
       keycloak.setUrl("keycloak.acme.com");
 
+      ExpositionSpec expositionSpec = new ExpositionSpec();
+      expositionSpec.setType(ExpositionType.GATEWAYROUTE);
+      GatewayRouteSpec gatewayRouteSpec = new GatewayRouteSpec();
+      gatewayRouteSpec.setGatewayRefNamespace("default");
+      expositionSpec.setGatewayRoute(gatewayRouteSpec);
+      spec.setCommonExpositions(expositionSpec);
+
       MicrocksSpec result = null;
       try {
          result = new ResourceMerger().mergeResources(defaultCR.getSpec(), partialCR.getSpec());
       } catch (Throwable t) {
+         t.printStackTrace();
          fail("Merging Microcks CR should not fail");
       }
 
