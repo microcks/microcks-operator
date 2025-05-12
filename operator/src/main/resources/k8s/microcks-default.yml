@@ -171,6 +171,8 @@ spec:
 
   commonExpositions:
     type: INGRESS
+    ingress:
+      generateCert: true
     gatewayRoute:
       gatewayRefName: default
       gatewayRefSectionName: https

@@ -4,7 +4,7 @@ metadata:
   name: microcks
   namespace: microcks
 spec:
-  version: 1.10.1
+  version: 1.11.2
   microcks:
     url: microcks.m.minikube.local
   keycloak:
