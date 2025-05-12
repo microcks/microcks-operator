@@ -44,7 +44,9 @@ import io.javaoperatorsdk.operator.processing.dependent.workflow.WorkflowBuilder
 import io.javaoperatorsdk.operator.processing.event.ResourceID;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A manager of Kubernetes secondary resources for Microcks module defined by a {@code MicrocksSpec} custom resource
@@ -122,14 +124,16 @@ public class MicrocksDependentResourcesManager {
     * @return An array of configured EventSources.
     */
    public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      return new EventSource[] {
+      List<EventSource> eventSources = new ArrayList<>(Arrays.asList(
             grpcSecretDR.initEventSource(context),
             configMapDR.initEventSource(context),
             deploymentDR.initEventSource(context),
             serviceDR.initEventSource(context),
             grpcServiceDR.initEventSource(context),
-            grpcIngressDR.initEventSource(context),
-            grpcRouteDR.initEventSource(context)
-      };
+            grpcIngressDR.initEventSource(context)));
+      if (client.supports("gateway.networking.k8s.io/v1", "GRPCRoute")) {
+         eventSources.add(grpcRouteDR.initEventSource(context));
+      }
+      return eventSources.toArray(new EventSource[0]);
    }
 }

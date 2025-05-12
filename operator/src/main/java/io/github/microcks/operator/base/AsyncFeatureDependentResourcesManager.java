@@ -46,7 +46,9 @@ import io.javaoperatorsdk.operator.processing.dependent.workflow.WorkflowBuilder
 import io.javaoperatorsdk.operator.processing.event.ResourceID;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A manager of Async feature secondary resources for Keycloak module defined by a {@code MicrocksSpec} custom resource
@@ -126,12 +128,15 @@ public class AsyncFeatureDependentResourcesManager {
     * @return An array of configured EventSources.
     */
    public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      return new EventSource[] {
+      List<EventSource> eventSources = new ArrayList<>(Arrays.asList(
             configMapDR.initEventSource(context),
             deploymentDR.initEventSource(context),
             serviceDR.initEventSource(context),
             wsSecretDR.initEventSource(context),
-            wsIngressDR.initEventSource(context),
-            wsHTTPRouteDR.initEventSource(context) };
+            wsIngressDR.initEventSource(context)));
+      if (client.supports("gateway.networking.k8s.io/v1", "HTTPRoute")) {
+         eventSources.add(wsHTTPRouteDR.initEventSource(context));
+      }
+      return eventSources.toArray(new EventSource[0]);
    }
 }
