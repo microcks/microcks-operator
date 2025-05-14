@@ -91,6 +91,13 @@ rules:
     verbs:
       - '*'
   - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - httproutes
+      - grpcroutes
+    verbs:
+      - '*'
+  - apiGroups:
       - monitoring.coreos.com
     resources:
       - servicemonitors
