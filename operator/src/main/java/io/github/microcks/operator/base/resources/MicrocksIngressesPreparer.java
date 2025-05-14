@@ -99,7 +99,7 @@ public class MicrocksIngressesPreparer {
 
       // Add custom url is present in the spec.
       if (microcks.getSpec().getMicrocks().getUrl() != null) {
-         builder.editSpec().withHost(microcks.getSpec().getMicrocks().getUrl());
+         builder.editSpec().withHost(microcks.getSpec().getMicrocks().getUrl()).endSpec();
       }
 
       // Add optional TLS configuration if specified in route spec.
@@ -143,7 +143,9 @@ public class MicrocksIngressesPreparer {
                .withName(getRouteName(microcks))
                .addToLabels("app", microcksName)
                .addToLabels("group", "microcks")
+               .addToLabels(microcks.getSpec().getCommonLabels())
                .addToAnnotations("ingress.kubernetes.io/rewrite-target", "/")
+               .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata()
             .withNewSpec()
                .addNewTl()
@@ -171,13 +173,13 @@ public class MicrocksIngressesPreparer {
 
       // Add ingress classname if specified.
       if (spec.getClassName() != null) {
-         builder.editSpec().withIngressClassName(spec.getClassName());
+         builder.editSpec().withIngressClassName(spec.getClassName()).endSpec();
       }
 
       // Add complementary annotations if any.
       Map<String, String> annotations = IngressSpecUtil.getAnnotationsIfAny(spec);
       if (annotations != null) {
-         builder.editMetadata().addToAnnotations(annotations);
+         builder.editMetadata().addToAnnotations(annotations).endMetadata();
       }
 
       return builder.build();
