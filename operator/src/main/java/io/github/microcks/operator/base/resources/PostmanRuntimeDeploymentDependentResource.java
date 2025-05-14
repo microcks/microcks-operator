@@ -88,7 +88,10 @@ public class PostmanRuntimeDeploymentDependentResource extends CRUDKubernetesDep
                      .addToAnnotations(microcks.getSpec().getCommonAnnotations())
                   .endMetadata()
                   .editSpec()
-                     .editFirstContainer().withImage(microcks.getSpec().getPostman().getImage().getCoordinates()).endContainer()
+                     .editFirstContainer()
+                        .withImage(microcks.getSpec().getPostman().getImage().getCoordinates())
+                        .withResources(microcks.getSpec().getPostman().getResources())
+                     .endContainer()
                   .endSpec()
                .endTemplate()
             .endSpec();

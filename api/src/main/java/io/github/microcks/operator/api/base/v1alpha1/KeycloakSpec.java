@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.sundr.builder.annotations.Buildable;
 
 import java.util.Map;
@@ -35,8 +36,8 @@ import java.util.Map;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "enabled", "install", "realm", "image", "url", "privateUrl", "ingress", "persistent", "volumeSize", "storageClassName",
-      "pvcAnnotations", "serviceAccount", "serviceAccountCredentials", "openshift" })
+@JsonPropertyOrder({ "enabled", "install", "realm", "image", "url", "privateUrl", "ingress", "gatewayRoute", "resources",
+      "persistent", "volumeSize", "storageClassName", "pvcAnnotations", "serviceAccount", "serviceAccountCredentials", "openshift" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class KeycloakSpec {
 
@@ -65,6 +66,9 @@ public class KeycloakSpec {
 
    @JsonPropertyDescription("Configuration to apply to HTTPRoute if created")
    private GatewayRouteSpec gatewayRoute;
+
+   @JsonPropertyDescription("Kubernetes resource requirements for Keycloak service")
+   private ResourceRequirements resources;
 
    @JsonPropertyDescription("Use persistent storage or ephemeral one? Default to true.")
    private boolean persistent = true;
@@ -158,6 +162,14 @@ public class KeycloakSpec {
 
    public void setGatewayRoute(GatewayRouteSpec gatewayRoute) {
       this.gatewayRoute = gatewayRoute;
+   }
+
+   public ResourceRequirements getResources() {
+      return resources;
+   }
+
+   public void setResources(ResourceRequirements resources) {
+      this.resources = resources;
    }
 
    public boolean isPersistent() {

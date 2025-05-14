@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.sundr.builder.annotations.Buildable;
 
 /**
@@ -29,7 +30,7 @@ import io.sundr.builder.annotations.Buildable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "image", "replicas" })
+@JsonPropertyOrder({ "image", "replicas", "resources" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class PostmanRuntimeSpec {
 
@@ -38,6 +39,9 @@ public class PostmanRuntimeSpec {
 
    @JsonPropertyDescription("Number of desired pods for Postman runtime")
    private int replicas = 1;
+
+   @JsonPropertyDescription("Kubernetes resource requirements for Postman runtime")
+   private ResourceRequirements resources;
 
    public ImageSpec getImage() {
       return image;
@@ -53,5 +57,13 @@ public class PostmanRuntimeSpec {
 
    public void setReplicas(int replicas) {
       this.replicas = replicas;
+   }
+
+   public ResourceRequirements getResources() {
+      return resources;
+   }
+
+   public void setResources(ResourceRequirements resources) {
+      this.resources = resources;
    }
 }

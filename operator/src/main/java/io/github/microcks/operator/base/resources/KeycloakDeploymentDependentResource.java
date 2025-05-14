@@ -101,6 +101,7 @@ public class KeycloakDeploymentDependentResource extends CRUDKubernetesDependent
                   .editSpec()
                      .editFirstContainer()
                         .withImage(spec.getKeycloak().getImage().getCoordinates())
+                        .withResources(spec.getKeycloak().getResources())
                         .addNewEnv()
                            .withName("KEYCLOAK_ADMIN")
                            .withNewValueFrom()

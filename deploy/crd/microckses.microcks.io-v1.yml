@@ -1053,6 +1053,31 @@ spec:
                   realm:
                     description: "Keycloak realm to use for authentication on Microcks"
                     type: "string"
+                  resources:
+                    description: "Kubernetes resource requirements for Keycloak service"
+                    properties:
+                      claims:
+                        items:
+                          properties:
+                            name:
+                              type: "string"
+                          type: "object"
+                        type: "array"
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: "integer"
+                          - type: "string"
+                          x-kubernetes-int-or-string: true
+                        type: "object"
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: "integer"
+                          - type: "string"
+                          x-kubernetes-int-or-string: true
+                        type: "object"
+                    type: "object"
                   serviceAccount:
                     description: "Service Account for connecting external services\
                       \ to Microcks"
@@ -1638,6 +1663,31 @@ spec:
                   replicas:
                     description: "Number of desired pods for Postman runtime"
                     type: "integer"
+                  resources:
+                    description: "Kubernetes resource requirements for Postman runtime"
+                    properties:
+                      claims:
+                        items:
+                          properties:
+                            name:
+                              type: "string"
+                          type: "object"
+                        type: "array"
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: "integer"
+                          - type: "string"
+                          x-kubernetes-int-or-string: true
+                        type: "object"
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: "integer"
+                          - type: "string"
+                          x-kubernetes-int-or-string: true
+                        type: "object"
+                    type: "object"
                 type: "object"
               version:
                 description: "The Microcks version"
