@@ -48,7 +48,7 @@ To get involved with our community, please make sure you are familiar with the p
 | Operator         | Microcks Version       |
 |------------------|------------------------|
 | `0.0.1`, `0.0.2` | `1.10.x`               |
-| `0.0.3`          | `1.11.x` and `nightly` |
+| `0.0.3`, `0.0.4` | `1.11.x` and `nightly` |
 
 ## Installation
 
@@ -58,6 +58,8 @@ Assuming you're connected to a Kubernetes cluster as an administrator, you must 
 kubectl apply -f deploy/crd/microckses.microcks.io-v1.yml
 kubectl apply -f deploy/crd/apisources.microcks.io-v1.yml
 kubectl apply -f deploy/crd/secretsources.microcks.io-v1.yml
+# If using operator version >= 0.0.4
+kubectl apply -f deploy/crd/tests.microcks.io-v1.yml
 ```
 
 Then you can install the operator itself in a dedicated namespace -let's say `microcks`- using: 
@@ -167,6 +169,32 @@ EOF
 ```
 
 > For comprehensive documentation and examples of `SecretSource` CR, please refer to the [SecretSource CR documentation](./documentation/secretsource-cr.md).
+
+Starting with version `0.0.4`, Microcks Operator also allows you to create `Test` CRs that will be used to run API conformance 
+tests in a targeted Microcks instance.
+
+For example, you can create a new `Test` CR named `tests-apipastries-01` that trigger the execution of an API conformance test
+on the Microcks instance named `microcks`. This test will be run against the `API Pastries:0.0.1` service and will target
+the `http://apipastries-app-01:3001` endpoint, checking the conformance of the API implementation against its OpenAPI specification:
+
+```shell
+cat <<EOF | kubectl apply -f -
+apiVersion: microcks.io/v1alpha1
+kind: Test
+metadata:
+  name: tests-apipastries-01
+  annotations:
+    microcks.io/instance: microcks
+spec:
+  serviceId: "API Pastries:0.0.1"
+  testEndpoint: http://apipastries-app-01:3001
+  runnerType: OPEN_API_SCHEMA
+  timeout: 5000
+  retentionPolicy: Retain
+EOF
+```
+
+> For comprehensive documentation and examples of `Test` CR, please refer to the [Test CR documentation](./documentation/test-cr.md).
 
 ## How to build it?
 

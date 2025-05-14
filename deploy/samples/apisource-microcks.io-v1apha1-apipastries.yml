@@ -1,0 +1,12 @@
+apiVersion: microcks.io/v1alpha1
+kind: APISource
+metadata:
+  name: tests-apipastries-artifacts
+  annotations:
+    microcks.io/instance: microcks
+spec:
+  artifacts:
+    - url: https://raw.githubusercontent.com/microcks/api-lifecycle/refs/heads/master/contract-testing-demo/apipastries-openapi.yaml
+      mainArtifact: true
+    - url: https://raw.githubusercontent.com/microcks/api-lifecycle/refs/heads/master/contract-testing-demo/apipastries-postman-collection.json
+      mainArtifact: false

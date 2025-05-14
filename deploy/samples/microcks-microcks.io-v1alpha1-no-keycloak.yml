@@ -6,5 +6,6 @@ spec:
   version: 1.11.2
   microcks:
     url: microcks.m2.minikube.local
+    logLevel: DEBUG
   keycloak:
     enabled: false

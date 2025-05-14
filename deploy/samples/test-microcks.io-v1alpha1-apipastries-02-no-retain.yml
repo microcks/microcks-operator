@@ -1,0 +1,12 @@
+apiVersion: microcks.io/v1alpha1
+kind: Test
+metadata:
+  name: tests-apipastries-02-no-retain
+  annotations:
+    microcks.io/instance: microcks
+spec:
+  serviceId: "API Pastries:0.0.1"
+  testEndpoint: http://apipastries-app-02:3002
+  runnerType: OPEN_API_SCHEMA
+  timeout: 5000
+  retentionPolicy: DeleteOnSuccess

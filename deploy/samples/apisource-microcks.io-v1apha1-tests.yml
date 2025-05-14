@@ -26,6 +26,7 @@ spec:
       active: false
       repository:
         url: https://raw.githubusercontent.com/microcks/microcks/master/samples/HelloService-soapui-project.xml
+        secretRef: my-secret
       labels:
         domain: authentication
         status: GA
