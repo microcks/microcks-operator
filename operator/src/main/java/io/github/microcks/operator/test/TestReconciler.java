@@ -27,6 +27,7 @@ import io.github.microcks.operator.AbstractMicrocksDependantReconciler;
 import io.github.microcks.operator.KeycloakHelper;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.model.Status;
+import io.github.microcks.operator.api.model.ValueFromSecretSpec;
 import io.github.microcks.operator.api.test.v1alpha1.Result;
 import io.github.microcks.operator.api.test.v1alpha1.RetentionPolicy;
 import io.github.microcks.operator.api.test.v1alpha1.Test;
@@ -34,6 +35,7 @@ import io.github.microcks.operator.api.test.v1alpha1.TestSpec;
 import io.github.microcks.operator.api.test.v1alpha1.TestStatus;
 import io.github.microcks.operator.model.ResourceMerger;
 
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
@@ -107,7 +109,7 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
             testStatus = new TestStatus();
             test.setStatus(testStatus);
 
-            TestResult testResult = launchTest(testApi, testSpec);
+            TestResult testResult = launchTest(testApi, test);
 
             // Ttracking test identifiers and progress in new status.
             testStatus.setId(testResult.getId());
@@ -172,7 +174,9 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
    }
 
    /** Launch a new test and get first results from Microcks instance. */
-   protected TestResult launchTest(TestApi testApi, TestSpec testSpec) throws ApiException {
+   protected TestResult launchTest(TestApi testApi, Test test) throws ApiException {
+      final TestSpec testSpec = test.getSpec();
+
       logger.infof("Launching test for service '%s' on endpoint '%s'",
             testSpec.getServiceId(), testSpec.getTestEndpoint());
 
@@ -212,8 +216,8 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
       if (testSpec.getOAuth2Context() != null) {
          // Build the OAuth2 context for API client.
          OAuth2ClientContext oAuth2Context = new OAuth2ClientContext();
-         oAuth2Context.setClientId(testSpec.getOAuth2Context().getClientId());
-         oAuth2Context.setClientSecret(testSpec.getOAuth2Context().getClientSecret());
+         oAuth2Context.setClientId(getOAuth2ContextClientId(test));
+         oAuth2Context.setClientSecret(getOAuth2ContextClientSecret(test));
          oAuth2Context.setTokenUri(testSpec.getOAuth2Context().getTokenUri());
          try {
             oAuth2Context.setGrantType(OAuth2ClientContext.GrantTypeEnum.fromValue(testSpec.getOAuth2Context().getGrantType()));
@@ -223,9 +227,9 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
             oAuth2Context.setGrantType(OAuth2ClientContext.GrantTypeEnum.CLIENT_CREDENTIALS);
          }
          // Following fields can be set to null.
-         oAuth2Context.setRefreshToken(testSpec.getOAuth2Context().getRefreshToken());
-         oAuth2Context.setUsername(testSpec.getOAuth2Context().getUsername());
-         oAuth2Context.setPassword(testSpec.getOAuth2Context().getPassword());
+         oAuth2Context.setRefreshToken(getOAuth2ContextRefreshToken(test));
+         oAuth2Context.setUsername(getOAuth2ContextUsername(test));
+         oAuth2Context.setPassword(getOAuth2ContextPassword(test));
 
          testRequest.setoAuth2Context(oAuth2Context);
       }
@@ -239,5 +243,130 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
             testSpec.getServiceId(), testSpec.getTestEndpoint());
 
       return testApi.getTestResult(testId);
+   }
+
+   /** Get the OAuth2 context client ID or raise an exception. */
+   private String getOAuth2ContextClientId(Test test) throws ApiException {
+      final TestSpec testSpec = test.getSpec();
+
+      if (testSpec.getOAuth2Context() != null) {
+         if (testSpec.getOAuth2Context().getClientId() != null) {
+            return testSpec.getOAuth2Context().getClientId();
+         } else if (testSpec.getOAuth2Context().getClientIdFrom() != null) {
+            String secretValue = getSecretValue(testSpec.getOAuth2Context().getClientIdFrom(), test.getMetadata().getNamespace());
+
+            if (secretValue == null) {
+               logger.errorf("Kubernetes secret '%s' not found for '%s' in Test '%s'",
+                     testSpec.getOAuth2Context().getClientIdFrom().getSecretRef(), testSpec.getOAuth2Context().getClientIdFrom().getSecretKey(),
+                     test.getMetadata().getName());
+               test.getStatus().setMessage("Kubernetes secret not found for OAuth2 client ID");
+               test.getStatus().setStatus(Status.ERROR);
+            }
+            return secretValue;
+         }
+      }
+      throw new ApiException("OAuth2 client ID is not set in Test resource '" + test.getMetadata().getName() + "'");
+   }
+
+   /** Get the OAuth2 context client Secret or raise an exception. */
+   private String getOAuth2ContextClientSecret(Test test) throws ApiException {
+      final TestSpec testSpec = test.getSpec();
+
+      if (testSpec.getOAuth2Context() != null) {
+         if (testSpec.getOAuth2Context().getClientSecret() != null) {
+            return testSpec.getOAuth2Context().getClientSecret();
+         } else if (testSpec.getOAuth2Context().getClientSecretFrom() != null) {
+            String secretValue = getSecretValue(testSpec.getOAuth2Context().getClientSecretFrom(), test.getMetadata().getNamespace());
+
+            if (secretValue == null) {
+               logger.errorf("Kubernetes secret '%s' not found for '%s' in Test '%s'",
+                     testSpec.getOAuth2Context().getClientSecretFrom().getSecretRef(), testSpec.getOAuth2Context().getClientSecretFrom().getSecretKey(),
+                     test.getMetadata().getName());
+               test.getStatus().setMessage("Kubernetes secret not found for OAuth2 client Secret");
+               test.getStatus().setStatus(Status.ERROR);
+            }
+            return secretValue;
+         }
+      }
+      throw new ApiException("OAuth2 client Secret is not set in Test resource '" + test.getMetadata().getName() + "'");
+   }
+
+   /** Get the OAuth2 context Refresh Token if any of track an error in status. */
+   private String getOAuth2ContextRefreshToken(Test test) {
+      final TestSpec testSpec = test.getSpec();
+
+      if (testSpec.getOAuth2Context() != null) {
+         if (testSpec.getOAuth2Context().getRefreshToken() != null) {
+            return testSpec.getOAuth2Context().getRefreshToken();
+         } else if (testSpec.getOAuth2Context().getRefreshTokenFrom() != null) {
+            String secretValue = getSecretValue(testSpec.getOAuth2Context().getRefreshTokenFrom(), test.getMetadata().getNamespace());
+
+            if (secretValue == null) {
+               logger.errorf("Kubernetes secret '%s' not found for '%s' in Test '%s'",
+                     testSpec.getOAuth2Context().getRefreshTokenFrom().getSecretRef(), testSpec.getOAuth2Context().getRefreshTokenFrom().getSecretKey(),
+                     test.getMetadata().getName());
+               test.getStatus().setMessage("Kubernetes secret not found for OAuth2 refresh token");
+               test.getStatus().setStatus(Status.ERROR);
+            }
+            return secretValue;
+         }
+      }
+      return null;
+   }
+
+   /** Get the OAuth2 context Username if any of track an error in status. */
+   private String getOAuth2ContextUsername(Test test) {
+      final TestSpec testSpec = test.getSpec();
+
+      if (testSpec.getOAuth2Context() != null) {
+         if (testSpec.getOAuth2Context().getUsername() != null) {
+            return testSpec.getOAuth2Context().getUsername();
+         } else if (testSpec.getOAuth2Context().getUsernameFrom() != null) {
+            String secretValue = getSecretValue(testSpec.getOAuth2Context().getUsernameFrom(), test.getMetadata().getNamespace());
+
+            if (secretValue == null) {
+               logger.errorf("Kubernetes secret '%s' not found for '%s' in Test '%s'",
+                     testSpec.getOAuth2Context().getUsernameFrom().getSecretRef(), testSpec.getOAuth2Context().getUsernameFrom().getSecretKey(),
+                     test.getMetadata().getName());
+               test.getStatus().setMessage("Kubernetes secret not found for OAuth2 username");
+               test.getStatus().setStatus(Status.ERROR);
+            }
+            return secretValue;
+         }
+      }
+      return null;
+   }
+
+   /** Get the OAuth2 context password Refresh Token if any of track an error in status. */
+   private String getOAuth2ContextPassword(Test test) {
+      final TestSpec testSpec = test.getSpec();
+
+      if (testSpec.getOAuth2Context() != null) {
+         if (testSpec.getOAuth2Context().getPassword() != null) {
+            return testSpec.getOAuth2Context().getPassword();
+         } else if (testSpec.getOAuth2Context().getPasswordFrom() != null) {
+            String secretValue = getSecretValue(testSpec.getOAuth2Context().getPasswordFrom(), test.getMetadata().getNamespace());
+
+            if (secretValue == null) {
+               logger.errorf("Kubernetes secret '%s' not found for '%s' in Test '%s'",
+                     testSpec.getOAuth2Context().getPasswordFrom().getSecretRef(), testSpec.getOAuth2Context().getPasswordFrom().getSecretKey(),
+                     test.getMetadata().getName());
+               test.getStatus().setMessage("Kubernetes secret not found for OAuth2 password");
+               test.getStatus().setStatus(Status.ERROR);
+            }
+            return secretValue;
+         }
+      }
+      return null;
+   }
+
+   /** Get a Kubernetes value from a secret or return null. */
+   private String getSecretValue(ValueFromSecretSpec spec, String ns) {
+      Secret kubeSecret = client.secrets().inNamespace(ns).withName(spec.getSecretKey()).get();
+
+      if (kubeSecret != null) {
+         return kubeSecret.getData().get(spec.getSecretKey());
+      }
+      return null;
    }
 }

@@ -3,7 +3,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  version: 1.11.2
+  version: 1.12.0
   microcks:
     url: microcks.m2.minikube.local
     logLevel: DEBUG

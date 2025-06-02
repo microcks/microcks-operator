@@ -30,9 +30,35 @@ spec:
                   clientId:
                     description: "The OAuth2 client ID"
                     type: "string"
+                  clientIdFrom:
+                    description: "A reference to a namespace Kubernetes Secret to\
+                      \ get the OAuth2 client ID value from"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                   clientSecret:
                     description: "The OAuth2 client Secret"
                     type: "string"
+                  clientSecretFrom:
+                    description: "A reference to a namespace Kubernetes Secret to\
+                      \ get the OAuth2 client Secret value from"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                   grantType:
                     description: "The OAuth Grant Type flow to apply for getting the\
                       \ token"
@@ -40,10 +66,37 @@ spec:
                   password:
                     description: "Optional. The password to use for the OAuth2 client"
                     type: "string"
+                  passwordFrom:
+                    description: "Optional. A reference to a a namespace Kubernetes\
+                      \ Secret to get the password to use for the OAuth2 client"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                   refreshToken:
                     description: "Optional. The refreshToken to use for obtaining\
                       \ a new OAuth2 token"
                     type: "string"
+                  refreshTokenFrom:
+                    description: "Optional. A reference to a a namespace Kubernetes\
+                      \ Secret to get the refreshToken to use for obtaining a new\
+                      \ OAuth2 token"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                   scopes:
                     description: "Optional. The OAuth2 scopes to use for negotiating\
                       \ the token"
@@ -54,15 +107,54 @@ spec:
                   username:
                     description: "Optional. The username to use for the OAuth2 client"
                     type: "string"
+                  usernameFrom:
+                    description: "Optional. A reference to a a namespace Kubernetes\
+                      \ Secret to get the username to use for the OAuth2 client"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                 type: "object"
               oauth2Context:
                 properties:
                   clientId:
                     description: "The OAuth2 client ID"
                     type: "string"
+                  clientIdFrom:
+                    description: "A reference to a namespace Kubernetes Secret to\
+                      \ get the OAuth2 client ID value from"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                   clientSecret:
                     description: "The OAuth2 client Secret"
                     type: "string"
+                  clientSecretFrom:
+                    description: "A reference to a namespace Kubernetes Secret to\
+                      \ get the OAuth2 client Secret value from"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                   grantType:
                     description: "The OAuth Grant Type flow to apply for getting the\
                       \ token"
@@ -70,10 +162,37 @@ spec:
                   password:
                     description: "Optional. The password to use for the OAuth2 client"
                     type: "string"
+                  passwordFrom:
+                    description: "Optional. A reference to a a namespace Kubernetes\
+                      \ Secret to get the password to use for the OAuth2 client"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                   refreshToken:
                     description: "Optional. The refreshToken to use for obtaining\
                       \ a new OAuth2 token"
                     type: "string"
+                  refreshTokenFrom:
+                    description: "Optional. A reference to a a namespace Kubernetes\
+                      \ Secret to get the refreshToken to use for obtaining a new\
+                      \ OAuth2 token"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                   scopes:
                     description: "Optional. The OAuth2 scopes to use for negotiating\
                       \ the token"
@@ -84,6 +203,19 @@ spec:
                   username:
                     description: "Optional. The username to use for the OAuth2 client"
                     type: "string"
+                  usernameFrom:
+                    description: "Optional. A reference to a a namespace Kubernetes\
+                      \ Secret to get the username to use for the OAuth2 client"
+                    properties:
+                      secretKey:
+                        description: "The key in referenced Secret to get the value\
+                          \ from"
+                        type: "string"
+                      secretRef:
+                        description: "The name of a namespace Kubernetes Secret to\
+                          \ get value from"
+                        type: "string"
+                    type: "object"
                 type: "object"
               operationsHeaders:
                 additionalProperties:

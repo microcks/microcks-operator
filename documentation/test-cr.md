@@ -93,6 +93,26 @@ The `retentionPolicy` property is used to define the behavior of the operator wh
 When coupled with an event-based workflow (like [Argo Events](https://argoproj.github.io/events/) for example), this allows you to automatically
 trigger  the next step of your pipeline without keeping the `Test` resource history in Kubernetes.
 
+## OAuth2Context specification details
+
+If the secured Test Endpoint cannot be accessed using a static Authentication Secret, Microcks is able to handle an OAuth2 / OpenID Connect authentication flow as the Tests prerequisites in order to retrieve an ephemeral bearer token.
+
+The `oAuth2Context` property is used to define the OAuth2 / OpenID Connect authentication flow details. It is an object with the following properties:
+
+| Property       | Description                                                                                                                                               |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `clientId`     | **Mandatory**. The client ID to use for the OAuth2 / OpenID Connect authentication flow.                                                                  |
+| `clientSecret` | **Mandatory**. The client secret to use for the OAuth2 / OpenID Connect authentication flow.                                                              |
+| `tokenUri`     | **Mandatory**. The URL to use for retrieving the OAuth2 / OpenID Connect token.                                                                           |
+| `grantType`    | **Mandatory**. The grant type to use for the OAuth2 / OpenID Connect authentication flow. Values are `CLIENT_CREDENTIALS`, `PASSWORD` or `REFRESH_TOKEN`. |
+| `username`     | **Optional**. The username to use for the OAuth2 / OpenID Connect authentication flow. It is only used if the `grantType` is set to `PASSWORD`.           |
+| `password`     | **Optional**. The password to use for the OAuth2 / OpenID Connect authentication flow. It is only used if the `grantType` is set to `PASSWORD`.           |
+| `scopes`       | **Optional**. A list of scopes to use for the OAuth2 / OpenID Connect authentication flow. `openid` is always included.                                   |
+| `refreshToken` | **Optional**. The refresh token to use for the OAuth2 / OpenID Connect authentication flow. It is only used if the `grantType` is set to `REFRESH_TOKEN`. |
+
+Instead of specifying values directly in these properties, you can also use `clientIdFrom`, `clientSecretFrom`, `usernameFrom`, `passwordFrom`, and `refreshTokenFrom` properties 
+to reference a namespace Kubernetes Secret key (see example below). This allows you to keep sensitive information out of your YAML files.
+
 ## Example
 
 Here is a full example below:
@@ -121,5 +141,9 @@ spec:
     clientId: test-client
     clientSecret: test-secret
     tokenUrl: http://oauth2-server/realm/my-realm/openid/token
+    grantType: REFRESH_TOKEN
+    refreshTokenFrom:
+      secretRef: my-kubernetes-secret
+      secretKey: refresh-token
   retentionPolicy: DeleteOnSuccess
 ```

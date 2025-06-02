@@ -15,6 +15,9 @@
  */
 package io.github.microcks.operator.api.test.v1alpha1;
 
+import io.github.microcks.operator.api.model.SecretReferenceSpec;
+import io.github.microcks.operator.api.model.ValueFromSecretSpec;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -33,6 +36,12 @@ public class OAuth2ClientContext {
    @JsonPropertyDescription("The OAuth2 client Secret")
    private String clientSecret;
 
+   @JsonPropertyDescription("A reference to a namespace Kubernetes Secret to get the OAuth2 client ID value from")
+   private ValueFromSecretSpec clientIdFrom;
+
+   @JsonPropertyDescription("A reference to a namespace Kubernetes Secret to get the OAuth2 client Secret value from")
+   private ValueFromSecretSpec clientSecretFrom;
+
    @JsonPropertyDescription("The IDP URI where to get the OAuth2 token")
    private String tokenUri;
 
@@ -45,8 +54,17 @@ public class OAuth2ClientContext {
    @JsonPropertyDescription("Optional. The password to use for the OAuth2 client")
    private String password;
 
+   @JsonPropertyDescription("Optional. A reference to a a namespace Kubernetes Secret to get the username to use for the OAuth2 client")
+   private ValueFromSecretSpec usernameFrom;
+
+   @JsonPropertyDescription("Optional. A reference to a a namespace Kubernetes Secret to get the password to use for the OAuth2 client")
+   private ValueFromSecretSpec passwordFrom;
+
    @JsonPropertyDescription("Optional. The refreshToken to use for obtaining a new OAuth2 token")
    private String refreshToken;
+
+   @JsonPropertyDescription("Optional. A reference to a a namespace Kubernetes Secret to get the refreshToken to use for obtaining a new OAuth2 token")
+   private ValueFromSecretSpec refreshTokenFrom;
 
    @JsonPropertyDescription("The OAuth Grant Type flow to apply for getting the token")
    private String grantType;
@@ -65,6 +83,22 @@ public class OAuth2ClientContext {
 
    public void setClientSecret(String clientSecret) {
       this.clientSecret = clientSecret;
+   }
+
+   public ValueFromSecretSpec getClientIdFrom() {
+      return clientIdFrom;
+   }
+
+   public void setClientIdFrom(ValueFromSecretSpec clientIdFrom) {
+      this.clientIdFrom = clientIdFrom;
+   }
+
+   public ValueFromSecretSpec getClientSecretFrom() {
+      return clientSecretFrom;
+   }
+
+   public void setClientSecretFrom(ValueFromSecretSpec clientSecretFrom) {
+      this.clientSecretFrom = clientSecretFrom;
    }
 
    public String getTokenUri() {
@@ -99,12 +133,36 @@ public class OAuth2ClientContext {
       this.password = password;
    }
 
+   public ValueFromSecretSpec getUsernameFrom() {
+      return usernameFrom;
+   }
+
+   public void setUsernameFrom(ValueFromSecretSpec usernameFrom) {
+      this.usernameFrom = usernameFrom;
+   }
+
+   public ValueFromSecretSpec getPasswordFrom() {
+      return passwordFrom;
+   }
+
+   public void setPasswordFrom(ValueFromSecretSpec passwordFrom) {
+      this.passwordFrom = passwordFrom;
+   }
+
    public String getRefreshToken() {
       return refreshToken;
    }
 
    public void setRefreshToken(String refreshToken) {
       this.refreshToken = refreshToken;
+   }
+
+   public ValueFromSecretSpec getRefreshTokenFrom() {
+      return refreshTokenFrom;
+   }
+
+   public void setRefreshTokenFrom(ValueFromSecretSpec refreshTokenFrom) {
+      this.refreshTokenFrom = refreshTokenFrom;
    }
 
    public String getGrantType() {
