@@ -6,7 +6,7 @@
   <groupId>io.github.microcks</groupId>
   <artifactId>microcks-operator</artifactId>
   <packaging>pom</packaging>
-  <version>0.0.4-SNAPSHOT</version>
+  <version>0.0.4</version>
 
   <modules>
     <module>api</module>
