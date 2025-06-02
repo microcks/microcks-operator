@@ -20,7 +20,7 @@ spec:
       serviceAccountName: microcks-operator
       containers:
         - name: microcks-operator
-          image: quay.io/microcks/microcks-operator:0.0.4
+          image: quay.io/microcks/microcks-operator:latest-native
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
