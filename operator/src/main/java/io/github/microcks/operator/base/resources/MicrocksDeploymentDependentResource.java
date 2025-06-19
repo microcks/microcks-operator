@@ -22,6 +22,7 @@ import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
@@ -31,6 +32,7 @@ import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernete
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 import org.jboss.logging.Logger;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -43,6 +45,18 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
+
+   /** List of reserved environment variables that should not be set by user. */
+   private static final List<String> RESERVED_ENV_VARS = List.of(
+         "KEYCLOAK_ENABLED",
+         "KEYCLOAK_URL",
+         "KEYCLOAK_PUBLIC_URL",
+         "SPRING_PROFILES_ACTIVE",
+         "SPRING_DATA_MONGODB_URI",
+         "SPRING_DATA_MONGODB_DATABASE",
+         "SPRING_DATA_MONGODB_USER",
+         "SPRING_DATA_MONGODB_PASSWORD"
+   );
 
    /** Default empty constructor. */
    public MicrocksDeploymentDependentResource() {
@@ -98,7 +112,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
                   .editSpec()
                      .editFirstContainer()
                         .withImage(spec.getMicrocks().getImage().getCoordinates())
-                        .addAllToEnv(spec.getMicrocks().getEnv())
+                        .addAllToEnv(getFilteredEnvVars(spec.getMicrocks().getEnv()))
                         .addNewEnv()
                            .withName("SPRING_PROFILES_ACTIVE")
                            .withValue("prod")
@@ -240,6 +254,12 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
       return builder.build();
    }
 
+   private List<EnvVar> getFilteredEnvVars(List<EnvVar> envVars) {
+      return envVars.stream()
+            .filter(envVar -> !RESERVED_ENV_VARS.contains(envVar.getName()))
+            .toList();
+   }
+
    private String getMongoDBConnection(Microcks microcks) {
       StringBuilder result = new StringBuilder(
             "mongodb://${SPRING_DATA_MONGODB_USER}:${SPRING_DATA_MONGODB_PASSWORD}@");
@@ -256,7 +276,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
       return result.toString();
    }
 
-   public String getMongoDBDatabase(Microcks microcks) {
+   private String getMongoDBDatabase(Microcks microcks) {
       return Objects.requireNonNullElse(microcks.getSpec().getMongoDB().getDatabase(),
             microcks.getMetadata().getName());
    }
