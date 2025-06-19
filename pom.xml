@@ -46,12 +46,12 @@
 
   <distributionManagement>
     <snapshotRepository>
-      <id>oss-sonatype-staging</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <id>central-sonatype-staging</id>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
     </snapshotRepository>
     <repository>
-      <id>oss-sonatype-staging</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <id>central-sonatype-releases</id>
+      <url>https://central.sonatype.com/repository/maven-releases/</url>
     </repository>
   </distributionManagement>
 
