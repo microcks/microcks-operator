@@ -41,7 +41,7 @@ deploy:
         url: https://central.sonatype.com/api/v1/publisher
         authorization: BEARER
         namespace: io.github.microcks
-        applyMavenCentralRules: false
+        applyMavenCentralRules: true
         stagingRepositories:
           - target/staging-deploy
     pomchecker:
