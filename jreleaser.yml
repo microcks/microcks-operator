@@ -40,7 +40,6 @@ deploy:
         snapshotSupported: false
         url: https://central.sonatype.com/api/v1/publisher
         username: wPlqdV4c
-        authorization: BEARER
         namespace: io.github.microcks
         applyMavenCentralRules: true
         stagingRepositories:
