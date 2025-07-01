@@ -8,6 +8,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>microcks-kube-operator</artifactId>
+  <name>Microcks Kubernetes Operator</name>
 
   <properties>
     <compiler-plugin.version>3.14.0</compiler-plugin.version>

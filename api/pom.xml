@@ -8,6 +8,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>microcks-kube-api</artifactId>
+  <name>Microcks Kubernetes API</name>
 
   <dependencies>
     <dependency>
