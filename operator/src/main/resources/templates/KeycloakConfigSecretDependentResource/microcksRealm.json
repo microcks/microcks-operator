@@ -169,7 +169,8 @@
       "enabled": true,
       "publicClient": true,
       "redirectUris": [
-        "https://{spec.microcks.url}/*"
+        "https://{spec.microcks.url}/*",
+        "http://localhost:58085/*"
       ],
       "webOrigins": [
         "+"
