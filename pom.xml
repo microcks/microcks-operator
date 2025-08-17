@@ -61,7 +61,7 @@
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <quarkus.version>3.17.8</quarkus.version>
+    <quarkus.version>3.25.3</quarkus.version>
     <quarkus.operator-sdk.version>6.9.3</quarkus.operator-sdk.version>
   </properties>
 
