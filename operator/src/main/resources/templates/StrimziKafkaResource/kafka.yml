@@ -34,9 +34,11 @@ spec:
               host: "{name}-kafka-0.{spec.features.async.kafka.url}"
         {/if}
 
+    {#if !spec.features.async.kafka.enableKraft}
     replicas: 1
     storage:
       type: ephemeral
+    {/if}
     resources:
       {#if spec.features.async.kafka.resources.requests}
         requests:
@@ -50,6 +52,7 @@ spec:
           {key}: {spec.features.async.kafka.resources.limits.get(key)}
         {/for}
       {/if}
+  {#if !spec.features.async.kafka.enableKraft}
   zookeeper:
     replicas: 1
     storage:
@@ -67,3 +70,4 @@ spec:
           {key}: {spec.features.async.kafka.zkResources.limits.get(key)}
         {/for}
       {/if}
+  {/if}

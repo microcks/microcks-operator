@@ -88,16 +88,25 @@ public class StrimziKafkaResource {
       }
 
       // Build the generic Kubernetes resource from map content.
-      GenericKubernetesResource genericKafka = new GenericKubernetesResourceBuilder()
-            .withApiVersion(kafkaMap.get("apiVersion").toString()).withKind(kafkaMap.get("kind").toString())
+      GenericKubernetesResourceBuilder genericKafka = new GenericKubernetesResourceBuilder()
+            .withApiVersion(kafkaMap.get("apiVersion").toString())
+            .withKind(kafkaMap.get("kind").toString())
             .withNewMetadata()
                .withName(microcksName + RESOURCE_SUFFIX)
                .addToLabels(microcks.getSpec().getCommonLabels())
                .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata()
-            .addToAdditionalProperties("spec", kafkaMap.get("spec")).build();
+            .addToAdditionalProperties("spec", kafkaMap.get("spec"));
 
-      return genericKafka;
+      if (microcks.getSpec().getFeatures().getAsync().getKafka().isEnableKraft()) {
+         genericKafka.editMetadata()
+               .addToAnnotations(Map.of(
+                     "strimzi.io/node-pools", "enabled",
+                     "strimzi.io/kraft", "enabled"))
+               .endMetadata();
+      }
+
+      return genericKafka.build();
    }
 
    /** A Qute templates accessor. */

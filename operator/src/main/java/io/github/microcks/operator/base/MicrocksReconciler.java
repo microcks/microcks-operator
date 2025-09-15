@@ -28,15 +28,13 @@ import io.github.microcks.operator.api.model.IngressSpec;
 import io.github.microcks.operator.api.model.Status;
 import io.github.microcks.operator.base.resources.KeycloakIngressesPreparer;
 import io.github.microcks.operator.base.resources.MicrocksIngressesPreparer;
+import io.github.microcks.operator.base.resources.StrimiziKafkaNodePoolResource;
 import io.github.microcks.operator.base.resources.StrimziKafkaResource;
 import io.github.microcks.operator.base.resources.StrimziKafkaTopicResource;
 import io.github.microcks.operator.model.ConditionUtil;
 import io.github.microcks.operator.model.IngressSpecUtil;
 import io.github.microcks.operator.model.ResourceMerger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
@@ -550,6 +548,16 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
     * @param context  The reconciliation context
     */
    protected void manageStrimziKafkaInstall(Microcks microcks, Context<Microcks> context) {
+      // If we use Kraft on Strimizi Kafka, we need to create a NodePool first.
+      if (microcks.getSpec().getFeatures().getAsync().getKafka().isEnableKraft()) {
+         StrimiziKafkaNodePoolResource strimiziKafkaNodePool = new StrimiziKafkaNodePoolResource(client);
+         GenericKubernetesResource strimiziKafkaNodePoolRes = strimiziKafkaNodePool.desired(microcks, context);
+
+         // Force the owner reference before creating or replacing those resources.
+         strimiziKafkaNodePoolRes.getMetadata().setOwnerReferences(List.of(getOwnerReference(microcks)));
+         createOrReplaceGenericResource(strimiziKafkaNodePoolRes, microcks.getMetadata().getNamespace());
+      }
+
       // Build desired Strimzi Kafka broker and topic.
       StrimziKafkaResource strimziKafka = new StrimziKafkaResource(client);
       StrimziKafkaTopicResource strimziTopic = new StrimziKafkaTopicResource(client);
@@ -577,6 +585,14 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
       removeGenericResourceWatcher(strimziKafkaRes, microcks.getMetadata().getNamespace());
       removeGenericResourceWatcher(strimziTopicRes, microcks.getMetadata().getNamespace());
+
+      // If we use Kraft on Strimizi Kafka, we need to unmanage the NodePool last.
+      if (microcks.getSpec().getFeatures().getAsync().getKafka().isEnableKraft()) {
+         StrimiziKafkaNodePoolResource strimiziKafkaNodePool = new StrimiziKafkaNodePoolResource(client);
+         GenericKubernetesResource strimiziKafkaNodePoolRes = strimiziKafkaNodePool.desired(microcks, context);
+
+         removeGenericResourceWatcher(strimiziKafkaNodePoolRes, microcks.getMetadata().getNamespace());
+      }
    }
 
    /** */

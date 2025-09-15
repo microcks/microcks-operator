@@ -109,6 +109,7 @@ rules:
     resources:
       - kafkas
       - kafkatopics
+      - kafkanodepools
     verbs:
       - '*'
   - apiGroups:

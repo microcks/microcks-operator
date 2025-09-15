@@ -5,14 +5,14 @@ metadata:
 spec:
   version: nightly
   microcks:
-    url: microcks.m2.minikube.local
+    url: microcks.m.minikube.local
   keycloak:
-    url: keycloak.m2.minikube.local
+    url: keycloak.m.minikube.local
   features:
     async:
       enabled: true
       kafka:
-        url: kafka.m2.minikube.local
+        url: kafka.m.minikube.local
       #sqs:
       #  region: eu-west-3
       #  credentialsSecretRef:

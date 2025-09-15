@@ -36,6 +36,9 @@ public class KafkaSpec {
    @JsonPropertyDescription("Install Kafka broker or reuse an existing instance? Default to true")
    private boolean install = true;
 
+   @JsonPropertyDescription("Enable Kafka KRaft mode (no Zookeeper)? Default to true")
+   private boolean enableKraft = true;
+
    @JsonPropertyDescription("The URL to use for either exposing embedded Kafka broker or connecting external broker")
    private String url;
 
@@ -66,6 +69,14 @@ public class KafkaSpec {
 
    public void setInstall(boolean install) {
       this.install = install;
+   }
+
+   public boolean isEnableKraft() {
+      return enableKraft;
+   }
+
+   public void setEnableKraft(boolean enableKraft) {
+      this.enableKraft = enableKraft;
    }
 
    public String getUrl() {

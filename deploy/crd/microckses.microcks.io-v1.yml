@@ -637,6 +637,10 @@ spec:
                                 - "SSL"
                                 type: "string"
                             type: "object"
+                          enableKraft:
+                            description: "Enable Kafka KRaft mode (no Zookeeper)?\
+                              \ Default to true"
+                            type: "boolean"
                           ingressClassName:
                             description: "When exposed via ingress, sets the ingressClassName\
                               \ property in the Ingress resources"
