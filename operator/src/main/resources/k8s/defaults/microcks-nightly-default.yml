@@ -9,7 +9,7 @@ spec:
       tag: nightly
   postman:
     image:
-      tag: 0.6.0
+      tag: 0.7.0
   keycloak:
     image:
       registry: quay.io
