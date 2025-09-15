@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/openjdk-21:1.21-1.1744796720
+FROM registry.access.redhat.com/ubi8/openjdk-21:1.23-3.1756174603
 
 # Some version information
 LABEL maintainer="Laurent Broudoux <laurent@microcks.io>" \
