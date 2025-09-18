@@ -19,6 +19,6 @@
 app.kubernetes.io/name: {{ include "microcks-operator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/part-of: microcks
+app.kubernetes.io/part-of: {{ include "microcks-operator.name" . }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 {{- end -}}
