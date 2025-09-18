@@ -1,0 +1,31 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: quay.io/microcks/microcks-operator
+  tag: "latest"
+  pullPolicy: Always
+
+imagePullSecrets: []
+
+replicaCount: 1
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+rbac:
+  create: true
+
+# Control CRD installation
+crds:
+  create: true
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
