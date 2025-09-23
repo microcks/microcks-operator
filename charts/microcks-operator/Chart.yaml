@@ -1,0 +1,19 @@
+apiVersion: v2
+name: microcks-operator
+description: Helm chart to install the Microcks Operator and CRDs
+
+type: application
+version: 0.1.0
+appVersion: "latest"
+keywords:
+  - microcks
+  - operator
+  - kubernetes-operator
+home: https://microcks.io/
+sources:
+  - https://github.com/microcks/microcks-operator
+maintainers:
+  - name: Microcks Maintainers
+    url: https://github.com/microcks
+
+kubeVersion: ">=1.22.0-0"
