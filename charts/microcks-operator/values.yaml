@@ -1,3 +1,4 @@
+# To skip CRD installation (Helm v3 installs files under crds/ automatically), use --skip-crds
 nameOverride: ""
 fullnameOverride: ""
 
@@ -16,10 +17,6 @@ serviceAccount:
   annotations: {}
 
 rbac:
-  create: true
-
-# Control CRD installation
-crds:
   create: true
 
 resources: {}
