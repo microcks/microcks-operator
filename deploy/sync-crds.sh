@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SRC_DIR="$ROOT_DIR/deploy/crd"
-DEST_DIR="$ROOT_DIR/charts/microcks-operator/crds"
+DEST_DIR="$ROOT_DIR/deploy/helm/microcks-operator/crds"
 
 usage() {
   echo "Usage: $0 [--check]" >&2
@@ -22,7 +22,7 @@ for f in "$SRC_DIR"/*.yml; do
   base="$(basename "$f")"
   if [[ $CHECK -eq 1 ]]; then
     if ! cmp -s "$f" "$DEST_DIR/$base"; then
-      echo "CRD drift detected: $base differs between deploy/crd and chart/crds" >&2
+      echo "CRD drift detected: $base differs between deploy/crd and deploy/helm/crds" >&2
       status=1
     fi
   else
@@ -33,7 +33,7 @@ done
 
 if [[ $CHECK -eq 1 ]]; then
   if [[ $status -ne 0 ]]; then
-    echo "Drift found. Run: hack/sync-crds.sh to update chart CRDs" >&2
+    echo "Drift found. Run: ./sync-crds.sh to update chart CRDs" >&2
   else
     echo "CRDs are in sync."
   fi
