@@ -16,14 +16,14 @@ Install and manage the Microcks Operator and its Custom Resource Definitions (CR
 Basic install into a dedicated namespace:
 
 ```bash
-helm install microcks-operator ./charts/microcks-operator \
+helm install microcks-operator ./deploy/helm/microcks-operator \
   --namespace microcks --create-namespace
 ```
 
 Install while skipping CRDs (for clusters where CRDs are pre-installed/managed out-of-band):
 
 ```bash
-helm install microcks-operator ./charts/microcks-operator \
+helm install microcks-operator ./deploy/helm/microcks-operator \
   --namespace microcks --create-namespace \
   --skip-crds
 ```
@@ -31,7 +31,7 @@ helm install microcks-operator ./charts/microcks-operator \
 Install with a custom values file:
 
 ```bash
-helm install microcks-operator ./charts/microcks-operator \
+helm install microcks-operator ./deploy/helm/microcks-operator \
   --namespace microcks --create-namespace \
   -f my-values.yaml
 ```
@@ -39,7 +39,7 @@ helm install microcks-operator ./charts/microcks-operator \
 Quick override example (pin the image tag and set resources):
 
 ```bash
-helm install microcks-operator ./charts/microcks-operator \
+helm install microcks-operator ./deploy/helm/microcks-operator \
   -n microcks --create-namespace \
   --set image.tag="v1.0.0" \
   --set resources.limits.cpu="200m" \
@@ -51,13 +51,13 @@ helm install microcks-operator ./charts/microcks-operator \
 ## Upgrading the chart
 
 ```bash
-helm upgrade microcks-operator ./charts/microcks-operator -n microcks
+helm upgrade microcks-operator ./deploy/helm/microcks-operator -n microcks
 ```
 
 If you manage CRDs separately, include `--skip-crds` during upgrades to avoid changes to CRDs by Helm:
 
 ```bash
-helm upgrade microcks-operator ./charts/microcks-operator -n microcks --skip-crds
+helm upgrade microcks-operator ./deploy/helm/microcks-operator -n microcks --skip-crds
 ```
 
 ## Uninstalling the chart
