@@ -41,11 +41,11 @@ Quick override example (pin the image tag and set resources):
 ```bash
 helm install microcks-operator ./deploy/helm/microcks-operator \
   -n microcks --create-namespace \
-  --set image.tag="v1.0.0" \
+  --set image.tag="0.0.6" \
   --set resources.limits.cpu="200m" \
-  --set resources.limits.memory="256Mi" \
+  --set resources.limits.memory="512Mi" \
   --set resources.requests.cpu="100m" \
-  --set resources.requests.memory="128Mi"
+  --set resources.requests.memory="256Mi"
 ```
 
 ## Upgrading the chart
