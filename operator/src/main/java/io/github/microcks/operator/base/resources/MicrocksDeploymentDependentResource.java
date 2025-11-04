@@ -261,12 +261,12 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
    }
 
    private String getMongoDBConnection(Microcks microcks) {
-      StringBuilder result = new StringBuilder(
-            "mongodb://${SPRING_DATA_MONGODB_USER}:${SPRING_DATA_MONGODB_PASSWORD}@");
+      StringBuilder result = new StringBuilder();
 
       if (microcks.getSpec().getMongoDB().getUri() != null) {
          result.append(microcks.getSpec().getMongoDB().getUri());
       } else {
+         result.append("mongodb://${SPRING_DATA_MONGODB_USER}:${SPRING_DATA_MONGODB_PASSWORD}@");
          result.append(MongoDBServiceDependentResource.getServiceName(microcks));
          result.append(":").append(MongoDBServiceDependentResource.MONGODB_SERVICE_PORT);
       }

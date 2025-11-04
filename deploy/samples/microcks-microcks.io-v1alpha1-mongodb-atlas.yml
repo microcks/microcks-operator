@@ -1,0 +1,18 @@
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+  version: 1.13.0
+  microcks:
+    url: microcks.m2.minikube.loc
+  keycloak:
+    url: keycloak.m2.minikube.loc
+  mongodb:
+    install: false
+    uri: 'mongodb+srv://${SPRING_DATA_MONGODB_USER}:${SPRING_DATA_MONGODB_PASSWORD}@xxxxx.yyyyy.mongodb.net'
+    uriParameters: '?retryWrites=true&w=majority&appName=DevCluster0'
+    database: microcks
+    secretRef:
+      name: mongodb-atlas-secret
+
