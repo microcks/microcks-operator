@@ -1,17 +1,19 @@
 ## Microcks Operator Helm Chart
 
-Install and manage the Microcks Operator and its Custom Resource Definitions (CRDs) using Helm.
+Install and manage the [Microcks](http://microcks.io) Operator and its Custom Resource Definitions (CRDs) using [Helm](https://helm.sh) package manager.
 
 ### Requirements
 - Kubernetes >= 1.22
 - Helm 3.x
 
-### What this chart deploys
+### What this Chart deploys
 - A `Deployment` running the Microcks Operator container
 - (Optionally) a `ServiceAccount`, `Role`, and `RoleBinding`
 - CRDs placed under `crds/` are handled by Helm (see CRDs section)
 
-## Installing the chart
+## Installing the Chart
+
+> You can retrieve the Helm chart from the official Microcks Helm repo: `helm repo add microcks https://microcks.io/helm`
 
 Basic install into a dedicated namespace:
 

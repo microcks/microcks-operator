@@ -45,10 +45,11 @@ To get involved with our community, please make sure you are familiar with the p
 
 ## Versions
 
-| Operator                  | Microcks Version                 |
-|---------------------------|----------------------------------|
-| `0.0.1`, `0.0.2`          | `1.10.x`                         |
-| `0.0.3`, `0.0.4`, `0.0.5` | `1.11.x`, `1.12.x` and `nightly` |
+| Operator                  | Microcks Version                           |
+|---------------------------|--------------------------------------------|
+| `0.0.1`, `0.0.2`          | `1.10.x`                                   |
+| `0.0.3`, `0.0.4`, `0.0.5` | `1.11.x`, `1.12.x`                         |
+| `0.0.6`                   | `1.11.x`, `1.12.x`, `1.13.x` and `nightly` |
 
 ## Installation
 
@@ -68,6 +69,8 @@ Then you can install the operator itself in a dedicated namespace -let's say `mi
 kubectl create namespace microcks
 kubectl apply -f deploy/operator-jvm.yaml -n microcks
 ```
+
+Since version `0.0.6`, Microcks Operator is also available as a Helm chart. Check the Helm Chart [README](./deploy/helm/microcks-operator/README.md) file for more details.
 
 ## Usage
 
