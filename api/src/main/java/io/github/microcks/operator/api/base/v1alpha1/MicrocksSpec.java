@@ -36,7 +36,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "version", "microcks", "postman", "keycloak", "mongodb", "features",
-      "commonLabels", "commonAnnotations", "commonAffinities", "commonTolerations", "commonExpositions" })
+      "clusterDomain", "commonLabels", "commonAnnotations", "commonAffinities", "commonTolerations", "commonExpositions" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class MicrocksSpec {
 
@@ -58,6 +58,9 @@ public class MicrocksSpec {
 
    @JsonPropertyDescription("Configuration of optional features in Microcks")
    private FeaturesSpec features;
+
+   @JsonPropertyDescription("Cluster internal domain (used to build service FQDNs). Default to 'cluster.local'")
+   private String clusterDomain = "cluster.local";
 
    @JsonPropertyDescription("Common labels to add to all managed resources")
    private Map<String, String> commonLabels;
@@ -120,6 +123,14 @@ public class MicrocksSpec {
 
    public void setFeatures(FeaturesSpec features) {
       this.features = features;
+   }
+
+   public String getClusterDomain() {
+      return clusterDomain;
+   }
+
+   public void setClusterDomain(String clusterDomain) {
+      this.clusterDomain = clusterDomain;
    }
 
    public Map<String, String> getCommonLabels() {

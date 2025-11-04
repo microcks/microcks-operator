@@ -60,7 +60,7 @@ status:
   observedGeneration: 0
   microcksUrl: microcks.m2.minikube.local
   keycloakUrl: keycloak.m2.minikube.local
-  condtions:
+  conditions:
   - lastTransitionTime: "2024-09-13T07:09:02Z"
     status: DEPLOYING
     type: MicrocksDeploying
@@ -75,6 +75,25 @@ to track the progress and the global status is made available via the `status.st
 
 The `status.microcksUrl` and `status.keycloakUrl` are made available to retrieve the exposed endpoints for those
 two components.
+
+### Cluster domain
+
+Starting with version `0.0.6` of the operator, you can specify a `spec.clusterDomain` property to define
+the cluster domain to use when internal components (microcks/keycloak/async-minion) need to directly access service names
+(using `<service>.<namespace>.svc.<cluster-domain>` FQDN).
+
+By default, the operator assumes the standard `cluster.local` domain. If your cluster is using another domain,
+you should specify it like in the example below:
+
+```yaml
+apiVersion: microcks.io/v1alpha1
+kind: Microcks
+metadata:
+  name: microcks
+spec:
+#[...]
+  clusterDomain: cluster-domain.example
+```
 
 ### Network exposition
 

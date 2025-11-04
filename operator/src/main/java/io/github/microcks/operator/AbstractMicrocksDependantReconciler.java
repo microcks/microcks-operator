@@ -137,7 +137,8 @@ public class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>,
 
       // Build a needed ApiCLient to interact with Microcks API.
       ApiClient apiClient = new ApiClient();
-      apiClient.updateBaseUri("http://" + microcks.getMetadata().getName() + "." + microcks.getMetadata().getNamespace() + ".svc.cluster.local:8080/api");
+      apiClient.updateBaseUri("http://" + microcks.getMetadata().getName() + "." + microcks.getMetadata().getNamespace()
+            + ".svc."  + microcks.getSpec().getClusterDomain() + ":8080/api");
       apiClient.setRequestInterceptor(request -> request.header("Authorization", "Bearer " + oauthToken));
 
       return new UpdateControlOrApiClient<>(null, apiClient);

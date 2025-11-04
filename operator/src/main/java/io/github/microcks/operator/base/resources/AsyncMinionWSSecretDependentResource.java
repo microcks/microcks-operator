@@ -73,7 +73,7 @@ public class AsyncMinionWSSecretDependentResource extends KubernetesDependentRes
             "group", "microcks");
       List<String> hosts = List.of(
             AsyncMinionWSIngressDependentResource.getWSHost(microcks),
-            AsyncMinionServiceDependentResource.getServiceName(microcks) + ".svc.cluster.local",
+            AsyncMinionServiceDependentResource.getServiceName(microcks) + ".svc." + microcks.getSpec().getClusterDomain(),
             "localhost");
 
       return IngressSpecUtil.generateSelfSignedCertificateSecret(getSecretName(microcks), labels, hosts);

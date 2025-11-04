@@ -47,7 +47,6 @@ public class KeycloakHelper {
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
 
-   private static final String KUBE_SVC_DNS_SUFFIX = ".svc.cluster.local";
    private static final String OIDC_TOKEN_ENDPOINT_SUFFIX = "/protocol/openid-connect/token";
 
    final KubernetesClient client;
@@ -71,7 +70,7 @@ public class KeycloakHelper {
    public KeycloakConfig getKeycloakConfig(Microcks completeMicrocks) throws ApiException {
       ApiClient apiClient = new ApiClient();
       apiClient.updateBaseUri("http://" + completeMicrocks.getMetadata().getName() + "."
-            + completeMicrocks.getMetadata().getNamespace() + KUBE_SVC_DNS_SUFFIX + ":8080/api");
+            + completeMicrocks.getMetadata().getNamespace() + ".svc." + completeMicrocks.getSpec().getClusterDomain() + ":8080/api");
       logger.infof("Connecting to Microcks on '%s'", apiClient.getBaseUri());
 
       ConfigApi configApi = new ConfigApi(apiClient);
@@ -203,7 +202,7 @@ public class KeycloakHelper {
    private String getKeycloakEndpoint(Microcks completeCR, KeycloakConfig config) {
       if (completeCR.getSpec().getKeycloak().isInstall()) {
          return "http://" + KeycloakServiceDependentResource.getServiceName(completeCR) + "." + completeCR.getMetadata().getNamespace()
-               + KUBE_SVC_DNS_SUFFIX + ":8080/realms/" + config.getRealm() + OIDC_TOKEN_ENDPOINT_SUFFIX;
+               + ".svc." + completeCR.getSpec().getClusterDomain() + ":8080/realms/" + config.getRealm() + OIDC_TOKEN_ENDPOINT_SUFFIX;
       } else if (completeCR.getSpec().getKeycloak().getPrivateUrl() != null) {
          return completeCR.getSpec().getKeycloak().getPrivateUrl() + "/realms/"
                + config.getRealm() + OIDC_TOKEN_ENDPOINT_SUFFIX;

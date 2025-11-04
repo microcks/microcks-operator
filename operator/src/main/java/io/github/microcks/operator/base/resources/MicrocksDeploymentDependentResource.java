@@ -310,7 +310,7 @@ public class MicrocksDeploymentDependentResource extends CRUDKubernetesDependent
       final MicrocksSpec spec = microcks.getSpec();
       if (spec.getKeycloak().isInstall() && spec.getKeycloak().getPrivateUrl() == null) {
          return "http://" + KeycloakServiceDependentResource.getServiceName(microcks) + "."
-               + microcks.getMetadata().getNamespace() + ".svc.cluster.local:8080";
+               + microcks.getMetadata().getNamespace() + ".svc." + microcks.getSpec().getClusterDomain() + ":8080";
       }  else if (spec.getKeycloak().getPrivateUrl() != null) {
          return spec.getKeycloak().getPrivateUrl();
       }

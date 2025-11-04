@@ -74,7 +74,7 @@ public class MicrocksGRPCSecretDependentResource extends KubernetesDependentReso
       List<String> hosts = List.of(
             microcks.getStatus().getMicrocksUrl(),
             MicrocksGRPCIngressDependentResource.getGRPCHost(microcks),
-            MicrocksGRPCServiceDependentResource.getServiceName(microcks) + ".svc.cluster.local",
+            MicrocksGRPCServiceDependentResource.getServiceName(microcks) + ".svc." + microcks.getSpec().getClusterDomain(),
             "localhost");
 
       return IngressSpecUtil.generateSelfSignedCertificateSecret(getSecretName(microcks), labels, hosts);
