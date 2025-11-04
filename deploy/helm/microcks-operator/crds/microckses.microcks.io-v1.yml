@@ -19,6 +19,10 @@ spec:
         properties:
           spec:
             properties:
+              clusterDomain:
+                description: "Cluster internal domain (used to build service FQDNs).\
+                  \ Default to 'cluster.local'"
+                type: "string"
               commonAffinities:
                 description: "Common affinities added to all managed resources"
                 properties:
