@@ -39,7 +39,7 @@ if [[ $# -eq 2 ]]; then
 
   # Add and commit before cleaning up things.
   git add ./static/helm/microcks-operator-$1.tgz
-  git commit -m 'microcks/microcks-operator#'"$2"' chore: Release Helm chart for '"$1"'' ./static/helm/index.yaml ./static/helm/microcks--operator-$1.tgz
+  git commit -m 'microcks/microcks-operator#'"$2"' chore: Release Helm chart for '"$1"'' ./static/helm/index.yaml ./static/helm/microcks-operator-$1.tgz
   git push origin master
 
   rm -rf ./static/helm/tmp
@@ -49,6 +49,6 @@ if [[ $# -eq 2 ]]; then
   cd $root_dir
   rm -rf $root_dir/tmp
 else
-  echo "post-release.sh must be called with <version> <release-issue> as 1st argument. Example:"
+  echo "post-release.sh must be called with <version> <release-issue> as arguments. Example:"
   echo "$ ./post-release.sh 0.0.6 188"
 fi

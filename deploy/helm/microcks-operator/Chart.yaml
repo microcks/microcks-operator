@@ -3,7 +3,7 @@ name: microcks-operator
 description: Helm chart to install the Microcks Operator and CRDs
 
 type: application
-version: 0.0.6
+version: 0.0.7
 appVersion: "latest"
 keywords:
   - microcks
