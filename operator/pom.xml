@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.github.microcks</groupId>
     <artifactId>microcks-operator</artifactId>
-    <version>0.0.6-SNAPSHOT</version>
+    <version>0.0.6</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>microcks-kube-operator</artifactId>
