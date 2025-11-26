@@ -21,6 +21,7 @@ import io.github.microcks.client.api.ConfigApi;
 import io.github.microcks.client.model.Secret;
 import io.github.microcks.operator.AbstractMicrocksDependantReconciler;
 import io.github.microcks.operator.KeycloakHelper;
+import io.github.microcks.operator.api.artifact.v1alpha1.APISource;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.model.Condition;
 import io.github.microcks.operator.api.model.Status;
@@ -31,14 +32,16 @@ import io.github.microcks.operator.api.secret.v1alpha1.SecretSpec;
 import io.github.microcks.operator.api.secret.v1alpha1.SecretValuesFromSpec;
 import io.github.microcks.operator.model.ConditionUtil;
 
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.javaoperatorsdk.operator.api.config.informer.InformerConfiguration;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
+import io.javaoperatorsdk.operator.api.config.informer.InformerEventSourceConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.DeleteControl;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
-import io.javaoperatorsdk.operator.api.reconciler.EventSourceInitializer;
 import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
 import io.javaoperatorsdk.operator.processing.event.ResourceID;
@@ -50,7 +53,7 @@ import org.jboss.logging.Logger;
 
 import java.time.Duration;
 import java.util.Base64;
-import java.util.Map;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
@@ -59,11 +62,11 @@ import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT
  * Reconciliation entry point for the {@code SecretSource} Kubernetes custom resource.
  * @author laurent
  */
-@ControllerConfiguration(namespaces = WATCH_CURRENT_NAMESPACE)
+@ControllerConfiguration(informer = @Informer(namespaces = WATCH_CURRENT_NAMESPACE))
 @SuppressWarnings("unused")
 @ApplicationScoped
 public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<SecretSource, SecretSourceSpec, SecretSourceStatus>
-      implements Reconciler<SecretSource>, Cleaner<SecretSource>, EventSourceInitializer<SecretSource> {
+      implements Reconciler<SecretSource>, Cleaner<SecretSource> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
@@ -78,7 +81,7 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
    }
 
    @Override
-   public Map<String, EventSource> prepareEventSources(EventSourceContext<SecretSource> context) {
+   public List<EventSource<?, SecretSource>> prepareEventSources(EventSourceContext<SecretSource> context) {
       /*
        * To create an event to a related SecretSource resource and trigger the reconciliation we need to
        * find which SecretSource this Secret custom resource is related to. To find the related customResourceId
@@ -94,8 +97,8 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
                   .map(ResourceID::fromResource)
                   .collect(Collectors.toSet());
 
-      InformerConfiguration<io.fabric8.kubernetes.api.model.Secret> configuration =
-            InformerConfiguration.from(io.fabric8.kubernetes.api.model.Secret.class, context)
+      InformerEventSourceConfiguration<io.fabric8.kubernetes.api.model.Secret> configuration =
+            InformerEventSourceConfiguration.from(io.fabric8.kubernetes.api.model.Secret.class, SecretSource.class)
                   .withSecondaryToPrimaryMapper(secretSourcesMatchingSecretName)
                   .withPrimaryToSecondaryMapper(
                         (SecretSource primary) -> primary.getSpec().getSecrets().stream()
@@ -105,8 +108,7 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
                   )
                   .build();
 
-      return EventSourceInitializer
-            .nameEventSources(new InformerEventSource<>(configuration, context));
+      return List.of(new InformerEventSource<>(configuration, context));
    }
 
    @Override
@@ -188,7 +190,8 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
       if (updateStatus) {
          logger.info("Returning an updateStatus control. ========================");
          checkIfGloballyReady(secretSource);
-         return UpdateControl.updateStatus(secretSource);
+
+         return UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(secretSource));
       }
 
       logger.info("Returning a noUpdate control. =============================");
@@ -247,6 +250,11 @@ public class SecretSourceReconciler extends AbstractMicrocksDependantReconciler<
       // Re-schedule cleanup operation in 30 seconds to wait for Microcks to be ready.
       logger.error("Rescheduling cleanup operation in 30 seconds");
       return DeleteControl.noFinalizerRemoval().rescheduleAfter(Duration.ofSeconds(30));
+   }
+
+   @Override
+   protected SecretSource buildCustomResourceInstance() {
+      return new SecretSource();
    }
 
    /** Get a secret id (or null if not exists) */

@@ -17,7 +17,6 @@ package io.github.microcks.operator.base;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.base.resources.KeycloackReadyCondition;
-import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.github.microcks.operator.base.resources.KeycloakConfigSecretDependentResource;
 import io.github.microcks.operator.base.resources.KeycloakDatabaseDeploymentDependentResource;
 import io.github.microcks.operator.base.resources.KeycloakDatabasePVCDependentResource;
@@ -33,15 +32,14 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
-import io.javaoperatorsdk.operator.api.reconciler.ResourceIDMatcherDiscriminator;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Workflow;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.WorkflowBuilder;
-import io.javaoperatorsdk.operator.processing.event.ResourceID;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A manager of Kubernetes secondary resources for Keycloak module defined by a {@code MicrocksSpec} custom resource
@@ -88,15 +86,15 @@ public class KeycloakDependentResourcesManager {
 
       // Configure the dependent resources.
       Arrays.asList(secretDR, dbPersistentVolumeDR, dbDeploymentDR, dbServiceDR, deploymentDR, serviceDR, configSecretDR).forEach(dr -> {
-         if (dr instanceof NamedSecondaryResourceProvider<?>) {
-            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
-                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
-                        p.getMetadata().getNamespace())));
-         }
-         builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
+//         if (dr instanceof NamedSecondaryResourceProvider<?>) {
+//            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
+//                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
+//                        p.getMetadata().getNamespace())));
+//         }
+         WorkflowBuilder.WorkflowNodeConfigurationBuilder nodeBuilder = builder.addDependentResourceAndConfigure(dr).withReconcilePrecondition(installedCondition);
          // Add a ready condition on deployment.
          if (dr == deploymentDR) {
-            builder.withReadyPostcondition(new KeycloackReadyCondition());
+            nodeBuilder.withReadyPostcondition(new KeycloackReadyCondition());
          }
       });
 
@@ -108,10 +106,10 @@ public class KeycloakDependentResourcesManager {
     * @param context The event source context for the Microcks primary resource
     * @return An array of configured EventSources.
     */
-   public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      return new EventSource[] { secretDR.initEventSource(context), dbPersistentVolumeDR.initEventSource(context),
+   public List<EventSource<?, Microcks>> initEventSources(EventSourceContext<Microcks> context) {
+      return List.of(secretDR.initEventSource(context), dbPersistentVolumeDR.initEventSource(context),
             dbDeploymentDR.initEventSource(context), dbServiceDR.initEventSource(context),
             deploymentDR.initEventSource(context), serviceDR.initEventSource(context),
-            configSecretDR.initEventSource(context) };
+            configSecretDR.initEventSource(context));
    }
 }

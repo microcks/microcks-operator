@@ -27,7 +27,6 @@ import io.github.microcks.operator.base.resources.MicrocksGRPCIngressInstallPrec
 import io.github.microcks.operator.base.resources.MicrocksReadyCondition;
 import io.github.microcks.operator.base.resources.MicrocksServiceDependentResource;
 import io.github.microcks.operator.base.resources.MicrocksConfigMapDependentResource;
-import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -37,11 +36,9 @@ import io.fabric8.kubernetes.api.model.gatewayapi.v1.GRPCRoute;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
-import io.javaoperatorsdk.operator.api.reconciler.ResourceIDMatcherDiscriminator;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Workflow;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.WorkflowBuilder;
-import io.javaoperatorsdk.operator.processing.event.ResourceID;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 
 import java.util.ArrayList;
@@ -92,26 +89,26 @@ public class MicrocksDependentResourcesManager {
 
       // Configure the dependent resources.
       Arrays.asList(grpcSecretDR, configMapDR, deploymentDR, serviceDR, grpcServiceDR, grpcIngressDR, grpcRouteDR).forEach(dr -> {
-         if (dr instanceof NamedSecondaryResourceProvider<?>) {
-            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
-                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
-                        p.getMetadata().getNamespace())));
-         }
-         builder.addDependentResource(dr);
+//         if (dr instanceof NamedSecondaryResourceProvider<?>) {
+//            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
+//                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
+//                        p.getMetadata().getNamespace())));
+//         }
+         WorkflowBuilder.WorkflowNodeConfigurationBuilder nodeBuilder = builder.addDependentResourceAndConfigure(dr);
          // Add an installation condition on grpc secret.
          if (dr == grpcSecretDR) {
-            builder.withReconcilePrecondition(new MicrocksGRPCSecretInstallPrecondition());
+            nodeBuilder.withReconcilePrecondition(new MicrocksGRPCSecretInstallPrecondition());
          }
          // Add installation conditions on Ingress and GRPCRoute.
          if (dr == grpcIngressDR) {
-            builder.withReconcilePrecondition(new MicrocksGRPCIngressInstallPrecondition());
+            nodeBuilder.withReconcilePrecondition(new MicrocksGRPCIngressInstallPrecondition());
          }
          if (dr == grpcRouteDR) {
-            builder.withReconcilePrecondition(new MicrocksGRPCRouteInstallPrecondition());
+            nodeBuilder.withReconcilePrecondition(new MicrocksGRPCRouteInstallPrecondition());
          }
          // Add a ready condition on deployment.
          if (dr == deploymentDR) {
-            builder.withReadyPostcondition(new MicrocksReadyCondition());
+            nodeBuilder.withReadyPostcondition(new MicrocksReadyCondition());
          }
       });
 
@@ -123,8 +120,8 @@ public class MicrocksDependentResourcesManager {
     * @param context The event source context for the Microcks primary resource
     * @return An array of configured EventSources.
     */
-   public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      List<EventSource> eventSources = new ArrayList<>(Arrays.asList(
+   public List<EventSource<?, Microcks>> initEventSources(EventSourceContext<Microcks> context) {
+      List<EventSource<?, Microcks>> eventSources = new ArrayList<>(Arrays.asList(
             grpcSecretDR.initEventSource(context),
             configMapDR.initEventSource(context),
             deploymentDR.initEventSource(context),
@@ -134,6 +131,6 @@ public class MicrocksDependentResourcesManager {
       if (client.supports("gateway.networking.k8s.io/v1", "GRPCRoute")) {
          eventSources.add(grpcRouteDR.initEventSource(context));
       }
-      return eventSources.toArray(new EventSource[0]);
+      return eventSources;
    }
 }

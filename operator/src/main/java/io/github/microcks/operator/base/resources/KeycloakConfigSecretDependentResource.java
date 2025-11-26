@@ -23,6 +23,7 @@ import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Deleter;
 import io.javaoperatorsdk.operator.processing.dependent.Creator;
@@ -38,7 +39,7 @@ import java.util.UUID;
  * A Keycloak Kubernetes Secret dependent resource holding realm configuration.
  * @author laurent
  */
-@KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
+@KubernetesDependent(informer = @Informer(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR))
 public class KeycloakConfigSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
       implements Creator<Secret, Microcks>, Deleter<Microcks>, NamedSecondaryResourceProvider<Microcks> {
 

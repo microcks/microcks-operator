@@ -23,6 +23,7 @@ import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Deleter;
 import io.javaoperatorsdk.operator.processing.dependent.Creator;
@@ -35,7 +36,7 @@ import org.jboss.logging.Logger;
  * A MongoDB Kubernetes Secret dependent resource.
  * @author laurent
  */
-@KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
+@KubernetesDependent(informer = @Informer(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR))
 public class MongoDBSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
       implements Creator<Secret, Microcks>, Deleter<Microcks>, NamedSecondaryResourceProvider<Microcks> {
 
@@ -90,10 +91,10 @@ public class MongoDBSecretDependentResource extends KubernetesDependentResource<
                .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata()
             .withType("kubernetes.io/basic-auth")
-            .addToStringData(MONGODB_USER_KEY, "user" + RandomStringUtils.randomAlphanumeric(6))
-            .addToStringData(MONGODB_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32))
-            .addToStringData(MONGODB_ADMIN_USER_KEY, RandomStringUtils.randomAlphanumeric(16))
-            .addToStringData(MONGODB_ADMIN_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32));
+            .addToStringData(MONGODB_USER_KEY, "user" + RandomStringUtils.secure().nextAlphanumeric(6))
+            .addToStringData(MONGODB_PASSWORD_KEY, RandomStringUtils.secure().nextAlphanumeric(32))
+            .addToStringData(MONGODB_ADMIN_USER_KEY, RandomStringUtils.secure().nextAlphanumeric(16))
+            .addToStringData(MONGODB_ADMIN_PASSWORD_KEY, RandomStringUtils.secure().nextAlphanumeric(32));
 
       return builder.build();
    }

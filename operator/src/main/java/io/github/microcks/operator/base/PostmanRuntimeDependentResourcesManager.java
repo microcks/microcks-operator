@@ -17,7 +17,6 @@ package io.github.microcks.operator.base;
 
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.base.resources.PostmanRuntimeReadyCondition;
-import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.github.microcks.operator.base.resources.PostmanRuntimeDeploymentDependentResource;
 import io.github.microcks.operator.base.resources.PostmanRuntimeServiceDependentResource;
 
@@ -25,14 +24,13 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
-import io.javaoperatorsdk.operator.api.reconciler.ResourceIDMatcherDiscriminator;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Workflow;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.WorkflowBuilder;
-import io.javaoperatorsdk.operator.processing.event.ResourceID;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A manager of Kubernetes secondary resources for Postman runtime module defined by a {@code MicrocksSpec} custom
@@ -69,15 +67,15 @@ public class PostmanRuntimeDependentResourcesManager {
       // Configure the dependent resources.
       Arrays.asList(deploymentDR, serviceDR).forEach(dr -> {
          //dr.setKubernetesClient(client);
-         if (dr instanceof NamedSecondaryResourceProvider<?>) {
-            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
-                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
-                        p.getMetadata().getNamespace())));
-         }
+//         if (dr instanceof NamedSecondaryResourceProvider<?>) {
+//            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
+//                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
+//                        p.getMetadata().getNamespace())));
+//         }
          builder.addDependentResource(dr);
       });
 
-      builder.addDependentResource(deploymentDR).withReadyPostcondition(new PostmanRuntimeReadyCondition());
+      builder.addDependentResourceAndConfigure(deploymentDR).withReadyPostcondition(new PostmanRuntimeReadyCondition());
 
       return builder.build();
    }
@@ -87,7 +85,7 @@ public class PostmanRuntimeDependentResourcesManager {
     * @param context The event source context for the Microcks primary resource
     * @return An array of configured EventSources.
     */
-   public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      return new EventSource[] { deploymentDR.initEventSource(context), serviceDR.initEventSource(context) };
+   public List<EventSource<?, Microcks>> initEventSources(EventSourceContext<Microcks> context) {
+      return List.of(deploymentDR.initEventSource(context), serviceDR.initEventSource(context));
    }
 }

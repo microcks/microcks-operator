@@ -22,6 +22,7 @@ import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Deleter;
 import io.javaoperatorsdk.operator.processing.dependent.Creator;
@@ -34,7 +35,7 @@ import org.jboss.logging.Logger;
  * A Keycloak Kubernetes Secret dependent resource.
  * @author laurent
  */
-@KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
+@KubernetesDependent(informer = @Informer(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR))
 public class KeycloakSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
       implements Creator<Secret, Microcks>, Deleter<Microcks>, NamedSecondaryResourceProvider<Microcks> {
 
@@ -88,10 +89,10 @@ public class KeycloakSecretDependentResource extends KubernetesDependentResource
                .addToAnnotations(microcks.getSpec().getCommonAnnotations())
             .endMetadata()
             .withType("kubernetes.io/basic-auth")
-            .addToStringData(KEYCLOAK_ADMIN_KEY, "admin" + RandomStringUtils.randomAlphanumeric(6))
-            .addToStringData(KEYCLOAK_ADMIN_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32))
-            .addToStringData(DATABASE_USER_KEY, "user" + RandomStringUtils.randomAlphanumeric(6))
-            .addToStringData(DATABASE_USER_PASSWORD_KEY, RandomStringUtils.randomAlphanumeric(32));
+            .addToStringData(KEYCLOAK_ADMIN_KEY, "admin" + RandomStringUtils.secure().nextAlphanumeric(6))
+            .addToStringData(KEYCLOAK_ADMIN_PASSWORD_KEY, RandomStringUtils.secure().nextAlphanumeric(32))
+            .addToStringData(DATABASE_USER_KEY, "user" + RandomStringUtils.secure().nextAlphanumeric(6))
+            .addToStringData(DATABASE_USER_PASSWORD_KEY, RandomStringUtils.secure().nextAlphanumeric(32));
 
       return builder.build();
    }

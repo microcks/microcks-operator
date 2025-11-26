@@ -21,6 +21,7 @@ import io.github.microcks.operator.model.IngressSpecUtil;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.Secret;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Deleter;
 import io.javaoperatorsdk.operator.processing.dependent.Creator;
@@ -35,7 +36,7 @@ import java.util.Map;
  * A Microcks GRPC ingress Kubernetes Secret dependent resource.
  * @author laurent
  */
-@KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
+@KubernetesDependent(informer = @Informer(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR))
 public class MicrocksGRPCSecretDependentResource extends KubernetesDependentResource<Secret, Microcks>
       implements Creator<Secret, Microcks>, Deleter<Microcks>, NamedSecondaryResourceProvider<Microcks> {
 
@@ -77,6 +78,8 @@ public class MicrocksGRPCSecretDependentResource extends KubernetesDependentReso
             MicrocksGRPCServiceDependentResource.getServiceName(microcks) + ".svc." + microcks.getSpec().getClusterDomain(),
             "localhost");
 
-      return IngressSpecUtil.generateSelfSignedCertificateSecret(getSecretName(microcks), labels, hosts);
+      Secret secret = IngressSpecUtil.generateSelfSignedCertificateSecret(getSecretName(microcks), labels, hosts);
+      secret.getMetadata().setNamespace(microcks.getMetadata().getNamespace());
+      return secret;
    }
 }

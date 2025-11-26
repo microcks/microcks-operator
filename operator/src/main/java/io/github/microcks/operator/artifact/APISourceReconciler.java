@@ -17,7 +17,6 @@ package io.github.microcks.operator.artifact;
 
 import io.github.microcks.client.ApiClient;
 import io.github.microcks.client.ApiException;
-import io.github.microcks.client.api.DefaultApi;
 import io.github.microcks.client.api.JobApi;
 import io.github.microcks.client.api.MockApi;
 import io.github.microcks.client.model.ImportJob;
@@ -39,7 +38,9 @@ import io.github.microcks.operator.model.ResourceMerger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
@@ -57,7 +58,7 @@ import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT
  * Reconciliation entry point for the {@code APISource} Kubernetes custom resource.
  * @author laurent
  */
-@ControllerConfiguration(namespaces = WATCH_CURRENT_NAMESPACE)
+@ControllerConfiguration(informer = @Informer(namespaces = WATCH_CURRENT_NAMESPACE))
 @SuppressWarnings("unused")
 @ApplicationScoped
 public class APISourceReconciler extends AbstractMicrocksDependantReconciler<APISource, APISourceSpec, APISourceStatus>
@@ -159,7 +160,7 @@ public class APISourceReconciler extends AbstractMicrocksDependantReconciler<API
       if (updateStatus) {
          logger.info("Returning an updateStatus control. ========================");
          checkIfGloballyReady(apiSource);
-         return UpdateControl.updateStatus(apiSource);
+         return UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(apiSource));
       }
 
       logger.info("Returning a noUpdate control. =============================");
@@ -239,6 +240,11 @@ public class APISourceReconciler extends AbstractMicrocksDependantReconciler<API
       // Re-schedule cleanup operation in 30 seconds to wait for Microcks to be ready.
       logger.error("Rescheduling cleanup operation in 30 seconds");
       return DeleteControl.noFinalizerRemoval().rescheduleAfter(Duration.ofSeconds(30));
+   }
+
+   @Override
+   protected APISource buildCustomResourceInstance() {
+      return new APISource();
    }
 
    /** Get an importer id (or null if not exists) */

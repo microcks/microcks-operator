@@ -35,8 +35,10 @@ import io.github.microcks.operator.api.test.v1alpha1.TestSpec;
 import io.github.microcks.operator.api.test.v1alpha1.TestStatus;
 import io.github.microcks.operator.model.ResourceMerger;
 
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
@@ -57,7 +59,7 @@ import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT
  * Reconciliation entry point for the {@code Test} Kubernetes custom resource.
  * @author laurent
  */
-@ControllerConfiguration(namespaces = WATCH_CURRENT_NAMESPACE)
+@ControllerConfiguration(informer = @Informer(namespaces = WATCH_CURRENT_NAMESPACE))
 @SuppressWarnings("unused")
 @ApplicationScoped
 public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, TestSpec, TestStatus>
@@ -118,7 +120,7 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
             testStatus.setResult(Result.IN_PROGRESS);
 
             // Schedule a new reconciliation in 4 sec.
-            return UpdateControl.updateStatus(test).rescheduleAfter(Duration.ofSeconds(4));
+            return UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(test)).rescheduleAfter(Duration.ofSeconds(4));
 
          } else if (testStatus.getStatus() == Status.DEPLOYING) {
             // Reconciliation is in progress as well as the test.
@@ -135,15 +137,15 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
                testStatus.setStatus(Status.READY);
             } else {
                logger.infof("Test '%s' is still in progress, scheduling a new check in 2 sec", testStatus.getId());
-               return UpdateControl.updateStatus(test).rescheduleAfter(Duration.ofSeconds(2));
+               return UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(test)).rescheduleAfter(Duration.ofSeconds(2));
             }
 
             // Tets has completed. We must update the status, and we may re-schedule a deletion based on retention policy.
             if (testSpec.getRetentionPolicy() != RetentionPolicy.Retain) {
                // Reschedule must not be too fast to allow event-driven workflows (like Argo Events) to be triggered.
-               return UpdateControl.updateStatus(test).rescheduleAfter(Duration.ofSeconds(10));
+               return UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(test)).rescheduleAfter(Duration.ofSeconds(10));
             }
-            return UpdateControl.updateStatus(test);
+            return UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(test));
 
          } else if (testStatus.getStatus() == Status.READY){
             // We have finished the reconciliation and the test result is known.
@@ -158,7 +160,7 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
          logger.errorf("Error while calling the test API on Microcks instance '%s'", microcks.getMetadata().getName());
          logger.errorf(API_EXCEPTION_ERROR_LOG, e.getMessage(), e.getResponseBody());
          test.getStatus().setStatus(Status.ERROR);
-         return UpdateControl.updateStatus(test).rescheduleAfter(Duration.ofSeconds(10));
+         return UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(test)).rescheduleAfter(Duration.ofSeconds(10));
       }
 
       logger.info("Returning a noUpdate control. =============================");
@@ -171,6 +173,11 @@ public class TestReconciler extends AbstractMicrocksDependantReconciler<Test, Te
 
       // If here then every test has been removed!
       return DeleteControl.defaultDelete();
+   }
+
+   @Override
+   protected Test buildCustomResourceInstance() {
+      return new Test();
    }
 
    /** Launch a new test and get first results from Microcks instance. */

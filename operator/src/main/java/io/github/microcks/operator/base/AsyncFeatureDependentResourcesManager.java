@@ -28,7 +28,6 @@ import io.github.microcks.operator.base.resources.AsyncMinionWSIngressInstallPre
 import io.github.microcks.operator.base.resources.AsyncMinionWSSecretDependentResource;
 import io.github.microcks.operator.base.resources.AsyncMinionWSSecretInstallPrecondition;
 import io.github.microcks.operator.base.workflow.AndConditions;
-import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -38,12 +37,10 @@ import io.fabric8.kubernetes.api.model.gatewayapi.v1.HTTPRoute;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
-import io.javaoperatorsdk.operator.api.reconciler.ResourceIDMatcherDiscriminator;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Workflow;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.WorkflowBuilder;
-import io.javaoperatorsdk.operator.processing.event.ResourceID;
 import io.javaoperatorsdk.operator.processing.event.source.EventSource;
 
 import java.util.ArrayList;
@@ -93,29 +90,29 @@ public class AsyncFeatureDependentResourcesManager {
 
       // Configure the dependent resources.
       Arrays.asList(configMapDR, deploymentDR, serviceDR, wsSecretDR, wsIngressDR, wsHTTPRouteDR).forEach(dr -> {
-         if (dr instanceof NamedSecondaryResourceProvider<?>) {
-            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
-                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
-                        p.getMetadata().getNamespace())));
-         }
-         builder.addDependentResource(dr).withReconcilePrecondition(installedCondition);
+//         if (dr instanceof NamedSecondaryResourceProvider<?>) {
+//            dr.setResourceDiscriminator(new ResourceIDMatcherDiscriminator<>(
+//                  p -> new ResourceID(((NamedSecondaryResourceProvider<Microcks>) dr).getSecondaryResourceName(p),
+//                        p.getMetadata().getNamespace())));
+//         }
+         WorkflowBuilder.WorkflowNodeConfigurationBuilder nodeBuilder = builder.addDependentResourceAndConfigure(dr).withReconcilePrecondition(installedCondition);
          // Add an installation condition on websocket secret.
          if (dr == wsSecretDR) {
-            builder.withReconcilePrecondition(
+            nodeBuilder.withReconcilePrecondition(
                   new AndConditions(installedCondition, new AsyncMinionWSSecretInstallPrecondition()));
          }
          // Add installation conditions on Ingress and HTTPRoute.
          if (dr == wsIngressDR) {
-            builder.withReconcilePrecondition(
+            nodeBuilder.withReconcilePrecondition(
                   new AndConditions(installedCondition, new AsyncMinionWSIngressInstallPrecondition()));
          }
          if (dr == wsHTTPRouteDR) {
-            builder.withReconcilePrecondition(
+            nodeBuilder.withReconcilePrecondition(
                   new AndConditions(installedCondition, new AsyncMinionWSHTTPRouteInstallPrecondition()));
          }
          // Add a ready condition on deployment.
          if (dr == deploymentDR) {
-            builder.withReadyPostcondition(new AsyncMinionReadyCondition());
+            nodeBuilder.withReadyPostcondition(new AsyncMinionReadyCondition());
          }
       });
 
@@ -127,8 +124,8 @@ public class AsyncFeatureDependentResourcesManager {
     * @param context The event source context for the Microcks primary resource
     * @return An array of configured EventSources.
     */
-   public EventSource[] initEventSources(EventSourceContext<Microcks> context) {
-      List<EventSource> eventSources = new ArrayList<>(Arrays.asList(
+   public List<EventSource<?, Microcks>> initEventSources(EventSourceContext<Microcks> context) {
+      List<EventSource<?, Microcks>> eventSources = new ArrayList<>(Arrays.asList(
             configMapDR.initEventSource(context),
             deploymentDR.initEventSource(context),
             serviceDR.initEventSource(context),
@@ -137,6 +134,6 @@ public class AsyncFeatureDependentResourcesManager {
       if (client.supports("gateway.networking.k8s.io/v1", "HTTPRoute")) {
          eventSources.add(wsHTTPRouteDR.initEventSource(context));
       }
-      return eventSources.toArray(new EventSource[0]);
+      return eventSources;
    }
 }

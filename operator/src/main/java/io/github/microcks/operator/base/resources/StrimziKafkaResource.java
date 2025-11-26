@@ -77,7 +77,8 @@ public class StrimziKafkaResource {
 
       // Compute strimzi-kafka with Qute template.
       String strimziKafka = Templates
-            .kafka(microcksName, microcks.getSpec(), client.adapt(OpenShiftClient.class).isSupported()).render();
+            .kafka(microcksName, microcks.getSpec(), client.adapt(OpenShiftClient.class).hasApiGroup("route.openshift.io", true))
+            .render();
 
       Map kafkaMap = null;
       try {

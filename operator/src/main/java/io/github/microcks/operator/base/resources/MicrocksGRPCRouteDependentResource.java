@@ -25,6 +25,7 @@ import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.gatewayapi.v1.GRPCRoute;
 import io.fabric8.kubernetes.api.model.gatewayapi.v1.GRPCRouteBuilder;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
@@ -36,7 +37,7 @@ import java.util.Map;
  * A Microcks Kubernetes GRPCRoute dependent resource for gRPC traffic.
  * @author laurent
  */
-@KubernetesDependent(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR)
+@KubernetesDependent(informer = @Informer(labelSelector = MicrocksOperatorConfig.RESOURCE_LABEL_SELECTOR))
 public class MicrocksGRPCRouteDependentResource extends CRUDKubernetesDependentResource<GRPCRoute, Microcks>
       implements NamedSecondaryResourceProvider<Microcks> {
 

@@ -22,6 +22,7 @@ import io.github.microcks.operator.api.model.StatusPreserving;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -39,7 +40,7 @@ import java.util.Map;
  * @param <S> The spec type for the custom resource
  * @param <T> The status type for the custom resource - must implement StatusPreserving
  */
-public class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>, S, T extends StatusPreserving> {
+public abstract class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>, S, T extends StatusPreserving> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
@@ -48,6 +49,11 @@ public class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>,
 
    protected KubernetesClient client;
    protected KeycloakHelper keycloakHelper;
+
+   /**
+    * Hook for extensions to provide the concrete implementation of custom resource.
+    */
+   protected abstract R buildCustomResourceInstance();
 
    /**
     * For a given custom resource, prepare the reconciliation by checking that the Microcks instance
@@ -63,7 +69,7 @@ public class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>,
          logger.errorf("No Microcks instance specified for %s '%s'", customResource.getKind(), customResource.getMetadata().getName());
          customResource.getStatus().setStatus(Status.ERROR);
          customResource.getStatus().setMessage("No Microcks instance specified for APISource. Expected annotation 'microcks.io/instance'");
-         return new UpdateControlOrMicrocks<>(UpdateControl.updateStatus(customResource), null);
+         return new UpdateControlOrMicrocks<>(UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(customResource)), null);
       }
 
       MixedOperation<Microcks, KubernetesResourceList<Microcks>, Resource<Microcks>> microcksClient = client.resources(Microcks.class);
@@ -74,7 +80,7 @@ public class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>,
          logger.errorf("No Microcks instance found for %s '%s'", customResource.getKind(), customResource.getMetadata().getName());
          customResource.getStatus().setStatus(Status.ERROR);
          customResource.getStatus().setMessage("No Microcks instance found for " + customResource.getKind() + ". Annotation 'microcks.io/instance' doesn't refer an existing instance");
-         return new UpdateControlOrMicrocks<>(UpdateControl.updateStatus(customResource), null);
+         return new UpdateControlOrMicrocks<>(UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(customResource)), null);
       }
 
       // Check that microcks instance is in ready status.
@@ -82,7 +88,7 @@ public class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>,
          logger.errorf("Microcks instance '%s' is not yet ready for %s '%s'", microcksName, customResource.getKind(), customResource.getMetadata().getName());
          customResource.getStatus().setStatus(Status.ERROR);
          customResource.getStatus().setMessage("Microcks instance is not yet ready for " + customResource.getKind() + ". Current status is " + microcks.getStatus().getStatus());
-         return new UpdateControlOrMicrocks<>(UpdateControl.updateStatus(customResource).rescheduleAfter(Duration.ofSeconds(5)), null);
+         return new UpdateControlOrMicrocks<>(UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(customResource)).rescheduleAfter(Duration.ofSeconds(5)), null);
       }
 
       return new UpdateControlOrMicrocks<>(null, microcks);
@@ -129,10 +135,10 @@ public class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>,
          oauthToken = keycloakHelper.getOAuthToken(customResource.getMetadata(), microcks);
       } catch (UnsatisfiedRequirementException ure) {
          logger.errorf("Unsatisfied requirement for connecting to Keycloak: %s", ure.getMessage());
-         return new UpdateControlOrApiClient<>(UpdateControl.updateStatus(customResource).rescheduleAfter(Duration.ofSeconds(120)), null);
+         return new UpdateControlOrApiClient<>(UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(customResource)).rescheduleAfter(Duration.ofSeconds(120)), null);
       } catch (Exception e) {
          logger.errorf("Error while getting OAuth token for Keycloak server: %s", e.getMessage());
-         return new UpdateControlOrApiClient<>(UpdateControl.updateStatus(customResource).rescheduleAfter(Duration.ofSeconds(10)), null);
+         return new UpdateControlOrApiClient<>(UpdateControl.patchStatus(prepareCustomResourceForStatusPatch(customResource)).rescheduleAfter(Duration.ofSeconds(10)), null);
       }
 
       // Build a needed ApiCLient to interact with Microcks API.
@@ -151,5 +157,17 @@ public class AbstractMicrocksDependantReconciler<R extends CustomResource<S, T>,
    }
 
    public record UpdateControlOrApiClient<R extends HasMetadata>(UpdateControl<R> updateControl, ApiClient apiClient) {
+   }
+
+   /** Applying the recipe from https://javaoperatorsdk.io/blog/2025/02/25/from-legacy-approach-to-server-side-apply */
+   protected R prepareCustomResourceForStatusPatch(R customResource) {
+      R customResourcePatch = buildCustomResourceInstance();
+      customResourcePatch.setMetadata(new ObjectMetaBuilder()
+            .withName(customResource.getMetadata().getName())
+            .withNamespace(customResource.getMetadata().getNamespace())
+            .withResourceVersion(customResource.getMetadata().getResourceVersion())
+            .build());
+      customResourcePatch.setStatus(customResource.getStatus());
+      return customResourcePatch;
    }
 }

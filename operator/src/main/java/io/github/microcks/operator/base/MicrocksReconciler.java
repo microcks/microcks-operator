@@ -35,7 +35,11 @@ import io.github.microcks.operator.model.ConditionUtil;
 import io.github.microcks.operator.model.IngressSpecUtil;
 import io.github.microcks.operator.model.ResourceMerger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -47,12 +51,12 @@ import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.javaoperatorsdk.operator.ReconcilerUtils;
+import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.ControllerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.DeleteControl;
 import io.javaoperatorsdk.operator.api.reconciler.EventSourceContext;
-import io.javaoperatorsdk.operator.api.reconciler.EventSourceInitializer;
 import io.javaoperatorsdk.operator.api.reconciler.Reconciler;
 import io.javaoperatorsdk.operator.api.reconciler.UpdateControl;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.DependentResource;
@@ -64,7 +68,6 @@ import org.jboss.logging.Logger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -75,10 +78,10 @@ import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT
  * Reconciliation entry point for the {@code Microcks} Kubernetes custom resource.
  * @author laurent
  */
-@ControllerConfiguration(namespaces = WATCH_CURRENT_NAMESPACE)
+@ControllerConfiguration(informer = @Informer(namespaces = WATCH_CURRENT_NAMESPACE))
 @SuppressWarnings("unused")
 @ApplicationScoped
-public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microcks>, EventSourceInitializer<Microcks> {
+public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microcks> {
 
    /** Get a JBoss logging logger. */
    private final Logger logger = Logger.getLogger(getClass());
@@ -134,15 +137,15 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
    }
 
    @Override
-   public Map<String, EventSource> prepareEventSources(EventSourceContext<Microcks> context) {
-      // Build names event sources from event sources coming from all the modules reconcilers.
-      return EventSourceInitializer.nameEventSources(Stream.concat(
-            Stream.concat(
-                  Stream.concat(Arrays.stream(keycloakReconciler.initEventSources(context)),
-                        Arrays.stream(mongoDBReconciler.initEventSources(context))),
-                  Stream.concat(Arrays.stream(microcksReconciler.initEventSources(context)),
-                        Arrays.stream(postmanRuntimeReconciler.initEventSources(context)))),
-            Arrays.stream(asyncFeatureReconciler.initEventSources(context))).toArray(EventSource[]::new));
+   public List<EventSource<?, Microcks>> prepareEventSources(EventSourceContext<Microcks> context) {
+      // Aggregates list of event sources from all the modules reconcilers in a single list.
+      return Stream.of(
+            keycloakReconciler.initEventSources(context),
+            mongoDBReconciler.initEventSources(context),
+            microcksReconciler.initEventSources(context),
+            postmanRuntimeReconciler.initEventSources(context),
+            asyncFeatureReconciler.initEventSources(context)
+      ).flatMap(List::stream).toList();
    }
 
    @Override
@@ -174,7 +177,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 //      logger.info("defaultSpec: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(defaultSpec));
 //      logger.info("CompleteCR: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(completeCR));
 
-      boolean isOpenShift = client.adapt(OpenShiftClient.class).isSupported();
+      boolean isOpenShift = client.adapt(OpenShiftClient.class).hasApiGroup("route.openshift.io", true);
       final List<OwnerReference> refs = List.of(getOwnerReference(completeCR));
 
       String microcksUrl = null;
@@ -208,7 +211,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             microcks.getStatus().setMessage(
                   "\"No Microcks URL specified and OpenShift Route disabled. You must either add spec.microcks.url "
                         + "or spec.microcks.openshift.route.enabled=true in the Microcks custom resource.");
-            return UpdateControl.updateStatus(microcks);
+            return UpdateControl.patchStatus(prepareMicrocksForStatusPatch(microcks));
          }
       } else {
          if (spec.getMicrocks() != null && spec.getMicrocks().getUrl() != null) {
@@ -218,7 +221,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
             microcks.getStatus().setStatus(Status.ERROR);
             microcks.getStatus()
                   .setMessage("Not exposing Microcks and no URL specified. You must add spec.microcks.url");
-            return UpdateControl.updateStatus(microcks);
+            return UpdateControl.patchStatus(prepareMicrocksForStatusPatch(microcks));
          }
       }
       microcks.getStatus().setMicrocksUrl(microcksUrl);
@@ -253,7 +256,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
                microcks.getStatus().setMessage(
                      "No Keycloak URL specified and OpenShift Route disabled. You must either add spec.keycloak.url "
                            + "or spec.keycloak.openshift.route.enabled=true in the Microcks custom resource.");
-               return UpdateControl.updateStatus(microcks);
+               return UpdateControl.patchStatus(prepareMicrocksForStatusPatch(microcks));
             }
          } else {
             if (spec.getKeycloak() != null && spec.getKeycloak().getUrl() != null) {
@@ -265,7 +268,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
                microcks.getStatus()
                      .setMessage("Not installing Keycloak but no URL specified. You must either add spec.keycloak.url "
                            + "or spec.keycloak.install=true with OpenShift support.");
-               return UpdateControl.updateStatus(microcks);
+               return UpdateControl.patchStatus(prepareMicrocksForStatusPatch(microcks));
             }
          }
          microcks.getStatus().setKeycloakUrl(keycloakUrl);
@@ -314,7 +317,7 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
          logger.info("Global status before check is: " + microcks.getStatus().getStatus());
          checkIfGloballyReady(completeCR, microcks.getStatus());
          logger.info("Global status after check is: " + microcks.getStatus().getStatus());
-         return UpdateControl.updateStatus(microcks);
+         return UpdateControl.patchStatus(prepareMicrocksForStatusPatch(microcks));
       }
 
       logger.info("Returning a noUpdate control. =============================");
@@ -518,16 +521,20 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
          if (result.erroredDependentsExist()) {
             logger.error("  Some dependents are in error...");
-            for (Map.Entry<DependentResource, ReconcileResult> entry : result.getReconcileResults().entrySet()) {
+            for (Map.Entry<DependentResource, Exception> entry : result.getErroredDependents().entrySet()) {
                logger.errorf(" - errored: '%s'", entry.getValue().toString());
             }
          }
       } else {
-         logger.debugf("  No dependents to reconcile. Mark module as ready!");
-         Condition condition = ConditionUtil.getOrCreateCondition(status, module + "Ready");
-         condition.setStatus(Status.READY);
-         ConditionUtil.touchConditionTime(condition);
-         updateStatus = true;
+         logger.debugf("  No dependents to reconcile. Ensure module is marked as ready!");
+         Condition condition = ConditionUtil.getCondition(status, module + "Ready");
+         if (condition == null) {
+            condition = new Condition();
+            condition.setType(module + "Ready");
+            status.addCondition(condition);
+            ConditionUtil.touchConditionTime(condition);
+            updateStatus = true;
+         }
       }
       return updateStatus;
    }
@@ -672,5 +679,17 @@ public class MicrocksReconciler implements Reconciler<Microcks>, Cleaner<Microck
 
       WatcherManager watchers = WatcherManager.getInstance();
       watchers.unregisterWatcher(watcherKey);
+   }
+
+   /** Applying the recipe from https://javaoperatorsdk.io/blog/2025/02/25/from-legacy-approach-to-server-side-apply */
+   private Microcks prepareMicrocksForStatusPatch(Microcks microcks) {
+      Microcks microcksPatch = new Microcks();
+      microcksPatch.setMetadata(new ObjectMetaBuilder()
+            .withName(microcks.getMetadata().getName())
+            .withNamespace(microcks.getMetadata().getNamespace())
+            .withResourceVersion(microcks.getMetadata().getResourceVersion())
+            .build());
+      microcksPatch.setStatus(microcks.getStatus());
+      return microcksPatch;
    }
 }
