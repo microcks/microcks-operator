@@ -1,10 +1,10 @@
 header:
   schema-version: 1.0.0
-  last-updated: '2024-09-23'
-  last-reviewed: '2024-09-23'
-  expiration-date: '2025-09-23T01:00:00.000Z'
+  last-updated: '2026-02-05'
+  last-reviewed: '2026-02-05'
+  expiration-date: '2027-09-05T01:00:00.000Z'
   project-url: https://github.com/microcks/microcks-operator
-  project-release: '0.0.1'
+  project-release: '0.0.7'
   changelog: https://github.com/microcks/microcks-operator/blob/main/CHANGELOG.md
   license: https://github.com/microcks/microcks-operator/blob/main/LICENSE
 project-lifecycle:
@@ -51,6 +51,6 @@ dependencies:
   third-party-packages: true
   dependencies-lists:
     - https://github.com/microcks/microcks-operator/network/dependencies
-    - https://app.fossa.com/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-operator/refs/branch/main/cf70fcc4fa4d3326b80b825e08d84cf7ee0d1e52/browse/dependencies
+    - https://app.fossa.com/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-operator/refs/branch/main/d9a092ec1d38b62fe8c52c1ae3757b08055ab2f0/browse/dependencies?revisionScanId=97286850
   env-dependencies-policy:
     policy-url: https://github.com/microcks/microcks-operator/network/dependencies/blob/main/DEPENDENCY_POLICY.md

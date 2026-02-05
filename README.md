@@ -14,9 +14,9 @@ that was hard to maintain and to evolve.
 
 ## Build Status
 
-Latest release version is `0.0.6`.
+Latest release version is `0.0.7`.
 
-The current development version is `0.0.7-SNAPSHOT`. 
+The current development version is `0.0.8-SNAPSHOT`. 
 
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/microcks/microcks-operator/build-verify.yml?logo=github&style=for-the-badge)](https://github.com/microcks/microcks/actions)
 
@@ -49,7 +49,7 @@ To get involved with our community, please make sure you are familiar with the p
 |---------------------------|--------------------------------------------|
 | `0.0.1`, `0.0.2`          | `1.10.x`                                   |
 | `0.0.3`, `0.0.4`, `0.0.5` | `1.11.x`, `1.12.x`                         |
-| `0.0.6`                   | `1.11.x`, `1.12.x`, `1.13.x` and `nightly` |
+| `0.0.6`, `0.0.7`          | `1.11.x`, `1.12.x`, `1.13.x` and `nightly` |
 
 ## Installation
 
@@ -76,7 +76,7 @@ Since version `0.0.6`, Microcks Operator is also available as a Helm chart. Chec
 
 Once operator is installed, you can create a new `Microcks` Custom Resource (CR) to get a working instance of Microcks.
 
-In below example, we're creating a new `Microcks` CR named `microcks` that will install Microcks `1.11.0`.
+In below example, we're creating a new `Microcks` CR named `microcks` that will install Microcks `1.13.0`.
 You need to customize the two `url` fields to match your environment with DNS names that will be mapped to the Microcks and Keycloak ingresses. 
 
 ```sh
@@ -86,7 +86,7 @@ kind: Microcks
 metadata:
   name: microcks
 spec:
-  version: 1.11.0
+  version: 1.13.0
   microcks:
     url: microcks.m.minikube.local
   keycloak:
