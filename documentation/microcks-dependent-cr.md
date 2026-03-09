@@ -84,7 +84,7 @@ This secrete will need to have -at least- two keys:
 * `service-account-name` will hold the value of the Service Account name to use,
 * `service-account-credentials` will hold the corresponding credentials to authenticate on your target Keycloak instance and realm.
 
-The last thing is how to tell the Microcks operator the secret to be used for Service Account retrievel? Well this
+The last thing is how to tell the Microcks operator the secret to be used for Service Account retrieval? Well this
 is done using an additional annotation on your Microcks-dependent resource: the `microcks.io/service-account-secret`
 annotation allows you to specify the name of secret to consider:
 

@@ -154,8 +154,19 @@ public class KeycloakHelper {
          Secret saSecret = client.secrets().inNamespace(resourceMetadata.getNamespace())
                .withName(serviceAccountSecret).get();
 
-         serviceAccountName = saSecret.getStringData().get("service-account-name");
-         serviceAccountCredentials = saSecret.getStringData().get("service-account-credentials");
+         if (saSecret == null) {
+            logger.errorf("Could not find secret '%s' in namespace '%s'", serviceAccountSecret, resourceMetadata.getNamespace());
+            logger.errorf("Please check that the secret exists and is in the same namespace as the Microcks instance '%s'", resourceMetadata.getName());
+         } else {
+            String encodedServiceAccountName = saSecret.getData().get("service-account-name");
+            String encodedServiceAccountCredentials = saSecret.getData().get("service-account-credentials");
+            if (encodedServiceAccountName != null && encodedServiceAccountCredentials != null) {
+               serviceAccountName = new String(Base64.getDecoder().decode(encodedServiceAccountName));
+               serviceAccountCredentials = new String(Base64.getDecoder().decode(encodedServiceAccountCredentials));
+            } else {
+               logger.errorf("Could not find service account name or credentials in secret '%s'", serviceAccountSecret);
+            }
+         }
       }
 
       return new ServiceAccountAndCredentials(serviceAccountName, serviceAccountCredentials);
