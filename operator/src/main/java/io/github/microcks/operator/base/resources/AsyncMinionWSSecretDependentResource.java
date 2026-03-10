@@ -21,6 +21,8 @@ import io.github.microcks.operator.model.IngressSpecUtil;
 import io.github.microcks.operator.model.NamedSecondaryResourceProvider;
 
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.OwnerReference;
+import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Deleter;
@@ -77,6 +79,16 @@ public class AsyncMinionWSSecretDependentResource extends KubernetesDependentRes
             AsyncMinionServiceDependentResource.getServiceName(microcks) + ".svc." + microcks.getSpec().getClusterDomain(),
             "localhost");
 
-      return IngressSpecUtil.generateSelfSignedCertificateSecret(getSecretName(microcks), labels, hosts);
+      Secret secret = IngressSpecUtil.generateSelfSignedCertificateSecret(getSecretName(microcks), labels, hosts);
+      secret.getMetadata().setNamespace(microcks.getMetadata().getNamespace());
+      secret.getMetadata().setOwnerReferences(List.of(getOwnerReference(microcks)));
+      return secret;
+   }
+
+   /** Build a new OwnerReference to assign to CR resources. */
+   private OwnerReference getOwnerReference(Microcks primary) {
+      return new OwnerReferenceBuilder().withController(true).withKind(primary.getKind())
+            .withApiVersion(primary.getApiVersion()).withName(primary.getMetadata().getName())
+            .withUid(primary.getMetadata().getUid()).build();
    }
 }
