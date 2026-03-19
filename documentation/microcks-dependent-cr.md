@@ -77,7 +77,7 @@ by specifying `spec.keycloak.operatorServiceAccountEnabled: false` in the Microc
 ### 2. Using an external Keycloak instance
 
 In this scenario, you will need to provision by yourself a Service Account that is granted the Microcks'
-**administrator role** on your Keycloak instance. Then, you will have to put both informations - the service account 
+**administrator role** on your Keycloak instance. Then, you will have to put both information - the service account 
 name and its credentials - into a Kubernetes `Secret` into the same namespace.
 
 This secrete will need to have -at least- two keys:
@@ -99,3 +99,12 @@ metadata:
 spec:
   [...]
 ```
+
+> [!CAUTION]
+> When using an external Keycloak instance, you have to make sure that Keycloak is configured with a hostname
+> corresponding to its public url and allows dynamic backchannel communication. See [Keycloak documentation](https://www.keycloak.org/server/hostname#_utilizing_an_internal_url_for_communication_among_clients)
+> for more details. 
+>
+> This is important for allowing both the operator and regular users to authenticate and have their tokens correctly 
+> issued and trusted. When deploying Keycloak on Kubernenes, this typically means that you have to have the following 
+> env variables: `KC_HOSTNAME=<public-url>` and `KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true` in your Keycloak deployment.
