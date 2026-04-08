@@ -17,10 +17,12 @@ package io.github.microcks.operator.artifact;
 
 import io.github.microcks.client.ApiClient;
 import io.github.microcks.client.ApiException;
+import io.github.microcks.client.api.ConfigApi;
 import io.github.microcks.client.api.JobApi;
 import io.github.microcks.client.api.MockApi;
 import io.github.microcks.client.model.ImportJob;
 import io.github.microcks.client.model.Metadata;
+import io.github.microcks.client.model.Secret;
 import io.github.microcks.client.model.SecretRef;
 import io.github.microcks.operator.AbstractMicrocksDependantReconciler;
 import io.github.microcks.operator.KeycloakHelper;
@@ -38,7 +40,6 @@ import io.github.microcks.operator.model.ResourceMerger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Cleaner;
@@ -51,6 +52,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 import java.time.Duration;
+import java.util.List;
 
 import static io.javaoperatorsdk.operator.api.reconciler.Constants.WATCH_CURRENT_NAMESPACE;
 
@@ -276,7 +278,7 @@ public class APISourceReconciler extends AbstractMicrocksDependantReconciler<API
          JobApi jobApi = new JobApi(apiClient);
          ImportJob job = jobApi.getImportJob(previousId);
          if (job != null) {
-            updateWithImporterSpec(job, importerSpec);
+            updateWithImporterSpec(apiClient, job, importerSpec);
             jobApi.updateImportJob(previousId, job);
             return previousId;
          }
@@ -287,22 +289,32 @@ public class APISourceReconciler extends AbstractMicrocksDependantReconciler<API
    protected String createImporterJob(ApiClient apiClient, ImporterSpec importerSpec) throws ApiException {
       // Move ImporterSpec into Microcks API model.
       ImportJob job = new ImportJob();
-      updateWithImporterSpec(job, importerSpec);
+      updateWithImporterSpec(apiClient, job, importerSpec);
       // Use the apiClient to create the job.
       JobApi jobApi = new JobApi(apiClient);
       job = jobApi.createImportJob(job);
       return job.getId();
    }
 
-   protected void updateWithImporterSpec(ImportJob job, ImporterSpec importerSpec) {
+   protected void updateWithImporterSpec(ApiClient apiClient, ImportJob job, ImporterSpec importerSpec) throws ApiException {
       job.setName(importerSpec.getName());
       job.setRepositoryUrl(importerSpec.getRepository().getUrl());
       job.setRepositoryDisableSSLValidation(importerSpec.getRepository().getDisableSSLValidation());
       job.setMainArtifact(importerSpec.getMainArtifact());
       job.setActive(importerSpec.getActive());
       if (importerSpec.getRepository().getSecretRef() != null) {
+         String secretName = importerSpec.getRepository().getSecretRef();
+         ConfigApi configApi = new ConfigApi(apiClient);
+         List<Secret> secrets = configApi.searchSecrets(secretName);
+         String secretId = secrets.stream()
+               .filter(secret -> secretName.equals(secret.getName()))
+               .findFirst()
+               .map(Secret::getId)
+               .orElseThrow(() -> new ApiException("Secret '" + secretName + "' not found in Microcks"));
+
          SecretRef secretRef = new SecretRef();
-         secretRef.setName(importerSpec.getRepository().getSecretRef());
+         secretRef.setName(secretName);
+         secretRef.setSecretId(secretId);
          job.setSecretRef(secretRef);
       }
       if (importerSpec.getLabels() != null) {
