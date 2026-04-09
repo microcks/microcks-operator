@@ -14,9 +14,9 @@ that was hard to maintain and to evolve.
 
 ## Build Status
 
-Latest release version is `0.0.7`.
+Latest release version is `0.0.9`.
 
-The current development version is `0.0.8-SNAPSHOT`. 
+The current development version is `0.0.10-SNAPSHOT`. 
 
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/microcks/microcks-operator/build-verify.yml?logo=github&style=for-the-badge)](https://github.com/microcks/microcks/actions)
 
@@ -50,7 +50,7 @@ To get involved with our community, please make sure you are familiar with the p
 | `0.0.1`, `0.0.2`          | `1.10.x`                                             |
 | `0.0.3`, `0.0.4`, `0.0.5` | `1.11.x`, `1.12.x`                                   |
 | `0.0.6`, `0.0.7`          | `1.11.x`, `1.12.x`, `1.13.x`                         |
-| `0.0.8`                   | `1.11.x`, `1.12.x`, `1.13.x`, `1.14.x` and `nightly` |
+| `0.0.8`, `0.0.9`          | `1.11.x`, `1.12.x`, `1.13.x`, `1.14.x` and `nightly` |
 
 ## Installation
 
