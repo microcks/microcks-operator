@@ -55,7 +55,7 @@ spec:
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: "keycloak-postgresql-data"
-              mountPath: "/var/lib/pgsql/data"
+              mountPath: "/var/lib/postgresql/data"
               subPath: pgdata
       terminationGracePeriodSeconds: 60
       volumes:
