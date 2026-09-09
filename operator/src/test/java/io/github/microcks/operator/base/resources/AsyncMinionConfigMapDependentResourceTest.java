@@ -22,6 +22,10 @@ import io.github.microcks.operator.base.MicrocksReconciler;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
+import io.github.microcks.operator.api.base.v1alpha1.AsyncFeatureSpec;
+import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationSpec;
+import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationType;
+import io.github.microcks.operator.api.base.v1alpha1.KafkaSpec;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -69,6 +73,35 @@ class AsyncMinionConfigMapDependentResourceTest {
 
       Assertions.assertTrue(applicationProperties.contains(ASYNCAPI_TRIGGERS_BOOTSTRAP),
             "microcks-asyncapi-triggers bootstrap.servers property must be present for Microcks 1.15.0");
+   }
+
+   @Test
+   void testSaslCallbackHandlerPropertiesRendered() throws Exception {
+      Microcks microcks = buildMicrocks("1.14.0");
+
+      KafkaAuthenticationSpec authSpec = new KafkaAuthenticationSpec();
+      authSpec.setType(KafkaAuthenticationType.SASL_SSL);
+      authSpec.setSaslClientCallbackHandlerClass("software.amazon.msk.auth.iam.IAMClientCallbackHandler");
+      authSpec.setSaslLoginCallbackHandlerClass("com.example.MyLoginHandler");
+
+      KafkaSpec kafkaSpec = new KafkaSpec();
+      kafkaSpec.setInstall(false);
+      kafkaSpec.setUrl("my-cluster:9092");
+      kafkaSpec.setAuthentication(authSpec);
+
+      AsyncFeatureSpec asyncSpec = new AsyncFeatureSpec();
+      asyncSpec.setEnabled(true);
+      asyncSpec.setKafka(kafkaSpec);
+
+      microcks.getSpec().getFeatures().setAsync(asyncSpec);
+
+      ConfigMap configMap = new AsyncMinionConfigMapDependentResource().desired(microcks, null);
+      String applicationProperties = configMap.getData().get("application.properties");
+
+      Assertions.assertTrue(applicationProperties.contains("kafka.sasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMClientCallbackHandler"),
+            "sasl client callback handler class property must be present");
+      Assertions.assertTrue(applicationProperties.contains("kafka.sasl.login.callback.handler.class=com.example.MyLoginHandler"),
+            "sasl login callback handler class property must be present");
    }
 }
 
