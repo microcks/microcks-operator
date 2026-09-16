@@ -571,6 +571,10 @@ spec:
                             description: "A Secret reference holding the GCP serviceAccount\
                               \ authentication token JSON file"
                             properties:
+                              additionalProperties:
+                                additionalProperties:
+                                  type: "object"
+                                type: "object"
                               name:
                                 type: "string"
                             type: "object"
@@ -605,6 +609,10 @@ spec:
                                 description: "Reference to Secret holding client private\
                                   \ key when using MTLS"
                                 properties:
+                                  additionalProperties:
+                                    additionalProperties:
+                                      type: "object"
+                                    type: "object"
                                   name:
                                     type: "string"
                                 type: "object"
@@ -612,9 +620,17 @@ spec:
                                 description: "Type of keystore where to find private\
                                   \ key when using MTLS. PKCS12 and JKS are supported"
                                 type: "string"
+                              saslClientCallbackHandlerClass:
+                                description: "SASL Client Callback Handler class for\
+                                  \ SASL_TLS authentication type"
+                                type: "string"
                               saslJaasConfig:
                                 description: "Additional JAAS config for SASL_TLS\
                                   \ authentication type"
+                                type: "string"
+                              saslLoginCallbackHandlerClass:
+                                description: "SASL Login Callback Handler class for\
+                                  \ SASL_TLS authentication type"
                                 type: "string"
                               saslMechanism:
                                 description: "SASL mechanism used when using SASL_TLS\
@@ -624,6 +640,10 @@ spec:
                                 description: "Reference to Secret holding cluster\
                                   \ certificate for TLS transport"
                                 properties:
+                                  additionalProperties:
+                                    additionalProperties:
+                                      type: "object"
+                                    type: "object"
                                   name:
                                     type: "string"
                                 type: "object"
@@ -665,6 +685,8 @@ spec:
                                 items:
                                   properties:
                                     name:
+                                      type: "string"
+                                    request:
                                       type: "string"
                                   type: "object"
                                 type: "array"
@@ -719,6 +741,8 @@ spec:
                                 items:
                                   properties:
                                     name:
+                                      type: "string"
+                                    request:
                                       type: "string"
                                   type: "object"
                                 type: "array"
@@ -779,6 +803,10 @@ spec:
                             description: "A secret reference holding the credentials\
                               \ information for the chosen type"
                             properties:
+                              additionalProperties:
+                                additionalProperties:
+                                  type: "object"
+                                type: "object"
                               name:
                                 type: "string"
                             type: "object"
@@ -805,6 +833,10 @@ spec:
                             description: "A secret reference holding the credentials\
                               \ information for the chosen type"
                             properties:
+                              additionalProperties:
+                                additionalProperties:
+                                  type: "object"
+                                type: "object"
                               name:
                                 type: "string"
                             type: "object"
@@ -1077,6 +1109,8 @@ spec:
                           properties:
                             name:
                               type: "string"
+                            request:
+                              type: "string"
                           type: "object"
                         type: "array"
                       limits:
@@ -1342,6 +1376,8 @@ spec:
                           properties:
                             name:
                               type: "string"
+                            request:
+                              type: "string"
                           type: "object"
                         type: "array"
                       limits:
@@ -1408,6 +1444,8 @@ spec:
                           properties:
                             name:
                               type: "string"
+                            request:
+                              type: "string"
                           type: "object"
                         type: "array"
                       limits:
@@ -1429,6 +1467,10 @@ spec:
                     description: "Reference of a Secret containing username and password\
                       \ keys for connecting to existing MongoDB instance"
                     properties:
+                      additionalProperties:
+                        additionalProperties:
+                          type: "object"
+                        type: "object"
                       name:
                         type: "string"
                     type: "object"
@@ -1452,6 +1494,8 @@ spec:
                         type: "boolean"
                       runAsUser:
                         type: "integer"
+                      seLinuxChangePolicy:
+                        type: "string"
                       seLinuxOptions:
                         properties:
                           level:
@@ -1474,6 +1518,8 @@ spec:
                         items:
                           type: "integer"
                         type: "array"
+                      supplementalGroupsPolicy:
+                        type: "string"
                       sysctls:
                         items:
                           properties:
@@ -1555,6 +1601,8 @@ spec:
                           properties:
                             name:
                               type: "string"
+                            request:
+                              type: "string"
                           type: "object"
                         type: "array"
                       limits:
@@ -1576,6 +1624,10 @@ spec:
                     description: "Reference of a Secret containing username and password\
                       \ keys for connecting to existing MongoDB instance"
                     properties:
+                      additionalProperties:
+                        additionalProperties:
+                          type: "object"
+                        type: "object"
                       name:
                         type: "string"
                     type: "object"
@@ -1599,6 +1651,8 @@ spec:
                         type: "boolean"
                       runAsUser:
                         type: "integer"
+                      seLinuxChangePolicy:
+                        type: "string"
                       seLinuxOptions:
                         properties:
                           level:
@@ -1621,6 +1675,8 @@ spec:
                         items:
                           type: "integer"
                         type: "array"
+                      supplementalGroupsPolicy:
+                        type: "string"
                       sysctls:
                         items:
                           properties:
@@ -1687,6 +1743,8 @@ spec:
                           properties:
                             name:
                               type: "string"
+                            request:
+                              type: "string"
                           type: "object"
                         type: "array"
                       limits:
@@ -1711,10 +1769,18 @@ spec:
             type: "object"
           status:
             properties:
+              additionalProperties:
+                additionalProperties:
+                  type: "object"
+                type: "object"
               conditions:
                 description: "List of status conditions"
                 items:
                   properties:
+                    additionalProperties:
+                      additionalProperties:
+                        type: "object"
+                      type: "object"
                     lastTransitionTime:
                       description: "Last time the condition of a type changed from\
                         \ one status to another. The required format is 'yyyy-MM-ddTHH:mm:ssZ',\
