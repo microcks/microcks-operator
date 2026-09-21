@@ -15,6 +15,10 @@
  */
 package io.github.microcks.operator.base.resources;
 
+import io.github.microcks.operator.api.base.v1alpha1.AsyncFeatureSpec;
+import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationSpec;
+import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationType;
+import io.github.microcks.operator.api.base.v1alpha1.KafkaSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.base.MicrocksReconciler;
@@ -22,10 +26,6 @@ import io.github.microcks.operator.base.MicrocksReconciler;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
-import io.github.microcks.operator.api.base.v1alpha1.AsyncFeatureSpec;
-import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationSpec;
-import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationType;
-import io.github.microcks.operator.api.base.v1alpha1.KafkaSpec;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,6 +34,8 @@ import org.junit.jupiter.api.Test;
  * This is a unit test verifying that the {@code {#if minorVersion >= 14}} condition of the async-minion
  * {@code application.properties} template is correctly handled, i.e. that the
  * {@code microcks-asyncapi-triggers} Kafka properties are rendered for Microcks 1.14.0 and 1.15.0.
+ * It also verifies that the optional SASL callback handler classes are rendered on all Kafka clients
+ * when configured, and omitted when they are not.
  * @author laurent
  */
 @QuarkusTest
@@ -41,6 +43,20 @@ class AsyncMinionConfigMapDependentResourceTest {
 
    private static final String ASYNCAPI_TRIGGERS_BOOTSTRAP =
          "%kube.mp.messaging.incoming.microcks-asyncapi-triggers.bootstrap.servers=";
+
+   private static final String CLIENT_CALLBACK_HANDLER_CLASS = "software.amazon.msk.auth.iam.IAMClientCallbackHandler";
+   private static final String LOGIN_CALLBACK_HANDLER_CLASS = "com.example.MyLoginHandler";
+
+   /** The native producers and both SmallRye channels each need their own copy of the client callback handler. */
+   private static final String[] CLIENT_CALLBACK_HANDLER_KEYS = {
+         "%kube.kafka.sasl.client.callback.handler.class=",
+         "%kube.mp.messaging.incoming.microcks-services-updates.sasl.client.callback.handler.class=",
+         "%kube.mp.messaging.incoming.microcks-asyncapi-triggers.sasl.client.callback.handler.class=" };
+
+   private static final String[] LOGIN_CALLBACK_HANDLER_KEYS = {
+         "%kube.kafka.sasl.login.callback.handler.class=",
+         "%kube.mp.messaging.incoming.microcks-services-updates.sasl.login.callback.handler.class=",
+         "%kube.mp.messaging.incoming.microcks-asyncapi-triggers.sasl.login.callback.handler.class=" };
 
    private Microcks buildMicrocks(String version) throws Exception {
       MicrocksReconciler reconciler = new MicrocksReconciler(new KubernetesClientBuilder().build());
@@ -53,10 +69,45 @@ class AsyncMinionConfigMapDependentResourceTest {
       return microcks;
    }
 
-   private String renderApplicationProperties(String version) throws Exception {
-      Microcks microcks = buildMicrocks(version);
+   private String render(Microcks microcks) throws Exception {
       ConfigMap configMap = new AsyncMinionConfigMapDependentResource().desired(microcks, null);
       return configMap.getData().get("application.properties");
+   }
+
+   private String renderApplicationProperties(String version) throws Exception {
+      return render(buildMicrocks(version));
+   }
+
+   /** Renders the async-minion properties for an external Kafka cluster using the given authentication spec. */
+   private String renderApplicationPropertiesWithKafkaAuthentication(String version,
+         KafkaAuthenticationSpec authentication) throws Exception {
+      Microcks microcks = buildMicrocks(version);
+
+      KafkaSpec kafkaSpec = new KafkaSpec();
+      kafkaSpec.setInstall(false);
+      kafkaSpec.setUrl("my-cluster:9092");
+      kafkaSpec.setAuthentication(authentication);
+
+      AsyncFeatureSpec asyncSpec = new AsyncFeatureSpec();
+      asyncSpec.setEnabled(true);
+      asyncSpec.setKafka(kafkaSpec);
+
+      microcks.getSpec().getFeatures().setAsync(asyncSpec);
+      return render(microcks);
+   }
+
+   private static void assertPropertiesRendered(String applicationProperties, String[] propertyKeys, String value) {
+      for (String propertyKey : propertyKeys) {
+         Assertions.assertTrue(applicationProperties.contains(propertyKey + value),
+               propertyKey + value + " must be present in rendered application.properties");
+      }
+   }
+
+   private static void assertPropertiesNotRendered(String applicationProperties, String[] propertyKeys) {
+      for (String propertyKey : propertyKeys) {
+         Assertions.assertFalse(applicationProperties.contains(propertyKey),
+               propertyKey + " must be absent when no callback handler class is configured");
+      }
    }
 
    @Test
@@ -77,31 +128,31 @@ class AsyncMinionConfigMapDependentResourceTest {
 
    @Test
    void testSaslCallbackHandlerPropertiesRendered() throws Exception {
-      Microcks microcks = buildMicrocks("1.14.0");
+      KafkaAuthenticationSpec authenticationSpec = new KafkaAuthenticationSpec();
+      authenticationSpec.setType(KafkaAuthenticationType.SASL_SSL);
+      authenticationSpec.setSaslMechanism("AWS_MSK_IAM");
+      authenticationSpec.setSaslClientCallbackHandlerClass(CLIENT_CALLBACK_HANDLER_CLASS);
+      authenticationSpec.setSaslLoginCallbackHandlerClass(LOGIN_CALLBACK_HANDLER_CLASS);
 
-      KafkaAuthenticationSpec authSpec = new KafkaAuthenticationSpec();
-      authSpec.setType(KafkaAuthenticationType.SASL_SSL);
-      authSpec.setSaslClientCallbackHandlerClass("software.amazon.msk.auth.iam.IAMClientCallbackHandler");
-      authSpec.setSaslLoginCallbackHandlerClass("com.example.MyLoginHandler");
+      String applicationProperties = renderApplicationPropertiesWithKafkaAuthentication("1.14.0", authenticationSpec);
 
-      KafkaSpec kafkaSpec = new KafkaSpec();
-      kafkaSpec.setInstall(false);
-      kafkaSpec.setUrl("my-cluster:9092");
-      kafkaSpec.setAuthentication(authSpec);
+      assertPropertiesRendered(applicationProperties, CLIENT_CALLBACK_HANDLER_KEYS, CLIENT_CALLBACK_HANDLER_CLASS);
+      assertPropertiesRendered(applicationProperties, LOGIN_CALLBACK_HANDLER_KEYS, LOGIN_CALLBACK_HANDLER_CLASS);
+   }
 
-      AsyncFeatureSpec asyncSpec = new AsyncFeatureSpec();
-      asyncSpec.setEnabled(true);
-      asyncSpec.setKafka(kafkaSpec);
+   @Test
+   void testSaslCallbackHandlerPropertiesNotRenderedWhenNotConfigured() throws Exception {
+      KafkaAuthenticationSpec authenticationSpec = new KafkaAuthenticationSpec();
+      authenticationSpec.setType(KafkaAuthenticationType.SASL_SSL);
+      authenticationSpec.setSaslMechanism("SCRAM-SHA-512");
 
-      microcks.getSpec().getFeatures().setAsync(asyncSpec);
+      String applicationProperties = renderApplicationPropertiesWithKafkaAuthentication("1.14.0", authenticationSpec);
 
-      ConfigMap configMap = new AsyncMinionConfigMapDependentResource().desired(microcks, null);
-      String applicationProperties = configMap.getData().get("application.properties");
+      // Guard against a false pass: the SASL_SSL branch must have been rendered for the absence to mean anything.
+      Assertions.assertTrue(applicationProperties.contains("%kube.kafka.sasl.mechanism="),
+            "SASL_SSL branch must be rendered for this test to be meaningful");
 
-      Assertions.assertTrue(applicationProperties.contains("kafka.sasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMClientCallbackHandler"),
-            "sasl client callback handler class property must be present");
-      Assertions.assertTrue(applicationProperties.contains("kafka.sasl.login.callback.handler.class=com.example.MyLoginHandler"),
-            "sasl login callback handler class property must be present");
+      assertPropertiesNotRendered(applicationProperties, CLIENT_CALLBACK_HANDLER_KEYS);
+      assertPropertiesNotRendered(applicationProperties, LOGIN_CALLBACK_HANDLER_KEYS);
    }
 }
-
