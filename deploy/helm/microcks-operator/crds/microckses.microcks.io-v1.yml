@@ -612,9 +612,17 @@ spec:
                                 description: "Type of keystore where to find private\
                                   \ key when using MTLS. PKCS12 and JKS are supported"
                                 type: "string"
+                              saslClientCallbackHandlerClass:
+                                description: "SASL Client Callback Handler class for\
+                                  \ SASL_TLS authentication type"
+                                type: "string"
                               saslJaasConfig:
                                 description: "Additional JAAS config for SASL_TLS\
                                   \ authentication type"
+                                type: "string"
+                              saslLoginCallbackHandlerClass:
+                                description: "SASL Login Callback Handler class for\
+                                  \ SASL_TLS authentication type"
                                 type: "string"
                               saslMechanism:
                                 description: "SASL mechanism used when using SASL_TLS\
