@@ -30,7 +30,7 @@ import io.sundr.builder.annotations.Buildable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "type", "truststoreType", "truststoreSecretRef", "keystoreType", "keystoreSecretRef",
-      "saslMechanism", "saslJaasConfig" })
+      "saslMechanism", "saslJaasConfig", "saslLoginCallbackHandlerClass", "saslClientCallbackHandlerClass" })
 @Buildable(editableEnabled = false, builderPackage = "io.fabric8.kubernetes.api.builder")
 public class KafkaAuthenticationSpec {
 
@@ -54,6 +54,12 @@ public class KafkaAuthenticationSpec {
 
    @JsonPropertyDescription("Additional JAAS config for SASL_TLS authentication type")
    private String saslJaasConfig;
+
+   @JsonPropertyDescription("SASL Login Callback Handler class for SASL_TLS authentication type")
+   private String saslLoginCallbackHandlerClass;
+
+   @JsonPropertyDescription("SASL Client Callback Handler class for SASL_TLS authentication type")
+   private String saslClientCallbackHandlerClass;
 
    public KafkaAuthenticationType getType() {
       return type;
@@ -109,5 +115,21 @@ public class KafkaAuthenticationSpec {
 
    public void setSaslJaasConfig(String saslJaasConfig) {
       this.saslJaasConfig = saslJaasConfig;
+   }
+
+   public String getSaslLoginCallbackHandlerClass() {
+      return saslLoginCallbackHandlerClass;
+   }
+
+   public void setSaslLoginCallbackHandlerClass(String saslLoginCallbackHandlerClass) {
+      this.saslLoginCallbackHandlerClass = saslLoginCallbackHandlerClass;
+   }
+
+   public String getSaslClientCallbackHandlerClass() {
+      return saslClientCallbackHandlerClass;
+   }
+
+   public void setSaslClientCallbackHandlerClass(String saslClientCallbackHandlerClass) {
+      this.saslClientCallbackHandlerClass = saslClientCallbackHandlerClass;
    }
 }
