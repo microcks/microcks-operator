@@ -15,12 +15,15 @@
  */
 package io.github.microcks.operator.base.resources;
 
+import io.github.microcks.operator.api.base.v1alpha1.AmazonServiceConnectionSpec;
+import io.github.microcks.operator.api.base.v1alpha1.AmazonServiceConnectionSpec.AmazonCredentialsProviderType;
 import io.github.microcks.operator.api.base.v1alpha1.AsyncFeatureSpec;
 import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationSpec;
 import io.github.microcks.operator.api.base.v1alpha1.KafkaAuthenticationType;
 import io.github.microcks.operator.api.base.v1alpha1.KafkaSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
+import io.github.microcks.operator.api.model.SecretReferenceSpec;
 import io.github.microcks.operator.base.MicrocksReconciler;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -35,7 +38,8 @@ import org.junit.jupiter.api.Test;
  * {@code application.properties} template is correctly handled, i.e. that the
  * {@code microcks-asyncapi-triggers} Kafka properties are rendered for Microcks 1.14.0 and 1.15.0.
  * It also verifies that the optional SASL callback handler classes are rendered on all Kafka clients
- * when configured, and omitted when they are not.
+ * when configured, and omitted when they are not. Finally, it checks that the Amazon SQS and SNS profile
+ * credentials are only rendered for the {@code profile} credentials type.
  * @author laurent
  */
 @QuarkusTest
@@ -57,6 +61,11 @@ class AsyncMinionConfigMapDependentResourceTest {
          "%kube.kafka.sasl.login.callback.handler.class=",
          "%kube.mp.messaging.incoming.microcks-services-updates.sasl.login.callback.handler.class=",
          "%kube.mp.messaging.incoming.microcks-asyncapi-triggers.sasl.login.callback.handler.class=" };
+
+   private static final String SQS_PREFIX = "%kube.amazonsqs.";
+   private static final String SNS_PREFIX = "%kube.amazonsns.";
+   private static final String[] AMAZON_SERVICE_PREFIXES = { SQS_PREFIX, SNS_PREFIX };
+   private static final String PROFILE_FILE_KEY = "aws.profile";
 
    private Microcks buildMicrocks(String version) throws Exception {
       MicrocksReconciler reconciler = new MicrocksReconciler(new KubernetesClientBuilder().build());
@@ -94,6 +103,40 @@ class AsyncMinionConfigMapDependentResourceTest {
 
       microcks.getSpec().getFeatures().setAsync(asyncSpec);
       return render(microcks);
+   }
+
+   /** Renders the async-minion properties with the given Amazon SQS and SNS connections. */
+   private String renderApplicationPropertiesWithAmazonServices(AmazonServiceConnectionSpec sqs,
+         AmazonServiceConnectionSpec sns) throws Exception {
+      Microcks microcks = buildMicrocks("1.14.0");
+      microcks.getSpec().getFeatures().getAsync().setSqs(sqs);
+      microcks.getSpec().getFeatures().getAsync().setSns(sns);
+      return render(microcks);
+   }
+
+   /** Builds an Amazon service connection whose credentials secret holds an AWS profile file. */
+   private static AmazonServiceConnectionSpec amazonConnection(AmazonCredentialsProviderType credentialsType,
+         String credentialsProfile) {
+      SecretReferenceSpec credentialsSecretRef = new SecretReferenceSpec();
+      credentialsSecretRef.setName("aws-credentials");
+      credentialsSecretRef.setAdditionalProperty("fileKey", PROFILE_FILE_KEY);
+
+      AmazonServiceConnectionSpec connection = new AmazonServiceConnectionSpec();
+      connection.setRegion("eu-west-3");
+      connection.setCredentialsType(credentialsType);
+      connection.setCredentialsProfile(credentialsProfile);
+      connection.setCredentialsSecretRef(credentialsSecretRef);
+      return connection;
+   }
+
+   private static void assertRendered(String applicationProperties, String property) {
+      Assertions.assertTrue(applicationProperties.contains(property),
+            property + " must be present in rendered application.properties");
+   }
+
+   private static void assertNotRendered(String applicationProperties, String property) {
+      Assertions.assertFalse(applicationProperties.contains(property),
+            property + " must be absent from rendered application.properties");
    }
 
    private static void assertPropertiesRendered(String applicationProperties, String[] propertyKeys, String value) {
@@ -154,5 +197,45 @@ class AsyncMinionConfigMapDependentResourceTest {
 
       assertPropertiesNotRendered(applicationProperties, CLIENT_CALLBACK_HANDLER_KEYS);
       assertPropertiesNotRendered(applicationProperties, LOGIN_CALLBACK_HANDLER_KEYS);
+   }
+
+   @Test
+   void testSqsProfileCredentialsRendered() throws Exception {
+      String applicationProperties = renderApplicationPropertiesWithAmazonServices(
+            amazonConnection(AmazonCredentialsProviderType.PROFILE, "my-sqs-profile"),
+            new AmazonServiceConnectionSpec());
+
+      // Guard against a false pass: the SQS section must have been rendered with the profile credentials type.
+      assertRendered(applicationProperties, SQS_PREFIX + "credentials-type=profile");
+      assertRendered(applicationProperties, SQS_PREFIX + "credentials-profile-name=my-sqs-profile");
+      assertRendered(applicationProperties,
+            SQS_PREFIX + "credentials-profile-location=/deployments/config/amazon-sqs/" + PROFILE_FILE_KEY);
+   }
+
+   @Test
+   void testSnsProfileCredentialsRenderedWithoutSqsCredentials() throws Exception {
+      // SQS is not configured, so only the SNS connection holds a credentials secret.
+      String applicationProperties = renderApplicationPropertiesWithAmazonServices(new AmazonServiceConnectionSpec(),
+            amazonConnection(AmazonCredentialsProviderType.PROFILE, "my-sns-profile"));
+
+      // Guard against a false pass: the SNS section must have been rendered with the profile credentials type.
+      assertRendered(applicationProperties, SNS_PREFIX + "credentials-type=profile");
+      assertRendered(applicationProperties, SNS_PREFIX + "credentials-profile-name=my-sns-profile");
+      assertRendered(applicationProperties,
+            SNS_PREFIX + "credentials-profile-location=/deployments/config/amazon-sns/" + PROFILE_FILE_KEY);
+   }
+
+   @Test
+   void testProfileCredentialsNotRenderedForEnvVariableCredentials() throws Exception {
+      String applicationProperties = renderApplicationPropertiesWithAmazonServices(
+            amazonConnection(AmazonCredentialsProviderType.ENV_VARIABLE, "my-sqs-profile"),
+            amazonConnection(AmazonCredentialsProviderType.ENV_VARIABLE, "my-sns-profile"));
+
+      for (String prefix : AMAZON_SERVICE_PREFIXES) {
+         // Guard against a false pass: the section must have been rendered with the env-variable credentials type.
+         assertRendered(applicationProperties, prefix + "credentials-type=env-variable");
+         assertNotRendered(applicationProperties, prefix + "credentials-profile-name=");
+         assertNotRendered(applicationProperties, prefix + "credentials-profile-location=");
+      }
    }
 }
