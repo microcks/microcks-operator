@@ -22,6 +22,7 @@ import io.github.microcks.operator.api.base.v1alpha1.KafkaSpec;
 import io.github.microcks.operator.api.base.v1alpha1.Microcks;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksSpec;
 import io.github.microcks.operator.api.base.v1alpha1.MicrocksStatus;
+import io.github.microcks.operator.api.model.ExpositionType;
 import io.github.microcks.operator.base.MicrocksReconciler;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -35,7 +36,8 @@ import org.junit.jupiter.api.Test;
  * This is a unit test verifying the Kafka authentication section of the main web app
  * {@code application.properties} template: SASL properties must be rendered for an external Kafka cluster
  * ({@code install: false}), on both the pre-1.14 and the 1.14+ producer layouts, and must not be rendered
- * when the operator installs Kafka itself.
+ * when the operator installs Kafka itself. It also checks that the gRPC TLS properties are only rendered for an
+ * {@code INGRESS} exposition.
  * @author Abhayanth K
  */
 @QuarkusTest
@@ -54,6 +56,11 @@ class MicrocksConfigMapDependentResourceTest {
 
    private static final String CLIENT_CALLBACK_HANDLER_KEY = "sasl.client.callback.handler.class=";
    private static final String LOGIN_CALLBACK_HANDLER_KEY = "sasl.login.callback.handler.class=";
+
+   private static final String GRPC_CERT_CHAIN_PROPERTY = "grpc.server.certChainFilePath=/deployments/config/grpc/tls.crt";
+   private static final String GRPC_PRIVATE_KEY_PROPERTY = "grpc.server.privateKeyFilePath=/deployments/config/grpc/tls.key";
+
+   private static final ExpositionType[] NON_INGRESS_EXPOSITIONS = { ExpositionType.NONE, ExpositionType.GATEWAYROUTE };
 
    private Microcks buildMicrocks(String version) throws Exception {
       MicrocksReconciler reconciler = new MicrocksReconciler(new KubernetesClientBuilder().build());
@@ -86,6 +93,14 @@ class MicrocksConfigMapDependentResourceTest {
       asyncSpec.setKafka(kafkaSpec);
 
       microcks.getSpec().getFeatures().setAsync(asyncSpec);
+
+      ConfigMap configMap = new MicrocksConfigMapDependentResource().desired(microcks, null);
+      return configMap.getData().get("application.properties");
+   }
+
+   private String renderApplicationProperties(ExpositionType expositionType) throws Exception {
+      Microcks microcks = buildMicrocks("1.14.0");
+      microcks.getSpec().getCommonExpositions().setType(expositionType);
 
       ConfigMap configMap = new MicrocksConfigMapDependentResource().desired(microcks, null);
       return configMap.getData().get("application.properties");
@@ -166,6 +181,26 @@ class MicrocksConfigMapDependentResourceTest {
       for (String producerPrefix : PRODUCER_PREFIXES) {
          assertNotRendered(applicationProperties, producerPrefix + "security.protocol=");
          assertNotRendered(applicationProperties, producerPrefix + CLIENT_CALLBACK_HANDLER_KEY);
+      }
+   }
+
+   @Test
+   void testGrpcTlsPropertiesRenderedForIngressExposition() throws Exception {
+      String applicationProperties = renderApplicationProperties(ExpositionType.INGRESS);
+
+      assertRendered(applicationProperties, GRPC_CERT_CHAIN_PROPERTY);
+      assertRendered(applicationProperties, GRPC_PRIVATE_KEY_PROPERTY);
+   }
+
+   @Test
+   void testGrpcTlsPropertiesNotRenderedForOtherExpositions() throws Exception {
+      for (ExpositionType expositionType : NON_INGRESS_EXPOSITIONS) {
+         String applicationProperties = renderApplicationProperties(expositionType);
+
+         // Guard against a false pass: the template must have been rendered up to the gRPC section.
+         assertRendered(applicationProperties, "# Grpc server properties");
+         assertNotRendered(applicationProperties, GRPC_CERT_CHAIN_PROPERTY);
+         assertNotRendered(applicationProperties, GRPC_PRIVATE_KEY_PROPERTY);
       }
    }
 }
